@@ -1,0 +1,100 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:LightDl.UI.ViewModels"
+        x:Class="LightDl.UI.Views.DownloadDialog"
+        x:DataType="vm:DownloadDialogViewModel"
+        mc:Ignorable="d"
+        Width="620"
+        Height="430">
+  <Design.DataContext>
+    <vm:DownloadDialogViewModel />
+  </Design.DataContext>
+
+  <UserControl.Styles>
+    <Style Selector="Border.dialog-card">
+      <Setter Property="Background" Value="{DynamicResource SukiCardBackground}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource SukiLightBorderBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="12" />
+      <Setter Property="Padding" Value="14" />
+    </Style>
+    <Style Selector="TextBlock.muted">
+      <Setter Property="Foreground" Value="{DynamicResource SukiLowText}" />
+    </Style>
+  </UserControl.Styles>
+
+  <Grid RowDefinitions="*,Auto" Margin="4">
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+      <StackPanel Spacing="14">
+        <TextBlock Text="{Binding DialogSubtitle}" Classes="muted" TextWrapping="Wrap" />
+        <Border Classes="dialog-card" IsVisible="{Binding IsBrowserCapture}">
+          <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" RowSpacing="8">
+            <StackPanel Spacing="3">
+              <TextBlock Text="来源浏览器" Classes="muted" FontSize="12" />
+              <TextBlock Text="{Binding BrowserName}" FontWeight="SemiBold" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Spacing="3">
+              <TextBlock Text="文件大小" Classes="muted" FontSize="12" />
+              <TextBlock Text="{Binding SizeText}" FontWeight="SemiBold" />
+            </StackPanel>
+          </Grid>
+        </Border>
+
+        <StackPanel Spacing="6">
+          <TextBlock Text="下载地址" Classes="muted" />
+          <TextBox Text="{Binding SourceUrl}"
+                   IsReadOnly="{Binding IsBrowserCapture}"
+                   TextWrapping="Wrap"
+                   MinHeight="64"
+                   VerticalContentAlignment="Top" />
+        </StackPanel>
+
+        <StackPanel Spacing="6">
+          <TextBlock Text="文件名" Classes="muted" />
+          <TextBox Text="{Binding FileName}" PlaceholderText="留空时使用服务器提供的文件名" />
+        </StackPanel>
+
+        <StackPanel Spacing="6">
+          <TextBlock Text="保存到" Classes="muted" />
+          <Grid ColumnDefinitions="*,Auto">
+            <TextBox Text="{Binding DownloadDirectory}" />
+            <Button Grid.Column="1" Content="浏览..." Click="BrowseDownloadDirectory" Margin="8,0,0,0" />
+          </Grid>
+        </StackPanel>
+
+        <Border Background="#16FFB020" CornerRadius="10" Padding="12" IsVisible="{Binding IsBrowserCapture}">
+          <TextBlock Text="浏览器任务已临时暂停。选择 LightDl 接管或取消下载后，浏览器任务会被移除；关闭窗口或选择浏览器继续时会恢复原下载。"
+                     TextWrapping="Wrap" />
+        </Border>
+
+        <TextBlock Text="{Binding ErrorMessage}"
+                   Foreground="#E5484D"
+                   TextWrapping="Wrap" />
+      </StackPanel>
+    </ScrollViewer>
+
+    <Grid Grid.Row="1" ColumnDefinitions="*,Auto" Margin="0,18,0,0">
+      <Button Content="浏览器继续下载"
+              Margin="0 0 10 0"
+              Click="ContinueInBrowser"
+              Classes="Flat"
+              IsVisible="{Binding IsBrowserCapture}" />
+      <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+        <Button Content="关闭" Click="CloseDialog" Classes="Flat" IsVisible="{Binding IsNewTask}" />
+        <Button Content="取消下载" Click="CancelDownload" Classes="Flat" IsVisible="{Binding IsBrowserCapture}" />
+        <Button Content="LightDl 接管下载"
+                Click="DownloadWithLightDl"
+                Classes="Flat Accent"
+                IsVisible="{Binding IsBrowserCapture}"
+                Padding="20,10" />
+        <Button Content="开始下载"
+                Click="DownloadWithLightDl"
+                Classes="Flat Accent"
+                IsVisible="{Binding IsNewTask}"
+                Padding="24,10" />
+      </StackPanel>
+    </Grid>
+  </Grid>
+</UserControl>

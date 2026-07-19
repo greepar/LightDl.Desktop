@@ -1,0 +1,3 @@
+[submodule "LightDl.Core"]
+	path = LightDl.Core
+	url = https://github.com/greepar/LightDl.git

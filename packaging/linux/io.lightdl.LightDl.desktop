@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=LightDl
+Comment=LightDl download manager
+Exec=/opt/lightdl/LightDl.Desktop %u
+Terminal=false
+MimeType=x-scheme-handler/lightdl;
+Categories=Network;FileTransfer;

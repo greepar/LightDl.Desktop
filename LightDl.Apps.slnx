@@ -1,0 +1,11 @@
+﻿<Solution>
+  <Project Path="LightDl.BrowserHost/LightDl.BrowserHost.csproj" />
+  <Project Path="LightDl.Android/LightDl.Android.csproj">
+    <Deploy />
+  </Project>
+  <Project Path="LightDl.Desktop/LightDl.Desktop.csproj" />
+  <Project Path="LightDl.iOS/LightDl.iOS.csproj">
+    <Deploy />
+  </Project>
+  <Project Path="LightDl.UI/LightDl.UI.csproj" />
+</Solution>

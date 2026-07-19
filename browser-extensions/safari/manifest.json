@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "LightDl Integration",
+  "version": "0.1.0",
+  "description": "Send links and the current page to LightDl.",
+  "permissions": ["activeTab", "contextMenus"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Download with LightDl"
+  }
+}
