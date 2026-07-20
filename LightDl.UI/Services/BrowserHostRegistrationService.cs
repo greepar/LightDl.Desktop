@@ -23,6 +23,7 @@ public sealed class BrowserHostRegistrationService
     {
         var hostPath = FindHostExecutable()
                        ?? throw new FileNotFoundException("找不到 LightDl.BrowserHost，请先构建或安装浏览器宿主程序。");
+        EnsureHostIsExecutable(hostPath);
         var dataDirectory = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "LightDl",
@@ -135,6 +136,16 @@ public sealed class BrowserHostRegistrationService
         }
 
         return null;
+    }
+
+    private static void EnsureHostIsExecutable(string hostPath)
+    {
+        if (!OperatingSystem.IsLinux() && !OperatingSystem.IsMacOS())
+            return;
+
+        var mode = File.GetUnixFileMode(hostPath);
+        if ((mode & UnixFileMode.UserExecute) == 0)
+            File.SetUnixFileMode(hostPath, mode | UnixFileMode.UserExecute);
     }
 
     [SupportedOSPlatform("windows")]

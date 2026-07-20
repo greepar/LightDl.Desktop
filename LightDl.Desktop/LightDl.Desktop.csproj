@@ -31,4 +31,21 @@
     <ItemGroup>
         <ProjectReference Include="..\LightDl.UI\LightDl.UI.csproj"/>
     </ItemGroup>
+
+    <Target Name="PublishBrowserIntegrationHost"
+            AfterTargets="Publish"
+            Condition="'$(RuntimeIdentifier)' != '' and '$(PublishBrowserIntegrationHost)' != 'false'">
+        <PropertyGroup>
+            <_BrowserHostProject>$(MSBuildProjectDirectory)/../LightDl.BrowserHost/LightDl.BrowserHost.csproj</_BrowserHostProject>
+            <_BrowserHostPublishDir>$(MSBuildProjectDirectory)/obj/browser-host/$(Configuration)/$(RuntimeIdentifier)/</_BrowserHostPublishDir>
+            <_BrowserHostExecutable Condition="$([MSBuild]::IsOSPlatform('Windows'))">LightDl.BrowserHost.exe</_BrowserHostExecutable>
+            <_BrowserHostExecutable Condition="!$([MSBuild]::IsOSPlatform('Windows'))">LightDl.BrowserHost</_BrowserHostExecutable>
+        </PropertyGroup>
+        <MSBuild Projects="$(_BrowserHostProject)"
+                 Targets="Restore;Publish"
+                 BuildInParallel="false"
+                 Properties="Configuration=$(Configuration);RuntimeIdentifier=$(RuntimeIdentifier);PublishDir=$(_BrowserHostPublishDir);PublishBrowserIntegrationHost=false" />
+        <Copy SourceFiles="$(_BrowserHostPublishDir)$(_BrowserHostExecutable)"
+              DestinationFolder="$(PublishDir)" />
+    </Target>
 </Project>

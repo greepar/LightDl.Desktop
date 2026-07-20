@@ -17,7 +17,7 @@
          CanResize="True"
          BackgroundStyle="Gradient">
         <suki:SukiWindow.Hosts>
-                <suki:SukiDialogHost Manager="{Binding DialogManager}" />
+                <suki:SukiDialogHost Manager="{CompiledBinding DialogManager}" />
         </suki:SukiWindow.Hosts>
         <views:MainView />
 </suki:SukiWindow>

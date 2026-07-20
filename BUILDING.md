@@ -24,13 +24,7 @@ Use `linux-x64`, `linux-arm64`, `osx-x64`, or `osx-arm64` on the matching build 
 
 ## Browser integration host
 
-Publish the Native Messaging host for the same runtime and place its executable beside the desktop executable:
-
-```powershell
-dotnet publish LightDl.BrowserHost/LightDl.BrowserHost.csproj -c Release -r win-x64
-```
-
-Use the matching Linux or macOS runtime identifier on those platforms. In LightDl Desktop, open `浏览器集成` and choose `注册 / 修复宿主` after both executables are installed.
+Publishing `LightDl.Desktop` automatically publishes the NativeAOT single-file `LightDl.BrowserHost` for the same runtime and places it beside the desktop executable. In LightDl Desktop, open `浏览器集成` and choose `注册 / 修复宿主` after installation.
 
 - Chrome or Edge: load `browser-extensions/automatic/chromium` as an unpacked extension.
 - Firefox 142 or newer: load `browser-extensions/automatic/firefox/manifest.json` from `about:debugging`.
