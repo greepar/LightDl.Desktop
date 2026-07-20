@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFramework>net11.0-android37.0</TargetFramework>
+        <TargetFramework>net10.0-android36.0</TargetFramework>
         <SupportedOSPlatformVersion>24</SupportedOSPlatformVersion>
         <Nullable>enable</Nullable>
         <ApplicationId>io.lightdl.desktop</ApplicationId>
@@ -13,8 +13,6 @@
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
         <PublishAot>true</PublishAot>
         <LightDlUseAndroidPlatformHttpHandler Condition="'$(LightDlUseAndroidPlatformHttpHandler)' == ''">false</LightDlUseAndroidPlatformHttpHandler>
-        <!-- .NET 11 Preview 6 drops this Java-only JNI callback from NativeAOT customer app links. -->
-        <_AndroidNativeAotExtraLinkerArgs Condition="'$(PublishAot)' == 'true'">$(_AndroidNativeAotExtraLinkerArgs);--undefined=Java_net_dot_android_crypto_DotnetProxyTrustManager_verifyRemoteCertificate</_AndroidNativeAotExtraLinkerArgs>
         <DefineConstants Condition="'$(LightDlUseAndroidPlatformHttpHandler)' == 'true'">$(DefineConstants);LIGHTDL_ANDROID_PLATFORM_HTTP</DefineConstants>
         <EnablePreviewFeatures>true</EnablePreviewFeatures>
         <!-- Mono.Android reports a framework-only NativeAOT aggregate warning; keep all actionable app warnings enabled. -->
@@ -25,10 +23,6 @@
         <AndroidResource Include="Icon.png">
             <Link>Resources\drawable\Icon.png</Link>
         </AndroidResource>
-    </ItemGroup>
-
-    <ItemGroup Condition="'$(PublishAot)' == 'true'">
-        <IlcArg Include="--export-dynamic-symbol:Java_net_dot_android_crypto_DotnetProxyTrustManager_verifyRemoteCertificate" />
     </ItemGroup>
 
     <ItemGroup>

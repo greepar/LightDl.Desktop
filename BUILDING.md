@@ -2,9 +2,9 @@
 
 ## Requirements
 
-- .NET SDK `11.0.100-preview.6` or newer .NET 11 preview.
-- Avalonia `12.1.0` and SukiUI `7.0.1` are restored from NuGet.
-- Android and iOS require the matching .NET 11 workloads.
+- .NET 10 SDK. The repository `global.json` selects the latest installed .NET 10 feature band.
+- Avalonia `11.3.14` and SukiUI `6.1.1` are restored from NuGet.
+- Android and iOS require the matching .NET 10 workloads.
 - iOS and macOS packaging require macOS with Xcode.
 - Desktop NativeAOT requires the platform native toolchain.
 
@@ -33,21 +33,19 @@ dotnet publish LightDl.BrowserHost/LightDl.BrowserHost.csproj -c Release -r win-
 Use the matching Linux or macOS runtime identifier on those platforms. In LightDl Desktop, open `浏览器集成` and choose `注册 / 修复宿主` after both executables are installed.
 
 - Chrome or Edge: load `browser-extensions/automatic/chromium` as an unpacked extension.
-- Firefox 128 or newer: load `browser-extensions/automatic/firefox/manifest.json` from `about:debugging`.
+- Firefox 142 or newer: load `browser-extensions/automatic/firefox/manifest.json` from `about:debugging`.
 
 The automatic integration uses Native Messaging only. If LightDl is unavailable or the user rejects the confirmation dialog, the browser download continues normally.
 
-## Android CoreCLR
+## Android NativeAOT
 
-The Android project sets `UseMonoRuntime=false`. Release builds use composite ReadyToRun with CoreCLR; this is not Mono AOT and not NativeAOT.
+The Android project sets `UseMonoRuntime=false` and `PublishAot=true` to publish with NativeAOT.
 
 ```powershell
-dotnet publish LightDl.Android/LightDl.Android.csproj -c Release -f net11.0-android37.0 -r android-arm64
+dotnet publish LightDl.Android/LightDl.Android.csproj -c Release -f net10.0-android36.0 -r android-arm64
 ```
 
-Both CoreCLR and NativeAOT use LightDl's default `SocketsHttpHandler`. .NET 11 Preview 6 drops the AndroidCrypto TrustManager JNI callback from NativeAOT customer app links, so the project explicitly retains and exports that callback. This is the same root cause as `dotnet/runtime#120959`; newer runtime builds register the callback explicitly through `dotnet/runtime#124173`.
-
-`AndroidMessageHandler` remains available as a diagnostic fallback by building with `-p:LightDlUseAndroidPlatformHttpHandler=true`.
+LightDl uses the default `SocketsHttpHandler`. `AndroidMessageHandler` remains available as a diagnostic fallback by building with `-p:LightDlUseAndroidPlatformHttpHandler=true`.
 
 Android downloads are written to the public `Download` directory. Android 11 and newer require the user to grant the app's "All files access" permission because LightDl uses random-access file writes and sidecar metadata for parallel resume support. Google Play restricts this permission, so a store-distributed build should replace it with a Storage Access Framework or MediaStore-backed destination.
 
@@ -63,6 +61,6 @@ dotnet publish LightDl.iOS/LightDl.iOS.csproj -c Release -r ios-arm64
 
 Publishing and signing an iOS application must be performed on macOS or through a configured Mac build host.
 
-## Optional NativeAOT mobile experiment
+## Mobile runtime note
 
-Setting `PublishAot=true` switches to the NativeAOT runtime, not CoreCLR. Android NativeAOT remains experimental and should not be used as the default production profile.
+Android NativeAOT remains experimental. Validate startup, TLS downloads, file access, and resume behavior on physical devices before distribution.

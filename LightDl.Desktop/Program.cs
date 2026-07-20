@@ -2,6 +2,7 @@
 using Avalonia.Threading;
 using LightDl.Desktop.Views;
 using LightDl.UI;
+using LightDl.UI.Services;
 using SukiUI;
 using SukiUI.Enums;
 
@@ -15,12 +16,15 @@ internal static class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        App.StartMinimizedToTray = args.Any(argument =>
+            string.Equals(argument, "--silent", StringComparison.OrdinalIgnoreCase));
         App.DesktopWindowFactory = static () => new MainWindow();
         App.DesktopThemeFactory = static () => new SukiTheme
         {
             Locale = "zh-CN",
             ThemeColor = SukiColor.Blue
         };
+        StartupPlatform.ConfigureAutoStartAsync = AutoStartService.ConfigureAsync;
 
         using var singleInstance = new SingleInstanceManager();
         if (!singleInstance.IsPrimary)
@@ -44,5 +48,26 @@ internal static class Program
         => AppBuilder.Configure<App>()
             .UsePlatformDetect()
             .WithInterFont()
-            .LogToTrace();
+            .LogToTrace()
+            .With(new Win32PlatformOptions
+            {
+                RenderingMode =
+                [
+                    Win32RenderingMode.AngleEgl,Win32RenderingMode.Software
+                ]
+            })
+            .With(new X11PlatformOptions
+            {
+                RenderingMode =
+                [
+                    X11RenderingMode.Glx,X11RenderingMode.Software
+                ]
+            })
+            .With(new AvaloniaNativePlatformOptions
+            {
+                RenderingMode =
+                [
+                    AvaloniaNativeRenderingMode.OpenGl,AvaloniaNativeRenderingMode.Software
+                ]
+            });
 }

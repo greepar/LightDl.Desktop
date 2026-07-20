@@ -1,0 +1,47 @@
+:root {
+  color-scheme: light dark;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+body {
+  box-sizing: border-box;
+  width: 330px;
+  margin: 0;
+  padding: 18px;
+  line-height: 1.5;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+header img {
+  width: 42px;
+  height: 42px;
+}
+
+header div {
+  display: grid;
+}
+
+header strong {
+  font-size: 18px;
+}
+
+header span,
+.privacy {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+ul {
+  padding-left: 20px;
+}
+
+.privacy {
+  margin-bottom: 0;
+  padding-top: 10px;
+  border-top: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+}

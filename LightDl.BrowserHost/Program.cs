@@ -92,6 +92,7 @@ internal static class Program
         {
             Process.Start(new ProcessStartInfo(executablePath)
             {
+                ArgumentList = { "--silent" },
                 UseShellExecute = false,
                 WorkingDirectory = AppContext.BaseDirectory
             });

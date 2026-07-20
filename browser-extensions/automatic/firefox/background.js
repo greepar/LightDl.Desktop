@@ -10,15 +10,6 @@ browser.downloads.onCreated.addListener((download) => {
   downloadStates.set(download.id, { status: "waiting", timer });
 });
 
-if (browser.downloads.onDeterminingFilename) {
-  browser.downloads.onDeterminingFilename.addListener((download, suggest) => {
-    suggest();
-    const state = downloadStates.get(download.id);
-    if (state?.timer) clearTimeout(state.timer);
-    captureDownload(download.id, download);
-  });
-}
-
 async function captureDownload(downloadId, initialDownload) {
   const state = downloadStates.get(downloadId);
   if (state?.status === "pending" || state?.status === "completed") return;

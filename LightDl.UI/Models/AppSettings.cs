@@ -38,6 +38,8 @@ public sealed class AppSettings
 
     public bool CloseToTray { get; set; } = true;
 
+    public bool StartWithSystem { get; set; }
+
     public bool ShowCompletionNotification { get; set; } = true;
 
     public int ThemeMode { get; set; }

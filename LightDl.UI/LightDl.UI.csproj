@@ -16,11 +16,10 @@
         <PackageReference Include="Avalonia" />
         <PackageReference Include="Avalonia.Themes.Fluent" />
         <PackageReference Include="Avalonia.Fonts.Inter" />
+        <PackageReference Include="AvaloniaUI.DiagnosticsSupport" PrivateAssets="All" Condition="'$(Configuration)' == 'Debug'" />
         <PackageReference Include="CommunityToolkit.Mvvm" />
+        <PackageReference Include="HotAvalonia" PrivateAssets="All" Publish="True" Condition="'$(Configuration)' == 'Debug'" />
+        <PackageReference Include="LightDl" />
         <PackageReference Include="SukiUI" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <ProjectReference Include="..\LightDl.Core\src\LightDl\LightDl.csproj" />
     </ItemGroup>
 </Project>

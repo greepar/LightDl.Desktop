@@ -24,6 +24,7 @@ public partial class SettingsViewModel : ViewModelBase
         UserAgent = settings.UserAgent;
         IgnoreSslErrors = settings.IgnoreSslErrors;
         CloseToTray = settings.CloseToTray;
+        StartWithSystem = settings.StartWithSystem;
         ShowCompletionNotification = settings.ShowCompletionNotification;
         ThemeMode = settings.ThemeMode;
         EnableBrowserIntegration = settings.EnableBrowserIntegration;
@@ -46,6 +47,7 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty] private string _userAgent;
     [ObservableProperty] private bool _ignoreSslErrors;
     [ObservableProperty] private bool _closeToTray;
+    [ObservableProperty] private bool _startWithSystem;
     [ObservableProperty] private bool _showCompletionNotification;
     [ObservableProperty] private int _themeMode;
     [ObservableProperty] private bool _enableBrowserIntegration;
@@ -73,6 +75,7 @@ public partial class SettingsViewModel : ViewModelBase
         UserAgent = UserAgent,
         IgnoreSslErrors = IgnoreSslErrors,
         CloseToTray = CloseToTray,
+        StartWithSystem = StartWithSystem,
         ShowCompletionNotification = ShowCompletionNotification,
         ThemeMode = ThemeMode,
         EnableBrowserIntegration = EnableBrowserIntegration

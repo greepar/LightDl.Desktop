@@ -2,6 +2,7 @@
 using System.ComponentModel;
 using Avalonia;
 using Avalonia.Styling;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LightDl.UI.Models;
@@ -16,6 +17,7 @@ public partial class MainViewModel : ViewModelBase
     private readonly DownloadTaskStore _taskStore;
     private readonly BrowserHostRegistrationService _browserHostRegistration;
     private TaskCompletionSource<BrowserCaptureResponse>? _browserCaptureCompletion;
+    private CancellationTokenSource? _statusResetCancellation;
 
     public MainViewModel() : this(
         new AppSettingsService(),
@@ -77,6 +79,40 @@ public partial class MainViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _statusMessage = "准备就绪";
+
+    partial void OnStatusMessageChanged(string value)
+    {
+        _statusResetCancellation?.Cancel();
+        _statusResetCancellation?.Dispose();
+        _statusResetCancellation = null;
+
+        if (value == "准备就绪")
+            return;
+
+        var cancellation = new CancellationTokenSource();
+        _statusResetCancellation = cancellation;
+        _ = ResetStatusMessageAsync(cancellation);
+    }
+
+    private async Task ResetStatusMessageAsync(CancellationTokenSource cancellation)
+    {
+        try
+        {
+            await Task.Delay(TimeSpan.FromSeconds(4), cancellation.Token);
+            await Dispatcher.UIThread.InvokeAsync(() => StatusMessage = "准备就绪");
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        finally
+        {
+            if (ReferenceEquals(_statusResetCancellation, cancellation))
+            {
+                _statusResetCancellation = null;
+                cancellation.Dispose();
+            }
+        }
+    }
 
     [ObservableProperty]
     private string _browserHostStatus;
@@ -152,6 +188,12 @@ public partial class MainViewModel : ViewModelBase
             item.PauseCommand.Execute(null);
     }
 
+    public void SelectDownload(DownloadItemViewModel selectedItem)
+    {
+        foreach (var item in Downloads)
+            item.IsSelected = ReferenceEquals(item, selectedItem);
+    }
+
     [RelayCommand]
     private void SelectSection(string? section)
     {
@@ -189,6 +231,19 @@ public partial class MainViewModel : ViewModelBase
         {
             StatusMessage = "请输入有效的 HTTP、HTTPS 或 SOCKS5 代理地址";
             return;
+        }
+
+        if (IsDesktopLayout && StartupPlatform.ConfigureAutoStartAsync is { } configureAutoStart)
+        {
+            try
+            {
+                await configureAutoStart(Settings.StartWithSystem);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
+            {
+                StatusMessage = $"开机自启设置失败：{ex.Message}";
+                return;
+            }
         }
 
         await _settingsService.SaveAsync(Settings.ToModel());
@@ -413,6 +468,9 @@ public partial class MainViewModel : ViewModelBase
         item.StartRequested -= OnStartRequested;
         item.PropertyChanged -= OnDownloadPropertyChanged;
         Downloads.Remove(item);
+        StatusMessage = Downloads.Count == 0
+            ? "准备就绪"
+            : $"已删除 {item.FileName}";
         RaiseSummaryChanged();
         RaiseDownloadListChanged();
         PersistDownloads();

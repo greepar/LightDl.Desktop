@@ -14,6 +14,10 @@ namespace LightDl.UI;
 
 public partial class App : Application
 {
+    private const string SilentArgument = "--silent";
+
+    public static bool StartMinimizedToTray { get; set; }
+
     public static Func<Window>? DesktopWindowFactory { get; set; }
 
     public static Func<IStyle>? DesktopThemeFactory { get; set; }
@@ -24,16 +28,21 @@ public partial class App : Application
     private TrayIcon? _trayIcon;
     private MainViewModel? _mainViewModel;
     private BrowserIntegrationService? _browserIntegrationService;
+    private IClassicDesktopStyleApplicationLifetime? _desktopLifetime;
 
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
+#if DEBUG
+        this.AttachDeveloperTools();
+#endif
     }
 
     public override void OnFrameworkInitializationCompleted()
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            _desktopLifetime = desktop;
             if (DesktopThemeFactory?.Invoke() is { } desktopTheme)
                 Styles.Add(desktopTheme);
 
@@ -48,21 +57,14 @@ public partial class App : Application
                 Content = new MainView()
             };
             _mainWindow.DataContext = _mainViewModel;
-            desktop.MainWindow = _mainWindow;
+            if (StartMinimizedToTray)
+                _mainWindow.ShowInTaskbar = false;
+            else
+                desktop.MainWindow = _mainWindow;
             CreateTrayIcon(desktop);
             _browserIntegrationService = new BrowserIntegrationService();
             _browserIntegrationService.Start(HandleBrowserCaptureAsync);
             HandleActivationArguments(_mainViewModel, Environment.GetCommandLineArgs().Skip(1));
-        }
-        else if (ApplicationLifetime is IActivityApplicationLifetime singleViewFactoryApplicationLifetime)
-        {
-            AddMobileTheme();
-            singleViewFactoryApplicationLifetime.MainViewFactory = () =>
-            {
-                var viewModel = new MainViewModel();
-                MainViewModel.ApplyTheme(viewModel.Settings.ThemeMode);
-                return new MainView { DataContext = viewModel };
-            };
         }
         else if (ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
         {
@@ -102,7 +104,8 @@ public partial class App : Application
         {
             Icon = new WindowIcon(iconStream),
             ToolTipText = "LightDl Download Manager",
-            Menu = menu
+            Menu = menu,
+            IsVisible = true
         };
         _trayIcon.Clicked += (_, _) => ShowMainWindow();
     }
@@ -113,6 +116,8 @@ public partial class App : Application
             return;
 
         _mainWindow.ShowInTaskbar = true;
+        if (_desktopLifetime is not null)
+            _desktopLifetime.MainWindow = _mainWindow;
         _mainWindow.Show();
         _mainWindow.WindowState = WindowState.Normal;
         _mainWindow.Activate();
@@ -120,8 +125,10 @@ public partial class App : Application
 
     public void HandleExternalArguments(IEnumerable<string> arguments)
     {
-        HandleActivationArguments(_mainViewModel, arguments);
-        ShowMainWindow();
+        var receivedArguments = arguments.ToArray();
+        HandleActivationArguments(_mainViewModel, receivedArguments);
+        if (receivedArguments.Length == 0 || receivedArguments.Any(argument => !IsSilentArgument(argument)))
+            ShowMainWindow();
     }
 
     private void Exit(IClassicDesktopStyleApplicationLifetime desktop)
@@ -146,9 +153,12 @@ public partial class App : Application
         if (viewModel is null)
             return;
 
-        foreach (var argument in arguments)
+        foreach (var argument in arguments.Where(argument => !IsSilentArgument(argument)))
             viewModel.HandleActivation(argument);
     }
+
+    private static bool IsSilentArgument(string argument) =>
+        string.Equals(argument, SilentArgument, StringComparison.OrdinalIgnoreCase);
 
     private Task<BrowserCaptureResponse> HandleBrowserCaptureAsync(BrowserCaptureRequest request)
     {

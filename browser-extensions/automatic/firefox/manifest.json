@@ -2,16 +2,34 @@
   "manifest_version": 3,
   "name": "LightDl Automatic Integration",
   "version": "0.1.0",
-  "description": "Automatically hand browser downloads to LightDl through Native Messaging.",
+  "description": "Send browser downloads to the local LightDl desktop app for faster, resumable downloading.",
+  "homepage_url": "https://github.com/greepar/LightDl.Desktop",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
   "permissions": ["downloads", "cookies", "nativeMessaging"],
   "host_permissions": ["<all_urls>"],
+  "action": {
+    "default_title": "LightDl Automatic Integration",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png"
+    }
+  },
   "background": {
     "scripts": ["background.js"]
   },
   "browser_specific_settings": {
     "gecko": {
       "id": "automatic-integration@lightdl.io",
-      "strict_min_version": "128.0"
+      "strict_min_version": "142.0",
+      "data_collection_permissions": {
+        "required": ["browsingActivity", "websiteContent", "websiteActivity"]
+      }
     }
   }
 }

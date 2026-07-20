@@ -2,19 +2,7 @@
 
 Cross-platform Avalonia applications for [LightDl](https://github.com/greepar/LightDl).
 
-## Clone
-
-The core downloader is included as a Git submodule:
-
-```bash
-git clone --recurse-submodules https://github.com/greepar/LightDl.Desktop.git
-```
-
-For an existing clone:
-
-```bash
-git submodule update --init --recursive
-```
+The application uses the published `LightDl` NuGet package for its download engine.
 
 ## Projects
 

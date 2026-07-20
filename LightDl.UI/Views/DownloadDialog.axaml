@@ -53,7 +53,7 @@
 
         <StackPanel Spacing="6">
           <TextBlock Text="文件名" Classes="muted" />
-          <TextBox Text="{Binding FileName}" PlaceholderText="留空时使用服务器提供的文件名" />
+          <TextBox Text="{Binding FileName}" Watermark="留空时使用服务器提供的文件名" />
         </StackPanel>
 
         <StackPanel Spacing="6">

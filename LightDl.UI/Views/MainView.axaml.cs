@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.Input;
 using Avalonia.Platform.Storage;
 using LightDl.UI.Models;
 using LightDl.UI.ViewModels;
@@ -17,6 +18,15 @@ public partial class MainView : UserControl
     {
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
+    }
+
+    private void SelectDownloadItem(object? sender, PointerPressedEventArgs e)
+    {
+        if (sender is not Control { DataContext: DownloadItemViewModel item } ||
+            DataContext is not MainViewModel viewModel)
+            return;
+
+        viewModel.SelectDownload(item);
     }
 
     private async void BrowseDownloadDirectory(object? sender, RoutedEventArgs e)

@@ -25,6 +25,7 @@ public partial class MainWindow : SukiWindow, ITrayManagedWindow
         if (DataContext is MainViewModel { Settings.CloseToTray: true })
         {
             e.Cancel = true;
+            ShowInTaskbar = false;
             Hide();
             return;
         }

@@ -1,6 +1,11 @@
 using System.Net;
+using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Input.Platform;
 using LightDl.UI.Models;
 using LightDl.UI.Services;
 
@@ -14,6 +19,10 @@ public partial class DownloadItemViewModel : ViewModelBase
     private readonly string? _requestedFileName;
     private readonly IReadOnlyDictionary<string, string>? _headers;
     private CancellationTokenSource? _cancellation;
+    private TaskCompletionSource? _downloadCompletion;
+    private double _displaySpeed;
+    private long _lastSpeedUpdateTimestamp;
+    private long _speedDropStartedTimestamp;
 
     public DownloadItemViewModel(
         string sourceUrl,
@@ -95,6 +104,24 @@ public partial class DownloadItemViewModel : ViewModelBase
 
     public bool CanResume => State is DownloadState.Paused or DownloadState.Failed;
 
+    public bool IsCompleted => State == DownloadState.Completed;
+
+    public bool HasLocalFile => !string.IsNullOrWhiteSpace(FilePath) && File.Exists(FilePath);
+
+    public bool CanDeleteLocalFile => !IsCompleted || GetDownloadFilePaths().Any(File.Exists);
+
+    public bool CanOpenFile => IsCompleted && HasLocalFile;
+
+    public bool CanRestart => State is DownloadState.Completed or DownloadState.Failed;
+
+    public string DetailsSavePath => FilePath ?? _destinationDirectory;
+
+    [ObservableProperty]
+    private bool _isDetailsVisible;
+
+    [ObservableProperty]
+    private bool _isSelected;
+
     public async Task StartAsync()
     {
         if (State == DownloadState.Downloading)
@@ -102,6 +129,9 @@ public partial class DownloadItemViewModel : ViewModelBase
 
         _cancellation?.Dispose();
         _cancellation = new CancellationTokenSource();
+        var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        _downloadCompletion = completion;
+        ResetDisplayedSpeed();
         State = DownloadState.Downloading;
         StatusText = "正在下载";
 
@@ -146,6 +176,12 @@ public partial class DownloadItemViewModel : ViewModelBase
             StatusText = ex.Message;
             State = DownloadState.Failed;
         }
+        finally
+        {
+            completion.TrySetResult();
+            if (ReferenceEquals(_downloadCompletion, completion))
+                _downloadCompletion = null;
+        }
     }
 
     [RelayCommand]
@@ -169,6 +205,88 @@ public partial class DownloadItemViewModel : ViewModelBase
         RemoveRequested?.Invoke(this, EventArgs.Empty);
     }
 
+    [RelayCommand]
+    private async Task RemoveWithFileAsync()
+    {
+        var downloadFiles = GetDownloadFilePaths().ToHashSet(StringComparer.OrdinalIgnoreCase);
+        _cancellation?.Cancel();
+
+        if (_downloadCompletion is { } completion)
+            await completion.Task;
+
+        downloadFiles.UnionWith(GetDownloadFilePaths());
+
+        foreach (var path in downloadFiles)
+        {
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+
+        RemoveRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    [RelayCommand]
+    private void ToggleDetails()
+    {
+        IsDetailsVisible = !IsDetailsVisible;
+    }
+
+    [RelayCommand]
+    private void OpenFile()
+    {
+        if (CanOpenFile)
+            Process.Start(new ProcessStartInfo(FilePath!) { UseShellExecute = true });
+    }
+
+    [RelayCommand]
+    private void OpenFolder()
+    {
+        var path = !string.IsNullOrWhiteSpace(FilePath) ? FilePath : _destinationDirectory;
+        var folder = File.Exists(path) ? Path.GetDirectoryName(path) : path;
+        if (string.IsNullOrWhiteSpace(folder) || !Directory.Exists(folder))
+            return;
+
+        if (OperatingSystem.IsWindows())
+            Process.Start(new ProcessStartInfo("explorer.exe", File.Exists(path) ? $"/select,\"{path}\"" : $"\"{folder}\"") { UseShellExecute = true });
+        else if (OperatingSystem.IsMacOS())
+            Process.Start(new ProcessStartInfo("open", File.Exists(path) ? $"-R \"{path}\"" : $"\"{folder}\"") { UseShellExecute = false });
+        else if (OperatingSystem.IsLinux())
+            Process.Start(new ProcessStartInfo("xdg-open", $"\"{folder}\"") { UseShellExecute = false });
+    }
+
+    [RelayCommand]
+    private async Task CopyUrlAsync()
+    {
+        await CopyTextAsync(SourceUrl);
+    }
+
+    [RelayCommand]
+    private async Task CopyFileNameAsync()
+    {
+        await CopyTextAsync(FileName);
+    }
+
+    [RelayCommand]
+    private async Task CopyFilePathAsync()
+    {
+        if (HasLocalFile)
+            await CopyTextAsync(FilePath!);
+    }
+
+    [RelayCommand]
+    private void Restart()
+    {
+        if (!CanRestart)
+            return;
+
+        ProgressPercentage = 0;
+        SpeedText = "--";
+        RemainingText = "--";
+        State = DownloadState.Queued;
+        StatusText = "等待重新下载";
+        StartRequested?.Invoke(this, EventArgs.Empty);
+    }
+
     public void Queue()
     {
         if (State == DownloadState.Downloading)
@@ -184,17 +302,80 @@ public partial class DownloadItemViewModel : ViewModelBase
     {
         OnPropertyChanged(nameof(IsActive));
         OnPropertyChanged(nameof(CanResume));
+        OnPropertyChanged(nameof(IsCompleted));
+        OnPropertyChanged(nameof(CanOpenFile));
+        OnPropertyChanged(nameof(CanRestart));
+        OnPropertyChanged(nameof(CanDeleteLocalFile));
+    }
+
+    partial void OnFilePathChanged(string? value)
+    {
+        OnPropertyChanged(nameof(CanOpenFile));
+        OnPropertyChanged(nameof(HasLocalFile));
+        OnPropertyChanged(nameof(CanDeleteLocalFile));
+        OnPropertyChanged(nameof(DetailsSavePath));
+    }
+
+    partial void OnFileNameChanged(string value)
+    {
+        OnPropertyChanged(nameof(CanDeleteLocalFile));
+        OnPropertyChanged(nameof(DetailsSavePath));
+    }
+
+    private IEnumerable<string> GetDownloadFilePaths()
+    {
+        var destinationPath = FilePath ?? ResolveDestinationPath();
+        yield return destinationPath;
+        yield return destinationPath + ".lightdl";
+        yield return destinationPath + ".lightdl.meta";
+        yield return destinationPath + ".lightdl.meta.tmp";
+    }
+
+    private string ResolveDestinationPath()
+    {
+        var path = Path.Combine(_destinationDirectory, _requestedFileName ?? FileName);
+        if (_settings.FileConflictPolicy != (int)LightDownloadFileConflictPolicy.Rename || !File.Exists(path))
+            return path;
+
+        var directory = Path.GetDirectoryName(path);
+        var name = Path.GetFileNameWithoutExtension(path);
+        var extension = Path.GetExtension(path);
+        for (var index = 1; ; index++)
+        {
+            var candidateName = string.IsNullOrEmpty(extension)
+                ? $"{name} ({index})"
+                : $"{name} ({index}){extension}";
+            var candidate = string.IsNullOrWhiteSpace(directory)
+                ? candidateName
+                : Path.Combine(directory, candidateName);
+            if (!File.Exists(candidate))
+                return candidate;
+        }
+    }
+
+    private static async Task CopyTextAsync(string text)
+    {
+        var topLevel = Application.Current?.ApplicationLifetime switch
+        {
+            IClassicDesktopStyleApplicationLifetime { MainWindow: { } window } => window,
+            ISingleViewApplicationLifetime { MainView: { } view } => TopLevel.GetTopLevel(view),
+            _ => null
+        };
+
+        if (topLevel?.Clipboard is { } clipboard)
+            await clipboard.SetTextAsync(text);
     }
 
     private void UpdateProgress(LightDownloadProgress progress)
     {
+        var displaySpeed = UpdateDisplayedSpeed(progress.Speed);
         ProgressPercentage = Math.Clamp(progress.ProgressPercentage, 0, 100);
         SizeText = $"{FormatBytes(progress.DownloadedBytes)} / {FormatBytes(progress.TotalBytes)}";
-        SpeedText = progress.Speed > 0 ? $"{FormatBytes(progress.Speed)}/s" : "--";
+        SpeedText = displaySpeed > 0 ? $"{FormatBytes(displaySpeed)}/s" : "--";
 
-        if (progress.Speed > 0 && progress.TotalBytes > progress.DownloadedBytes)
+        if (displaySpeed > 0 && progress.TotalBytes > progress.DownloadedBytes)
         {
-            var remaining = TimeSpan.FromSeconds((progress.TotalBytes - progress.DownloadedBytes) / progress.Speed);
+            var remaining = TimeSpan.FromSeconds((progress.TotalBytes - progress.DownloadedBytes) / displaySpeed);
             RemainingText = remaining.TotalHours >= 1
                 ? $"{remaining:hh\\:mm\\:ss}"
                 : $"{remaining:mm\\:ss}";
@@ -203,6 +384,58 @@ public partial class DownloadItemViewModel : ViewModelBase
         {
             RemainingText = "--";
         }
+    }
+
+    private double UpdateDisplayedSpeed(double speed)
+    {
+        var actualSpeed = double.IsFinite(speed) ? Math.Max(0, speed) : 0;
+        var now = Stopwatch.GetTimestamp();
+        if (_lastSpeedUpdateTimestamp == 0 || _displaySpeed <= 0)
+        {
+            _displaySpeed = actualSpeed;
+            _lastSpeedUpdateTimestamp = now;
+            _speedDropStartedTimestamp = 0;
+            return _displaySpeed;
+        }
+
+        var elapsedSeconds = Math.Clamp(
+            (now - _lastSpeedUpdateTimestamp) / (double)Stopwatch.Frequency,
+            0.01,
+            2);
+        _lastSpeedUpdateTimestamp = now;
+
+        if (actualSpeed >= _displaySpeed)
+        {
+            _speedDropStartedTimestamp = 0;
+            var riseFactor = 1 - Math.Exp(-elapsedSeconds / 0.15);
+            _displaySpeed += (actualSpeed - _displaySpeed) * riseFactor;
+        }
+        else
+        {
+            if (_speedDropStartedTimestamp == 0)
+                _speedDropStartedTimestamp = now;
+
+            var dropDuration = (now - _speedDropStartedTimestamp) / (double)Stopwatch.Frequency;
+            if (dropDuration >= 1)
+            {
+                var fallFactor = 1 - Math.Exp(-elapsedSeconds / 3.5);
+                _displaySpeed += (actualSpeed - _displaySpeed) * fallFactor;
+            }
+        }
+
+        if (_displaySpeed < 1)
+            _displaySpeed = 0;
+
+        return _displaySpeed;
+    }
+
+    private void ResetDisplayedSpeed()
+    {
+        _displaySpeed = 0;
+        _lastSpeedUpdateTimestamp = 0;
+        _speedDropStartedTimestamp = 0;
+        SpeedText = "--";
+        RemainingText = "--";
     }
 
     private LightDownloadConfig CreateDownloadConfig()
