@@ -23,6 +23,8 @@ public partial class DownloadItemViewModel : ViewModelBase
     private double _displaySpeed;
     private long _lastSpeedUpdateTimestamp;
     private long _speedDropStartedTimestamp;
+    private LightDownloadProgress? _pendingProgress;
+    private bool _uiUpdatesEnabled = true;
 
     public DownloadItemViewModel(
         string sourceUrl,
@@ -368,6 +370,17 @@ public partial class DownloadItemViewModel : ViewModelBase
 
     private void UpdateProgress(LightDownloadProgress progress)
     {
+        if (!_uiUpdatesEnabled)
+        {
+            _pendingProgress = progress;
+            return;
+        }
+
+        UpdateProgressCore(progress);
+    }
+
+    private void UpdateProgressCore(LightDownloadProgress progress)
+    {
         var displaySpeed = UpdateDisplayedSpeed(progress.Speed);
         ProgressPercentage = Math.Clamp(progress.ProgressPercentage, 0, 100);
         SizeText = $"{FormatBytes(progress.DownloadedBytes)} / {FormatBytes(progress.TotalBytes)}";
@@ -384,6 +397,21 @@ public partial class DownloadItemViewModel : ViewModelBase
         {
             RemainingText = "--";
         }
+    }
+
+    public void SetUiUpdatesEnabled(bool enabled)
+    {
+        if (_uiUpdatesEnabled == enabled)
+            return;
+
+        _uiUpdatesEnabled = enabled;
+        if (!enabled)
+            return;
+
+        if (State == DownloadState.Downloading && _pendingProgress is { } progress)
+            UpdateProgressCore(progress);
+
+        _pendingProgress = null;
     }
 
     private double UpdateDisplayedSpeed(double speed)

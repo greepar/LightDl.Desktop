@@ -18,6 +18,7 @@ public partial class MainViewModel : ViewModelBase
     private readonly BrowserHostRegistrationService _browserHostRegistration;
     private TaskCompletionSource<BrowserCaptureResponse>? _browserCaptureCompletion;
     private CancellationTokenSource? _statusResetCancellation;
+    private bool _uiUpdatesEnabled = true;
 
     public MainViewModel() : this(
         new AppSettingsService(),
@@ -514,6 +515,7 @@ public partial class MainViewModel : ViewModelBase
 
     private void AttachDownload(DownloadItemViewModel item, bool insertAtStart = false)
     {
+        item.SetUiUpdatesEnabled(_uiUpdatesEnabled);
         item.RemoveRequested += OnRemoveRequested;
         item.StartRequested += OnStartRequested;
         item.PropertyChanged += OnDownloadPropertyChanged;
@@ -521,6 +523,16 @@ public partial class MainViewModel : ViewModelBase
             Downloads.Insert(0, item);
         else
             Downloads.Add(item);
+    }
+
+    public void SetUiUpdatesEnabled(bool enabled)
+    {
+        if (_uiUpdatesEnabled == enabled)
+            return;
+
+        _uiUpdatesEnabled = enabled;
+        foreach (var item in Downloads)
+            item.SetUiUpdatesEnabled(enabled);
     }
 
     private void PersistDownloads()
