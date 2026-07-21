@@ -24,7 +24,7 @@ Use `linux-x64`, `linux-arm64`, `osx-x64`, or `osx-arm64` on the matching build 
 
 ## Browser integration host
 
-Publishing `LightDl.Desktop` automatically publishes the NativeAOT single-file `LightDl.BrowserHost` for the same runtime and places it beside the desktop executable. In LightDl Desktop, open `浏览器集成` and choose `注册 / 修复宿主` after installation.
+The published `LightDl.Desktop` executable also serves as the Native Messaging host. The browser starts the same executable in host mode, while normal launches enter the Avalonia GUI. In LightDl Desktop, open `浏览器集成` and choose `注册 / 修复宿主` after installation.
 
 - Chrome or Edge: load `browser-extensions/automatic/chromium` as an unpacked extension.
 - Firefox 142 or newer: load `browser-extensions/automatic/firefox/manifest.json` from `about:debugging`.

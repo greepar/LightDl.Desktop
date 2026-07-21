@@ -1,5 +1,4 @@
 ﻿<Solution>
-  <Project Path="LightDl.BrowserHost/LightDl.BrowserHost.csproj" />
   <Project Path="LightDl.Android/LightDl.Android.csproj">
     <Deploy />
   </Project>

@@ -319,22 +319,12 @@ public partial class MainViewModel : ViewModelBase
         await AcceptBrowserCaptureFromDialogAsync(capture.FileName, capture.DownloadDirectory);
     }
 
-    public async Task<bool> AcceptBrowserCaptureFromDialogAsync(string fileName, string downloadDirectory)
+    public async Task<bool> AcceptBrowserCaptureFromDialogAsync(string _, string downloadDirectory)
     {
         if (PendingBrowserCapture is not { } capture || _browserCaptureCompletion is not { } completion)
             return false;
 
-        capture.FileName = fileName;
         capture.DownloadDirectory = downloadDirectory;
-
-        var normalizedFileName = Path.GetFileName(capture.FileName.Trim());
-        if (string.IsNullOrWhiteSpace(normalizedFileName) ||
-            normalizedFileName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 ||
-            !string.Equals(normalizedFileName, capture.FileName.Trim(), StringComparison.Ordinal))
-        {
-            StatusMessage = "请输入有效的文件名";
-            return false;
-        }
 
         if (string.IsNullOrWhiteSpace(capture.DownloadDirectory))
         {
@@ -346,7 +336,7 @@ public partial class MainViewModel : ViewModelBase
         var item = await AddDownloadCoreAsync(
             capture.SourceUrl,
             capture.DownloadDirectory,
-            normalizedFileName,
+            requestedFileName: null,
             headers);
         if (item is null)
             return false;

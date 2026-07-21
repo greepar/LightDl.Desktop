@@ -5,11 +5,23 @@ using System.Text.Json;
 using LightDl.UI.Models;
 using LightDl.UI.Services;
 
-namespace LightDl.BrowserHost;
+namespace LightDl.Desktop;
 
-internal static class Program
+internal static class NativeMessagingHost
 {
-    public static async Task<int> Main()
+    private const string FirefoxExtensionId = "automatic-integration@lightdl.io";
+
+    public static bool IsInvocation(IReadOnlyList<string> args)
+    {
+        return args.Any(argument =>
+            argument.StartsWith("chrome-extension://", StringComparison.OrdinalIgnoreCase) ||
+            argument.StartsWith("moz-extension://", StringComparison.OrdinalIgnoreCase) ||
+            argument.StartsWith("--parent-window=", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(argument, "-mozilla", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(argument, FirefoxExtensionId, StringComparison.OrdinalIgnoreCase));
+    }
+
+    public static async Task RunAsync()
     {
         BrowserCaptureResponse response;
         try
@@ -23,7 +35,6 @@ internal static class Program
         }
 
         await WriteNativeResponseAsync(Console.OpenStandardOutput(), response);
-        return 0;
     }
 
     private static async Task<BrowserCaptureResponse> ForwardToDesktopAsync(BrowserCaptureRequest request)
@@ -81,11 +92,9 @@ internal static class Program
 
     private static void TryStartDesktop()
     {
-        var executableName = OperatingSystem.IsWindows()
-            ? "LightDl.Desktop.exe"
-            : "LightDl.Desktop";
-        var executablePath = FindDesktopExecutable(executableName);
-        if (executablePath is null)
+        var executablePath = Environment.ProcessPath;
+        if (string.IsNullOrWhiteSpace(executablePath) ||
+            string.Equals(Path.GetFileNameWithoutExtension(executablePath), "dotnet", StringComparison.OrdinalIgnoreCase))
             return;
 
         try
@@ -100,28 +109,6 @@ internal static class Program
         catch
         {
         }
-    }
-
-    private static string? FindDesktopExecutable(string executableName)
-    {
-        var installedPath = Path.Combine(AppContext.BaseDirectory, executableName);
-        if (File.Exists(installedPath))
-            return installedPath;
-
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-        while (directory is not null)
-        {
-            var projectDirectory = Path.Combine(directory.FullName, "LightDl.Desktop");
-            if (Directory.Exists(projectDirectory))
-            {
-                return Directory.EnumerateFiles(projectDirectory, executableName, SearchOption.AllDirectories)
-                    .FirstOrDefault(path => !path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal));
-            }
-
-            directory = directory.Parent;
-        }
-
-        return null;
     }
 
     private static async Task<BrowserCaptureRequest> ReadNativeRequestAsync(Stream input)

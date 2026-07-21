@@ -16,6 +16,12 @@ internal static class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        if (NativeMessagingHost.IsInvocation(args))
+        {
+            NativeMessagingHost.RunAsync().GetAwaiter().GetResult();
+            return;
+        }
+
         App.StartMinimizedToTray = args.Any(argument =>
             string.Equals(argument, "--silent", StringComparison.OrdinalIgnoreCase));
         App.DesktopWindowFactory = static () => new MainWindow();

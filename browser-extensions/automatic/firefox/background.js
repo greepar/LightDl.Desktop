@@ -82,7 +82,7 @@ async function buildRequest(download) {
     url: download.url || finalUrl,
     finalUrl,
     referrer: download.referrer || "",
-    suggestedFileName: getBaseName(download.filename || ""),
+    suggestedFileName: "",
     mimeType: download.mime || "",
     totalBytes: Number.isFinite(download.totalBytes) && download.totalBytes >= 0
       ? download.totalBytes

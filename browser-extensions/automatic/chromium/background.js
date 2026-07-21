@@ -1,5 +1,5 @@
 const nativeHostName = "com.lightdl.browser";
-const captureDelayMs = 0;
+const captureDelayMs = 500;
 const completedStateLifetimeMs = 5 * 60 * 1000;
 const downloadStates = new Map();
 const browserName = navigator.userAgent.includes("Edg/") ? "edge" : "chrome";
@@ -13,10 +13,13 @@ chrome.downloads.onCreated.addListener((download) => {
 
 if (chrome.downloads.onDeterminingFilename) {
   chrome.downloads.onDeterminingFilename.addListener((download, suggest) => {
-    suggest();
     const state = downloadStates.get(download.id);
     if (state?.timer) clearTimeout(state.timer);
-    captureDownload(download.id, download);
+    captureDownload(download.id, download).finally(() => {
+      const filename = getBaseName(download.filename || "");
+      suggest(filename ? { filename, conflictAction: "uniquify" } : undefined);
+    });
+    return true;
   });
 }
 
@@ -92,7 +95,7 @@ async function buildRequest(download) {
     url: download.url || finalUrl,
     finalUrl,
     referrer: download.referrer || "",
-    suggestedFileName: getBaseName(download.filename || ""),
+    suggestedFileName: "",
     mimeType: download.mime || "",
     totalBytes: Number.isFinite(download.totalBytes) && download.totalBytes >= 0
       ? download.totalBytes

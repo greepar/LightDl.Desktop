@@ -22,7 +22,7 @@ public sealed class BrowserHostRegistrationService
     public async Task RegisterAsync()
     {
         var hostPath = FindHostExecutable()
-                       ?? throw new FileNotFoundException("找不到 LightDl.BrowserHost，请先构建或安装浏览器宿主程序。");
+                       ?? throw new FileNotFoundException("找不到 LightDl.Desktop 可执行文件，请先发布应用。");
         EnsureHostIsExecutable(hostPath);
         var dataDirectory = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -117,24 +117,10 @@ public sealed class BrowserHostRegistrationService
 
     private static string? FindHostExecutable()
     {
-        var executableName = OperatingSystem.IsWindows() ? "LightDl.BrowserHost.exe" : "LightDl.BrowserHost";
+        var executableName = OperatingSystem.IsWindows() ? "LightDl.Desktop.exe" : "LightDl.Desktop";
         var installedPath = Path.Combine(AppContext.BaseDirectory, executableName);
         if (File.Exists(installedPath))
             return Path.GetFullPath(installedPath);
-
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-        while (directory is not null)
-        {
-            var projectDirectory = Path.Combine(directory.FullName, "LightDl.BrowserHost");
-            if (Directory.Exists(projectDirectory))
-            {
-                return Directory.EnumerateFiles(projectDirectory, executableName, SearchOption.AllDirectories)
-                    .FirstOrDefault(path => !path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal));
-            }
-
-            directory = directory.Parent;
-        }
-
         return null;
     }
 

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <OutputType>WinExe</OutputType>
         <!--If you are willing to use platform-specific APIs, use conditional compilation.
@@ -19,33 +19,17 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Avalonia.Desktop"/>
+        <PackageReference Include="Avalonia.Desktop" />
         <PackageReference Include="AvaloniaUI.DiagnosticsSupport" PrivateAssets="All" Condition="'$(Configuration)' == 'Debug'" />
         <PackageReference Include="Avalonia.Markup.Xaml.Loader" PrivateAssets="All" Publish="True" Condition="'$(Configuration)' == 'Debug'" />
         <PackageReference Include="HotAvalonia" PrivateAssets="All" Publish="True" Condition="'$(Configuration)' == 'Debug'" />
-        <PackageReference Include="SukiUI"/>
+        <PackageReference Include="SkiaSharp" />
+        <PackageReference Include="SukiUI" />
         <PackageReference Include="StaticLink.Avalonia" />
         <PackageReference Include="StaticLink.Avalonia.Native" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\LightDl.UI\LightDl.UI.csproj"/>
+        <ProjectReference Include="..\LightDl.UI\LightDl.UI.csproj" />
     </ItemGroup>
-
-    <Target Name="PublishBrowserIntegrationHost"
-            AfterTargets="Publish"
-            Condition="'$(RuntimeIdentifier)' != '' and '$(PublishBrowserIntegrationHost)' != 'false'">
-        <PropertyGroup>
-            <_BrowserHostProject>$(MSBuildProjectDirectory)/../LightDl.BrowserHost/LightDl.BrowserHost.csproj</_BrowserHostProject>
-            <_BrowserHostPublishDir>$(MSBuildProjectDirectory)/obj/browser-host/$(Configuration)/$(RuntimeIdentifier)/</_BrowserHostPublishDir>
-            <_BrowserHostExecutable Condition="$([MSBuild]::IsOSPlatform('Windows'))">LightDl.BrowserHost.exe</_BrowserHostExecutable>
-            <_BrowserHostExecutable Condition="!$([MSBuild]::IsOSPlatform('Windows'))">LightDl.BrowserHost</_BrowserHostExecutable>
-        </PropertyGroup>
-        <MSBuild Projects="$(_BrowserHostProject)"
-                 Targets="Restore;Publish"
-                 BuildInParallel="false"
-                 Properties="Configuration=$(Configuration);RuntimeIdentifier=$(RuntimeIdentifier);PublishDir=$(_BrowserHostPublishDir);PublishBrowserIntegrationHost=false" />
-        <Copy SourceFiles="$(_BrowserHostPublishDir)$(_BrowserHostExecutable)"
-              DestinationFolder="$(PublishDir)" />
-    </Target>
 </Project>

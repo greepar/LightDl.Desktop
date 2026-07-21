@@ -144,25 +144,47 @@ public partial class MainView : UserControl
         }
     }
 
-    private static Task<DownloadDialogResult?> ShowDownloadDialogAsync(
+    private Task<DownloadDialogResult?> ShowDownloadDialogAsync(
         MainViewModel mainViewModel,
         DownloadDialogViewModel dialogViewModel)
     {
         var completion = new TaskCompletionSource<DownloadDialogResult?>(
             TaskCreationOptions.RunContinuationsAsynchronously);
         var content = new DownloadDialog(dialogViewModel);
-        content.Completed += (_, result) =>
+        var topLevel = TopLevel.GetTopLevel(this);
+        EventHandler<KeyEventArgs>? keyHandler = null;
+
+        void Complete(DownloadDialogResult? result)
         {
+            if (!completion.TrySetResult(result))
+                return;
+
+            if (topLevel is not null && keyHandler is not null)
+                topLevel.RemoveHandler(InputElement.KeyDownEvent, keyHandler);
             mainViewModel.DialogManager.DismissDialog();
-            completion.TrySetResult(result);
+        }
+
+        keyHandler = (_, e) =>
+        {
+            if (e.Key != Key.Escape)
+                return;
+
+            e.Handled = true;
+            Complete(null);
         };
+        topLevel?.AddHandler(
+            InputElement.KeyDownEvent,
+            keyHandler,
+            RoutingStrategies.Tunnel,
+            handledEventsToo: true);
+        content.Completed += (_, result) => Complete(result);
 
         var shown = mainViewModel.DialogManager.CreateDialog()
             .WithTitle(dialogViewModel.DialogTitle)
             .WithContent(content)
             .TryShow();
         if (!shown)
-            completion.TrySetResult(null);
+            Complete(null);
 
         return completion.Task;
     }

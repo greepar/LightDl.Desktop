@@ -7,10 +7,9 @@ The application uses the published `LightDl` NuGet package for its download engi
 ## Projects
 
 - `LightDl.UI`: shared Avalonia UI and application services.
-- `LightDl.Desktop`: Windows, Linux, and macOS desktop entry point.
+- `LightDl.Desktop`: Windows, Linux, and macOS GUI entry point and browser Native Messaging host.
 - `LightDl.Android`: Android application.
 - `LightDl.iOS`: iOS application.
-- `LightDl.BrowserHost`: browser Native Messaging host.
 
 ## Build
 
