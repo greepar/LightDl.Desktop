@@ -23,7 +23,6 @@
         <PackageReference Include="AvaloniaUI.DiagnosticsSupport" PrivateAssets="All" Condition="'$(Configuration)' == 'Debug'" />
         <PackageReference Include="Avalonia.Markup.Xaml.Loader" PrivateAssets="All" Publish="True" Condition="'$(Configuration)' == 'Debug'" />
         <PackageReference Include="HotAvalonia" PrivateAssets="All" Publish="True" Condition="'$(Configuration)' == 'Debug'" />
-        <PackageReference Include="SkiaSharp" />
         <PackageReference Include="SukiUI" />
         <PackageReference Include="StaticLink.Avalonia" />
         <PackageReference Include="StaticLink.Avalonia.Native" />
