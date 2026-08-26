@@ -90,7 +90,10 @@ public partial class MainView : UserControl
                 await viewModel.AddDownloadFromDialogAsync(
                     result.SourceUrl,
                     result.DownloadDirectory,
-                    result.FileName);
+                    result.FileName,
+                    result.Cookie,
+                    result.Referer,
+                    result.UserAgent);
             }
         }
         finally

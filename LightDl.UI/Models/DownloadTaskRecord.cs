@@ -10,6 +10,8 @@ public sealed class DownloadTaskRecord
 
     public string? RequestedFileName { get; set; }
 
+    public Dictionary<string, string>? RequestHeaders { get; set; }
+
     public string FileName { get; set; } = string.Empty;
 
     public string? FilePath { get; set; }

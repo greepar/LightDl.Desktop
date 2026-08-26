@@ -10,7 +10,7 @@
     "48": "icons/icon-48.png",
     "128": "icons/icon-128.png"
   },
-  "permissions": ["downloads", "cookies", "nativeMessaging"],
+  "permissions": ["downloads", "cookies", "nativeMessaging", "storage"],
   "host_permissions": ["<all_urls>"],
   "action": {
     "default_title": "LightDl Automatic Integration",

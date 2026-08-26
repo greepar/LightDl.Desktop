@@ -35,7 +35,7 @@ namespace LightDl.Android
 #if LIGHTDL_ANDROID_PLATFORM_HTTP
             DownloadPlatform.HttpMessageHandlerFactory = static () => new AndroidMessageHandler
             {
-                AllowAutoRedirect = true,
+                AllowAutoRedirect = false,
                 AutomaticDecompression = System.Net.DecompressionMethods.All,
                 MaxConnectionsPerServer = 64,
                 ConnectTimeout = TimeSpan.FromSeconds(30),

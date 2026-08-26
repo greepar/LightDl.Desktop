@@ -21,6 +21,7 @@ public sealed class BrowserIntegrationService : IDisposable
 
     private async Task AcceptLoopAsync(CancellationToken cancellationToken)
     {
+        var retryDelay = TimeSpan.Zero;
         while (!cancellationToken.IsCancellationRequested)
         {
             var server = new NamedPipeServerStream(
@@ -34,6 +35,7 @@ public sealed class BrowserIntegrationService : IDisposable
             {
                 await server.WaitForConnectionAsync(cancellationToken);
                 _ = HandleConnectionAsync(server, cancellationToken);
+                retryDelay = TimeSpan.Zero;
             }
             catch (OperationCanceledException)
             {
@@ -42,6 +44,21 @@ public sealed class BrowserIntegrationService : IDisposable
             catch (IOException)
             {
                 server.Dispose();
+                if (retryDelay < TimeSpan.FromSeconds(5))
+                    retryDelay = retryDelay == TimeSpan.Zero
+                        ? TimeSpan.FromMilliseconds(100)
+                        : retryDelay * 2;
+            }
+
+            if (retryDelay > TimeSpan.Zero)
+            {
+                try
+                {
+                    await Task.Delay(retryDelay, cancellationToken);
+                }
+                catch (OperationCanceledException)
+                {
+                }
             }
         }
     }
@@ -73,14 +90,16 @@ public sealed class BrowserIntegrationService : IDisposable
 
     private static async Task<BrowserCaptureRequest> ReadRequestAsync(Stream stream, CancellationToken cancellationToken)
     {
+        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutCts.CancelAfter(TimeSpan.FromSeconds(30));
         var lengthBuffer = new byte[4];
-        await stream.ReadExactlyAsync(lengthBuffer, cancellationToken);
+        await stream.ReadExactlyAsync(lengthBuffer, timeoutCts.Token);
         var length = BinaryPrimitives.ReadInt32LittleEndian(lengthBuffer);
         if (length is <= 0 or > MaxMessageSize)
             throw new InvalidDataException("Invalid browser integration message length");
 
         var payload = new byte[length];
-        await stream.ReadExactlyAsync(payload, cancellationToken);
+        await stream.ReadExactlyAsync(payload, timeoutCts.Token);
         return JsonSerializer.Deserialize(payload, BrowserIntegrationJsonContext.Default.BrowserCaptureRequest)
                ?? throw new InvalidDataException("Empty browser integration request");
     }

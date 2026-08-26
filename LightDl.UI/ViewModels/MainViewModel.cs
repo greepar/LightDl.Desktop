@@ -63,6 +63,9 @@ public partial class MainViewModel : ViewModelBase
 
     public bool IsMobileLayout => !IsDesktopLayout;
 
+    public string LightDlVersion { get; } =
+        typeof(global::LightDl.LightDownloader).Assembly.GetName().Version?.ToString(3) ?? "未知";
+
     public bool HasDownloads => Downloads.Count > 0;
 
     public bool HasNoDownloads => Downloads.Count == 0;
@@ -285,20 +288,28 @@ public partial class MainViewModel : ViewModelBase
         }
     }
 
-    public Task<BrowserCaptureResponse> HandleBrowserCaptureAsync(BrowserCaptureRequest request)
+    public BrowserCaptureResponse? ValidateBrowserCapture(BrowserCaptureRequest request)
     {
         if (!Settings.EnableBrowserIntegration)
-            return Task.FromResult(BrowserCaptureResponse.Reject("Browser integration is disabled"));
+            return BrowserCaptureResponse.Reject("Browser integration is disabled");
 
         if (request.ProtocolVersion != 1 || request.Type != "capture-download")
-            return Task.FromResult(BrowserCaptureResponse.Reject("Unsupported browser integration protocol"));
+            return BrowserCaptureResponse.Reject("Unsupported browser integration protocol");
 
         var sourceUrl = request.FinalUrl.Length > 0 ? request.FinalUrl : request.Url;
         if (!Uri.TryCreate(sourceUrl, UriKind.Absolute, out var uri) ||
             uri.Scheme is not "http" and not "https")
         {
-            return Task.FromResult(BrowserCaptureResponse.Reject("Only HTTP and HTTPS downloads are supported"));
+            return BrowserCaptureResponse.Reject("Only HTTP and HTTPS downloads are supported");
         }
+
+        return null;
+    }
+
+    public Task<BrowserCaptureResponse> HandleBrowserCaptureAsync(BrowserCaptureRequest request)
+    {
+        if (ValidateBrowserCapture(request) is { } rejected)
+            return Task.FromResult(rejected);
 
         if (PendingBrowserCapture is not null)
             return Task.FromResult(BrowserCaptureResponse.Reject("Another browser download is awaiting confirmation"));
@@ -319,12 +330,13 @@ public partial class MainViewModel : ViewModelBase
         await AcceptBrowserCaptureFromDialogAsync(capture.FileName, capture.DownloadDirectory);
     }
 
-    public async Task<bool> AcceptBrowserCaptureFromDialogAsync(string _, string downloadDirectory)
+    public async Task<bool> AcceptBrowserCaptureFromDialogAsync(string fileName, string downloadDirectory)
     {
         if (PendingBrowserCapture is not { } capture || _browserCaptureCompletion is not { } completion)
             return false;
 
         capture.DownloadDirectory = downloadDirectory;
+        capture.FileName = fileName;
 
         if (string.IsNullOrWhiteSpace(capture.DownloadDirectory))
         {
@@ -336,7 +348,7 @@ public partial class MainViewModel : ViewModelBase
         var item = await AddDownloadCoreAsync(
             capture.SourceUrl,
             capture.DownloadDirectory,
-            requestedFileName: null,
+            string.IsNullOrWhiteSpace(fileName) ? null : fileName.Trim(),
             headers);
         if (item is null)
             return false;
@@ -391,12 +403,17 @@ public partial class MainViewModel : ViewModelBase
     public async Task<bool> AddDownloadFromDialogAsync(
         string sourceUrl,
         string downloadDirectory,
-        string? fileName)
+        string? fileName,
+        string? cookie,
+        string? referer,
+        string? userAgent)
     {
+        var headers = BuildManualHeaders(cookie, referer, userAgent);
         var item = await AddDownloadCoreAsync(
             sourceUrl,
             downloadDirectory,
-            string.IsNullOrWhiteSpace(fileName) ? null : fileName.Trim());
+            string.IsNullOrWhiteSpace(fileName) ? null : fileName.Trim(),
+            headers);
         return item is not null;
     }
 
@@ -589,6 +606,22 @@ public partial class MainViewModel : ViewModelBase
         }
 
         return headers;
+    }
+
+    private static IReadOnlyDictionary<string, string>? BuildManualHeaders(
+        string? cookie,
+        string? referer,
+        string? userAgent)
+    {
+        var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        if (!string.IsNullOrWhiteSpace(cookie))
+            headers["Cookie"] = cookie.Trim();
+        if (!string.IsNullOrWhiteSpace(referer))
+            headers["Referer"] = referer.Trim();
+        if (!string.IsNullOrWhiteSpace(userAgent))
+            headers["User-Agent"] = userAgent.Trim();
+
+        return headers.Count == 0 ? null : headers;
     }
 
     public static void ApplyTheme(int themeMode)

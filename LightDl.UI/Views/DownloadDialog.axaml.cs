@@ -66,7 +66,10 @@ public partial class DownloadDialog : UserControl
                 action,
                 viewModel.SourceUrl,
                 viewModel.FileName,
-                viewModel.DownloadDirectory)
+                viewModel.DownloadDirectory,
+                viewModel.Cookie,
+                viewModel.Referer,
+                viewModel.UserAgent)
             : null;
     }
 }

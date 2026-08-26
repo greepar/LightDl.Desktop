@@ -16,7 +16,8 @@ public sealed class BrowserHostRegistrationService
         if (OperatingSystem.IsWindows())
             return IsWindowsRegistered();
 
-        return GetManifestDestinations().Any(File.Exists);
+        return GetChromiumManifestDestinations().Any(File.Exists) &&
+               GetFirefoxManifestDestinations().Any(File.Exists);
     }
 
     public async Task RegisterAsync()
@@ -96,13 +97,25 @@ public sealed class BrowserHostRegistrationService
         if (OperatingSystem.IsMacOS())
         {
             yield return Path.Combine(home, "Library", "Application Support", "Google", "Chrome", "NativeMessagingHosts", HostName + ".json");
+            yield return Path.Combine(home, "Library", "Application Support", "Google", "Chrome Beta", "NativeMessagingHosts", HostName + ".json");
+            yield return Path.Combine(home, "Library", "Application Support", "Google", "Chrome Canary", "NativeMessagingHosts", HostName + ".json");
             yield return Path.Combine(home, "Library", "Application Support", "Microsoft Edge", "NativeMessagingHosts", HostName + ".json");
+            yield return Path.Combine(home, "Library", "Application Support", "Microsoft Edge Beta", "NativeMessagingHosts", HostName + ".json");
+            yield return Path.Combine(home, "Library", "Application Support", "BraveSoftware", "Brave-Browser", "NativeMessagingHosts", HostName + ".json");
+            yield return Path.Combine(home, "Library", "Application Support", "Vivaldi", "NativeMessagingHosts", HostName + ".json");
+            yield return Path.Combine(home, "Library", "Application Support", "Chromium", "NativeMessagingHosts", HostName + ".json");
         }
         else if (OperatingSystem.IsLinux())
         {
             yield return Path.Combine(home, ".config", "google-chrome", "NativeMessagingHosts", HostName + ".json");
+            yield return Path.Combine(home, ".config", "google-chrome-beta", "NativeMessagingHosts", HostName + ".json");
+            yield return Path.Combine(home, ".config", "google-chrome-unstable", "NativeMessagingHosts", HostName + ".json");
             yield return Path.Combine(home, ".config", "chromium", "NativeMessagingHosts", HostName + ".json");
             yield return Path.Combine(home, ".config", "microsoft-edge", "NativeMessagingHosts", HostName + ".json");
+            yield return Path.Combine(home, ".config", "microsoft-edge-beta", "NativeMessagingHosts", HostName + ".json");
+            yield return Path.Combine(home, ".config", "microsoft-edge-dev", "NativeMessagingHosts", HostName + ".json");
+            yield return Path.Combine(home, ".config", "brave-browser", "NativeMessagingHosts", HostName + ".json");
+            yield return Path.Combine(home, ".config", "vivaldi", "NativeMessagingHosts", HostName + ".json");
         }
     }
 
@@ -140,7 +153,8 @@ public sealed class BrowserHostRegistrationService
         using var chrome = Registry.CurrentUser.OpenSubKey($"Software\\Google\\Chrome\\NativeMessagingHosts\\{HostName}");
         using var edge = Registry.CurrentUser.OpenSubKey($"Software\\Microsoft\\Edge\\NativeMessagingHosts\\{HostName}");
         using var firefox = Registry.CurrentUser.OpenSubKey($"Software\\Mozilla\\NativeMessagingHosts\\{HostName}");
-        return chrome?.GetValue(null) is string && edge?.GetValue(null) is string && firefox?.GetValue(null) is string;
+        var chromiumRegistered = chrome?.GetValue(null) is string || edge?.GetValue(null) is string;
+        return chromiumRegistered && firefox?.GetValue(null) is string;
     }
 
     [SupportedOSPlatform("windows")]

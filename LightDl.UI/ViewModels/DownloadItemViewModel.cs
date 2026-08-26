@@ -51,6 +51,7 @@ public partial class DownloadItemViewModel : ViewModelBase
         _settings = settings;
         _createdAt = record.CreatedAt == default ? DateTimeOffset.UtcNow : record.CreatedAt;
         _requestedFileName = record.RequestedFileName;
+        _headers = record.RequestHeaders;
         FileName = string.IsNullOrWhiteSpace(record.FileName) ? GetInitialFileName(record.SourceUrl) : record.FileName;
         FilePath = record.FilePath;
         SizeText = record.SizeText;
@@ -500,6 +501,10 @@ public partial class DownloadItemViewModel : ViewModelBase
         SourceUrl = SourceUrl,
         DestinationDirectory = _destinationDirectory,
         RequestedFileName = _requestedFileName,
+        RequestHeaders = _headers?.ToDictionary(
+            header => header.Key,
+            header => header.Value,
+            StringComparer.OrdinalIgnoreCase),
         FileName = FileName,
         FilePath = FilePath,
         State = State,

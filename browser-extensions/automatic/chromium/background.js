@@ -1,8 +1,12 @@
 const nativeHostName = "com.lightdl.browser";
 const captureDelayMs = 500;
 const completedStateLifetimeMs = 5 * 60 * 1000;
+const heldDownloadStaleMs = 5 * 60 * 1000;
+const heldDownloadsStorageKey = "lightdlHeldDownloads";
 const downloadStates = new Map();
 const browserName = navigator.userAgent.includes("Edg/") ? "edge" : "chrome";
+
+recoverStrandedDownloads();
 
 chrome.downloads.onCreated.addListener((download) => {
   if (downloadStates.has(download.id)) return;
@@ -41,6 +45,7 @@ async function captureDownload(downloadId, initialDownload) {
       try {
         await chrome.downloads.pause(downloadId);
         pausedByLightDl = true;
+        await holdDownload(downloadId);
       } catch {
         // Some browser-managed downloads cannot be paused. Continue safely.
       }
@@ -61,15 +66,68 @@ async function captureDownload(downloadId, initialDownload) {
   } catch {
     // Native host failures must leave the browser download untouched.
   } finally {
-    if (pausedByLightDl && !handedOff) {
-      try {
-        await chrome.downloads.resume(downloadId);
-      } catch {
-        // The task may already have completed or been removed by the user.
+    if (pausedByLightDl) {
+      if (!handedOff) {
+        try {
+          await chrome.downloads.resume(downloadId);
+        } catch {
+          // The task may already have completed or been removed by the user.
+        }
       }
+      await unholdDownload(downloadId);
     }
 
     markCompleted(downloadId);
+  }
+}
+
+async function recoverStrandedDownloads() {
+  const held = await loadHeldDownloads();
+  if (held.size === 0) return;
+
+  const now = Date.now();
+  for (const [id, entry] of held) {
+    if (now - (entry?.pausedAt || 0) < heldDownloadStaleMs) continue;
+
+    try {
+      const [download] = await chrome.downloads.search({ id: Number(id) });
+      if (download && download.paused && download.state === "in_progress") {
+        await chrome.downloads.resume(Number(id));
+      }
+    } catch {
+      // The task may already have completed or been removed by the user.
+    }
+    await unholdDownload(id);
+  }
+}
+
+async function loadHeldDownloads() {
+  try {
+    const data = await chrome.storage.session.get(heldDownloadsStorageKey);
+    return new Map(Object.entries(data[heldDownloadsStorageKey] || {}));
+  } catch {
+    return new Map();
+  }
+}
+
+async function holdDownload(downloadId) {
+  const held = await loadHeldDownloads();
+  held.set(String(downloadId), { pausedAt: Date.now() });
+  try {
+    await chrome.storage.session.set({ [heldDownloadsStorageKey]: Object.fromEntries(held) });
+  } catch {
+    // storage.session may be unavailable on some browsers; the download is not stranded because
+    // captureDownload still resumes it in its finally block while the worker is alive.
+  }
+}
+
+async function unholdDownload(downloadId) {
+  const held = await loadHeldDownloads();
+  if (held.delete(String(downloadId))) {
+    try {
+      await chrome.storage.session.set({ [heldDownloadsStorageKey]: Object.fromEntries(held) });
+    } catch {
+    }
   }
 }
 
@@ -95,7 +153,7 @@ async function buildRequest(download) {
     url: download.url || finalUrl,
     finalUrl,
     referrer: download.referrer || "",
-    suggestedFileName: "",
+    suggestedFileName: getBaseName(download.filename || ""),
     mimeType: download.mime || "",
     totalBytes: Number.isFinite(download.totalBytes) && download.totalBytes >= 0
       ? download.totalBytes

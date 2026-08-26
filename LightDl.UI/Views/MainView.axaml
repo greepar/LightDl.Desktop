@@ -23,12 +23,12 @@
       <Setter Property="Background" Value="#0A000000" />
       <Setter Property="BoxShadow" Value="0 3 12 0 #0A000000" />
     </Style>
-    <Style Selector="ToggleButton.nav">
+    <Style Selector="Button.nav">
       <Setter Property="HorizontalContentAlignment" Value="Left" />
       <Setter Property="Padding" Value="14,10" />
       <Setter Property="Margin" Value="0,2" />
     </Style>
-    <Style Selector="ToggleButton.nav:checked">
+    <Style Selector="Button.nav.selected">
       <Setter Property="Background" Value="#2874E8" />
       <Setter Property="Foreground" Value="White" />
       <Setter Property="BorderBrush" Value="#2874E8" />
@@ -74,15 +74,15 @@
           </StackPanel>
 
           <StackPanel Grid.Row="1" Spacing="2">
-            <ToggleButton Content="全部任务" Classes="nav" IsChecked="{Binding IsAllSelected, Mode=OneWay}" Command="{Binding SelectSectionCommand}" CommandParameter="all" />
-            <ToggleButton Content="正在下载" Classes="nav" IsChecked="{Binding IsDownloadingSelected, Mode=OneWay}" Command="{Binding SelectSectionCommand}" CommandParameter="downloading" />
-            <ToggleButton Content="已完成" Classes="nav" IsChecked="{Binding IsCompletedSelected, Mode=OneWay}" Command="{Binding SelectSectionCommand}" CommandParameter="completed" />
-            <ToggleButton Content="下载失败" Classes="nav" IsChecked="{Binding IsFailedSelected, Mode=OneWay}" Command="{Binding SelectSectionCommand}" CommandParameter="failed" />
+            <Button Content="全部任务" Classes="nav" Classes.selected="{Binding IsAllSelected}" Command="{Binding SelectSectionCommand}" CommandParameter="all" />
+            <Button Content="正在下载" Classes="nav" Classes.selected="{Binding IsDownloadingSelected}" Command="{Binding SelectSectionCommand}" CommandParameter="downloading" />
+            <Button Content="已完成" Classes="nav" Classes.selected="{Binding IsCompletedSelected}" Command="{Binding SelectSectionCommand}" CommandParameter="completed" />
+            <Button Content="下载失败" Classes="nav" Classes.selected="{Binding IsFailedSelected}" Command="{Binding SelectSectionCommand}" CommandParameter="failed" />
           </StackPanel>
 
           <StackPanel Grid.Row="3" Spacing="2">
-            <ToggleButton Content="浏览器集成" Classes="nav" IsChecked="{Binding IsBrowserSelected, Mode=OneWay}" Command="{Binding SelectSectionCommand}" CommandParameter="browser" />
-            <ToggleButton Content="设置" Classes="nav" IsChecked="{Binding IsSettingsSelected, Mode=OneWay}" Command="{Binding SelectSectionCommand}" CommandParameter="settings" />
+            <Button Content="浏览器集成" Classes="nav" Classes.selected="{Binding IsBrowserSelected}" Command="{Binding SelectSectionCommand}" CommandParameter="browser" />
+            <Button Content="设置" Classes="nav" Classes.selected="{Binding IsSettingsSelected}" Command="{Binding SelectSectionCommand}" CommandParameter="settings" />
           </StackPanel>
         </Grid>
       </Border>

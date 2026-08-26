@@ -165,10 +165,20 @@ public partial class App : Application
         {
             try
             {
+                if (_mainViewModel is null)
+                {
+                    completion.TrySetResult(BrowserCaptureResponse.Reject("LightDl is not ready"));
+                    return;
+                }
+
+                if (_mainViewModel.ValidateBrowserCapture(request) is { } rejected)
+                {
+                    completion.TrySetResult(rejected);
+                    return;
+                }
+
                 ShowMainWindow();
-                var response = _mainViewModel is null
-                    ? BrowserCaptureResponse.Reject("LightDl is not ready")
-                    : await _mainViewModel.HandleBrowserCaptureAsync(request);
+                var response = await _mainViewModel.HandleBrowserCaptureAsync(request);
                 completion.TrySetResult(response);
             }
             catch (Exception ex)

@@ -50,7 +50,16 @@ public sealed class DownloadTaskStore
             Directory.CreateDirectory(directory);
             var temporaryPath = _tasksPath + ".tmp";
 
-            await using (var stream = File.Create(temporaryPath))
+            var streamOptions = new FileStreamOptions
+            {
+                Mode = FileMode.Create,
+                Access = FileAccess.Write,
+                Share = FileShare.None
+            };
+            if (!OperatingSystem.IsWindows())
+                streamOptions.UnixCreateMode = UnixFileMode.UserRead | UnixFileMode.UserWrite;
+
+            await using (var stream = new FileStream(temporaryPath, streamOptions))
             {
                 await JsonSerializer.SerializeAsync(
                     stream,
@@ -59,6 +68,7 @@ public sealed class DownloadTaskStore
             }
 
             File.Move(temporaryPath, _tasksPath, true);
+            RestrictTaskFileAccess();
         }
         catch (IOException)
         {
@@ -69,6 +79,26 @@ public sealed class DownloadTaskStore
         finally
         {
             _saveLock.Release();
+        }
+    }
+
+    private void RestrictTaskFileAccess()
+    {
+        if (OperatingSystem.IsWindows())
+            return;
+
+        try
+        {
+            File.SetUnixFileMode(_tasksPath, UnixFileMode.UserRead | UnixFileMode.UserWrite);
+        }
+        catch (IOException)
+        {
+        }
+        catch (UnauthorizedAccessException)
+        {
+        }
+        catch (PlatformNotSupportedException)
+        {
         }
     }
 }

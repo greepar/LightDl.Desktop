@@ -14,7 +14,10 @@ public partial class DownloadDialogViewModel : ViewModelBase
         string fileName,
         string downloadDirectory,
         string browserName = "",
-        string sizeText = "未知大小")
+        string sizeText = "未知大小",
+        string cookie = "",
+        string referer = "",
+        string userAgent = "")
     {
         IsBrowserCapture = isBrowserCapture;
         IsNewTask = !isBrowserCapture;
@@ -23,6 +26,9 @@ public partial class DownloadDialogViewModel : ViewModelBase
         DownloadDirectory = downloadDirectory;
         BrowserName = browserName;
         SizeText = sizeText;
+        Cookie = cookie;
+        Referer = referer;
+        UserAgent = userAgent;
         DialogTitle = isBrowserCapture ? "浏览器下载接管" : "新建下载任务";
         DialogSubtitle = isBrowserCapture
             ? "确认下载信息，并选择由浏览器继续、取消下载或交给 LightDl。"
@@ -46,6 +52,12 @@ public partial class DownloadDialogViewModel : ViewModelBase
     [ObservableProperty] private string _fileName;
 
     [ObservableProperty] private string _downloadDirectory;
+
+    [ObservableProperty] private string _cookie;
+
+    [ObservableProperty] private string _referer;
+
+    [ObservableProperty] private string _userAgent;
 
     [ObservableProperty] private string _errorMessage = string.Empty;
 
@@ -73,9 +85,35 @@ public partial class DownloadDialogViewModel : ViewModelBase
             return false;
         }
 
+        var trimmedReferer = Referer.Trim();
+        if (trimmedReferer.Length > 0 &&
+            (!Uri.TryCreate(trimmedReferer, UriKind.Absolute, out var refererUri) ||
+             refererUri.Scheme is not "http" and not "https"))
+        {
+            ErrorMessage = "请输入有效的 HTTP 或 HTTPS Referer";
+            return false;
+        }
+
+        var trimmedCookie = Cookie.Trim();
+        if (trimmedCookie.Length > 32 * 1024 || trimmedCookie.IndexOfAny(['\r', '\n']) >= 0)
+        {
+            ErrorMessage = "Cookie 格式无效";
+            return false;
+        }
+
+        var trimmedUserAgent = UserAgent.Trim();
+        if (trimmedUserAgent.Length > 4096 || trimmedUserAgent.IndexOfAny(['\r', '\n']) >= 0)
+        {
+            ErrorMessage = "User-Agent 格式无效";
+            return false;
+        }
+
         SourceUrl = uri.AbsoluteUri;
         FileName = trimmedFileName;
         DownloadDirectory = DownloadDirectory.Trim();
+        Cookie = trimmedCookie;
+        Referer = trimmedReferer;
+        UserAgent = trimmedUserAgent;
         ErrorMessage = string.Empty;
         return true;
     }

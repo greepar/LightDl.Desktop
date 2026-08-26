@@ -11,4 +11,7 @@ public sealed record DownloadDialogResult(
     DownloadDialogAction Action,
     string SourceUrl,
     string FileName,
-    string DownloadDirectory);
+    string DownloadDirectory,
+    string Cookie,
+    string Referer,
+    string UserAgent);

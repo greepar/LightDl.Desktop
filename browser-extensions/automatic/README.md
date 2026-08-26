@@ -5,7 +5,7 @@ These extensions observe browser downloads and send one `capture-download` reque
 ## Development loading
 
 - Chrome or Edge: load `automatic/chromium` as an unpacked extension.
-- Firefox 128 or newer: load `automatic/firefox/manifest.json` from `about:debugging`.
+- Firefox 142 or newer: load `automatic/firefox/manifest.json` from `about:debugging`.
 
 The Chromium manifest contains a fixed development key, so Chrome and Edge use extension ID `nafkhlacfpmamhmhdfbnfnkainjdaohi`. Firefox uses `automatic-integration@lightdl.io`. LightDl Desktop's browser-integration page registers native-host manifests for these IDs.
 

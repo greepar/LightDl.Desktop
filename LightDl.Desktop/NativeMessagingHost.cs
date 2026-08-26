@@ -29,7 +29,8 @@ internal static class NativeMessagingHost
             var request = await ReadNativeRequestAsync(Console.OpenStandardInput());
             response = await ForwardToDesktopAsync(request);
         }
-        catch (Exception ex) when (ex is IOException or JsonException or InvalidDataException)
+        catch (Exception ex) when (ex is IOException or JsonException or InvalidDataException
+                                       or OperationCanceledException or TimeoutException)
         {
             response = BrowserCaptureResponse.Reject("LightDl browser host could not process the request");
         }
@@ -56,7 +57,7 @@ internal static class NativeMessagingHost
                 BrowserIntegrationJsonContext.Default.BrowserCaptureRequest);
             await WriteFrameAsync(client, payload);
 
-            var responsePayload = await ReadFrameAsync(client);
+            var responsePayload = await ReadFrameAsync(client, TimeSpan.FromSeconds(90));
             return JsonSerializer.Deserialize(
                        responsePayload,
                        BrowserIntegrationJsonContext.Default.BrowserCaptureResponse)
@@ -126,16 +127,19 @@ internal static class NativeMessagingHost
         await WriteFrameAsync(output, payload);
     }
 
-    private static async Task<byte[]> ReadFrameAsync(Stream stream)
+    private static async Task<byte[]> ReadFrameAsync(Stream stream, TimeSpan? timeout = null)
     {
+        using var timeoutCts = timeout is { } duration
+            ? new CancellationTokenSource(duration)
+            : null;
         var lengthBuffer = new byte[4];
-        await stream.ReadExactlyAsync(lengthBuffer);
+        await stream.ReadExactlyAsync(lengthBuffer, timeoutCts?.Token ?? default);
         var length = BinaryPrimitives.ReadInt32LittleEndian(lengthBuffer);
         if (length is <= 0 or > BrowserIntegrationService.MaxMessageSize)
             throw new InvalidDataException("Invalid native message length");
 
         var payload = new byte[length];
-        await stream.ReadExactlyAsync(payload);
+        await stream.ReadExactlyAsync(payload, timeoutCts?.Token ?? default);
         return payload;
     }
 

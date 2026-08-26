@@ -64,6 +64,29 @@
           </Grid>
         </StackPanel>
 
+        <Expander Header="高级选项"
+                  IsExpanded="False"
+                  IsVisible="{Binding IsNewTask}">
+          <StackPanel Spacing="10" Margin="0,10,0,0">
+            <StackPanel Spacing="6">
+              <TextBlock Text="Cookie" Classes="muted" />
+              <TextBox Text="{Binding Cookie}"
+                       Watermark="例如：session=value; token=value"
+                       PasswordChar="●" />
+            </StackPanel>
+
+            <StackPanel Spacing="6">
+              <TextBlock Text="Referer" Classes="muted" />
+              <TextBox Text="{Binding Referer}" Watermark="例如：https://example.com/" />
+            </StackPanel>
+
+            <StackPanel Spacing="6">
+              <TextBlock Text="User-Agent" Classes="muted" />
+              <TextBox Text="{Binding UserAgent}" Watermark="留空时使用设置中的全局 User-Agent" />
+            </StackPanel>
+          </StackPanel>
+        </Expander>
+
         <Border Background="#16FFB020" CornerRadius="10" Padding="12" IsVisible="{Binding IsBrowserCapture}">
           <TextBlock Text="浏览器任务已临时暂停。选择 LightDl 接管或取消下载后，浏览器任务会被移除；关闭窗口或选择浏览器继续时会恢复原下载。"
                      TextWrapping="Wrap" />
