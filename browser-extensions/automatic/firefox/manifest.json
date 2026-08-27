@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "LightDl Automatic Integration",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Send browser downloads to the local LightDl desktop app for faster, resumable downloading.",
   "homepage_url": "https://github.com/greepar/LightDl.Desktop",
   "icons": {

@@ -1,14 +1,32 @@
 const nativeHostName = "com.lightdl.browser";
-const captureDelayMs = 0;
+const captureDelayMs = 500;
 const completedStateLifetimeMs = 5 * 60 * 1000;
 const heldDownloadStaleMs = 5 * 60 * 1000;
+const captureCooldownMs = 5 * 1000;
 const heldDownloadsStorageKey = "lightdlHeldDownloads";
 const downloadStates = new Map();
+let captureInProgress = false;
+let captureCooldownUntil = 0;
 
 recoverStrandedDownloads();
 
 browser.downloads.onCreated.addListener((download) => {
   if (downloadStates.has(download.id)) return;
+
+  if (captureInProgress || Date.now() < captureCooldownUntil) {
+    markCompleted(download.id);
+    return;
+  }
+
+  const waitingDownload = Array.from(downloadStates.entries())
+    .find(([, state]) => state.status === "waiting");
+  if (waitingDownload) {
+    if (waitingDownload[1].timer) clearTimeout(waitingDownload[1].timer);
+    markCompleted(waitingDownload[0]);
+    markCompleted(download.id);
+    captureCooldownUntil = Date.now() + captureCooldownMs;
+    return;
+  }
 
   const timer = setTimeout(() => captureDownload(download.id, download), captureDelayMs);
   downloadStates.set(download.id, { status: "waiting", timer });
@@ -19,6 +37,13 @@ async function captureDownload(downloadId, initialDownload) {
   if (state?.status === "pending" || state?.status === "completed") return;
 
   if (state?.timer) clearTimeout(state.timer);
+
+  if (captureInProgress || Date.now() < captureCooldownUntil) {
+    markCompleted(downloadId);
+    return;
+  }
+
+  captureInProgress = true;
   downloadStates.set(downloadId, { status: "pending" });
 
   let pausedByLightDl = false;
@@ -27,6 +52,7 @@ async function captureDownload(downloadId, initialDownload) {
   try {
     const matches = await browser.downloads.search({ id: downloadId });
     const download = { ...initialDownload, ...(matches[0] || {}) };
+    if (download.state !== "in_progress") return;
 
     if (!download.paused && download.state === "in_progress") {
       try {
@@ -64,6 +90,8 @@ async function captureDownload(downloadId, initialDownload) {
       await unholdDownload(downloadId);
     }
 
+    captureInProgress = false;
+    captureCooldownUntil = Date.now() + captureCooldownMs;
     markCompleted(downloadId);
   }
 }

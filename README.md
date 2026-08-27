@@ -1,15 +1,12 @@
 # LightDl Desktop
 
-Cross-platform Avalonia applications for [LightDl](https://github.com/greepar/LightDl).
+LightDl Desktop is a high-performance concurrent download manager built with Avalonia and powered by the [LightDl](https://github.com/greepar/LightDl) download engine.
 
-The application uses the published `LightDl` NuGet package for its download engine.
+The desktop application supports Windows, Linux, and macOS. This repository also contains Android and iOS projects.
 
-## Projects
+## Download
 
-- `LightDl.UI`: shared Avalonia UI and application services.
-- `LightDl.Desktop`: Windows, Linux, and macOS GUI entry point and browser Native Messaging host.
-- `LightDl.Android`: Android application.
-- `LightDl.iOS`: iOS application.
+Download the package for your platform from [Releases](https://github.com/greepar/LightDl.Desktop/releases).
 
 ## Build
 
@@ -17,4 +14,8 @@ The application uses the published `LightDl` NuGet package for its download engi
 dotnet build LightDl.Desktop/LightDl.Desktop.csproj -c Release
 ```
 
-See [BUILDING.md](BUILDING.md) for platform-specific requirements and publishing commands.
+See [BUILDING.md](BUILDING.md) for platform requirements and publishing commands.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).

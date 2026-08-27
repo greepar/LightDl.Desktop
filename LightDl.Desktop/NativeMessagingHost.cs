@@ -10,6 +10,7 @@ namespace LightDl.Desktop;
 internal static class NativeMessagingHost
 {
     private const string FirefoxExtensionId = "automatic-integration@lightdl.io";
+    private const string NativeHostLockFileName = "lightdl-native-messaging-host.lock";
 
     public static bool IsInvocation(IReadOnlyList<string> args)
     {
@@ -22,6 +23,20 @@ internal static class NativeMessagingHost
     }
 
     public static async Task RunAsync()
+    {
+        await using var hostLock = TryAcquireHostLock();
+        if (hostLock is null)
+        {
+            await WriteNativeResponseAsync(
+                Console.OpenStandardOutput(),
+                BrowserCaptureResponse.Reject("Another browser download is awaiting confirmation"));
+            return;
+        }
+
+        await RunCoreAsync();
+    }
+
+    private static async Task RunCoreAsync()
     {
         BrowserCaptureResponse response;
         try
@@ -42,10 +57,7 @@ internal static class NativeMessagingHost
     {
         var client = await TryConnectAsync(TimeSpan.FromSeconds(1));
         if (client is null)
-        {
-            TryStartDesktop();
-            client = await TryConnectAsync(TimeSpan.FromSeconds(10));
-        }
+            client = await StartDesktopAndConnectAsync();
 
         if (client is null)
             return BrowserCaptureResponse.Reject("LightDl Desktop is not running");
@@ -62,6 +74,36 @@ internal static class NativeMessagingHost
                        responsePayload,
                        BrowserIntegrationJsonContext.Default.BrowserCaptureResponse)
                    ?? BrowserCaptureResponse.Reject("LightDl Desktop returned an empty response");
+        }
+    }
+
+    private static async Task<NamedPipeClientStream?> StartDesktopAndConnectAsync()
+    {
+        var client = await TryConnectAsync(TimeSpan.FromMilliseconds(500));
+        if (client is not null)
+            return client;
+
+        TryStartDesktop();
+        return await TryConnectAsync(TimeSpan.FromSeconds(10));
+    }
+
+    private static FileStream? TryAcquireHostLock()
+    {
+        try
+        {
+            return new FileStream(
+                Path.Combine(Path.GetTempPath(), NativeHostLockFileName),
+                FileMode.OpenOrCreate,
+                FileAccess.ReadWrite,
+                FileShare.None);
+        }
+        catch (IOException)
+        {
+            return null;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return null;
         }
     }
 

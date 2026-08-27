@@ -11,4 +11,6 @@ The Chromium manifest contains a fixed development key, so Chrome and Edge use e
 
 The extension temporarily pauses a newly created browser download while LightDl is waiting for user confirmation. It cancels and removes the browser task only when the response contains both `accepted: true` and `cancelBrowserDownload: true`. If the host is absent, communication fails, or the request is rejected, the extension resumes the browser download.
 
+Only one download can await confirmation at a time. Downloads created in a burst are left to the browser so background exports and backup jobs cannot spawn multiple Native Messaging hosts.
+
 Cookie values are sent only inside the Native Messaging request, marked as sensitive, and are not logged or persisted by the extension.
