@@ -3,7 +3,7 @@
 ## Requirements
 
 - .NET 10 SDK. The repository `global.json` selects the latest installed .NET 10 feature band.
-- Avalonia `11.3.14` and SukiUI `6.1.1` are restored from NuGet.
+- Avalonia `12.1.4` and SukiUI `7.0.1` are restored from NuGet. Mobile projects use Semi.Avalonia `12.1.0.1`.
 - Android and iOS require the matching .NET 10 workloads.
 - iOS and macOS packaging require macOS with Xcode.
 - Desktop NativeAOT requires the platform native toolchain.
@@ -21,6 +21,14 @@ dotnet publish LightDl.Desktop/LightDl.Desktop.csproj -c Release -r win-x64
 ```
 
 Use `linux-x64`, `linux-arm64`, `osx-x64`, or `osx-arm64` on the matching build operating system. NativeAOT publishing is platform-specific.
+
+Desktop window and tray icons follow the application's light/dark theme. Windows executables embed the light icon. Linux publish output includes `lightdl.png`; when installing to `/opt/lightdl`, keep this file beside the executable and install `packaging/linux/io.lightdl.LightDl.desktop` in `~/.local/share/applications/` for the launcher icon. Adjust both paths in the desktop entry if installing elsewhere.
+
+Linux prefers the native Avalonia Wayland backend via `UseWaylandWithFallback()`. If Wayland cannot initialize, Avalonia uses X11; Windows and macOS keep their platform backends. The Wayland window app ID is `io.lightdl.LightDl`, matching the desktop entry filename, while X11 uses `StartupWMClass=LightDl.Desktop`. Install the desktop entry and icon on KDE/GNOME so the taskbar can resolve the application icon. Native Wayland support is experimental; global menus, window icon updates, and blur effects do not yet have the same support as X11. The taskbar launcher uses the static icon from the desktop entry.
+
+StaticLink.Avalonia stays on `3.119.4.1` for SkiaSharp `3.119.4`. StaticLink.Avalonia.Native uses the latest available package, `12.1.3.1`; macOS NativeAOT publishing against Avalonia `12.1.4` must be validated on macOS.
+
+Linux NativeAOT publishing currently reports upstream trim/AOT analysis warnings (`IL2104`, `IL3053`) from SukiUI's DataGrid dependency, including DataGrid `12.1.2`. These warnings are not suppressed.
 
 ## Browser integration host
 

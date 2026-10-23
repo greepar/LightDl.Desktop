@@ -280,10 +280,10 @@
                   <ComboBoxItem Content="自定义代理" />
                 </ComboBox>
                 <TextBox Text="{Binding Settings.ProxyUrl}"
-                          Watermark="http://127.0.0.1:7890"
+                          PlaceholderText="http://127.0.0.1:7890"
                          IsVisible="{Binding Settings.UsesCustomProxy}" />
                 <TextBlock Text="User-Agent" Classes="muted" />
-                <TextBox Text="{Binding Settings.UserAgent}" Watermark="留空使用 LightDl 默认值" />
+                <TextBox Text="{Binding Settings.UserAgent}" PlaceholderText="留空使用 LightDl 默认值" />
                 <CheckBox Content="忽略 SSL 证书错误（不安全）" IsChecked="{Binding Settings.IgnoreSslErrors}" />
               </StackPanel>
             </Border>
@@ -386,7 +386,7 @@
               </Border>
             </Grid>
 
-            <TextBox Watermark="https://example.com/file.zip"
+            <TextBox PlaceholderText="https://example.com/file.zip"
                      Text="{Binding NewUrl}"
                      MinHeight="46"
                      FontSize="14" />

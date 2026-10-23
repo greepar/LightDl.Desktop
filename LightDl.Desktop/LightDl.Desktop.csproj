@@ -17,10 +17,12 @@
 
     <PropertyGroup>
         <ApplicationManifest>app.manifest</ApplicationManifest>
+        <ApplicationIcon>../LightDl.UI/Assets/lightdl-light.ico</ApplicationIcon>
     </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="Avalonia.Desktop" />
+        <PackageReference Include="Avalonia.Wayland" />
         <PackageReference Include="AvaloniaUI.DiagnosticsSupport" PrivateAssets="All" Condition="'$(Configuration)' == 'Debug'" />
         <PackageReference Include="Avalonia.Markup.Xaml.Loader" PrivateAssets="All" Publish="True" Condition="'$(Configuration)' == 'Debug'" />
         <PackageReference Include="HotAvalonia" PrivateAssets="All" Publish="True" Condition="'$(Configuration)' == 'Debug'" />
@@ -31,5 +33,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\LightDl.UI\LightDl.UI.csproj" />
+        <Content Include="../LightDl.UI/Assets/lightdl-light.png" Link="lightdl.png"
+                 CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     </ItemGroup>
 </Project>

@@ -59,9 +59,20 @@ public partial class App : Application
             else
                 desktop.MainWindow = _mainWindow;
             CreateTrayIcon(desktop);
+            ActualThemeVariantChanged += (_, _) => UpdateDesktopIcons();
             _browserIntegrationService = new BrowserIntegrationService();
             _browserIntegrationService.Start(HandleBrowserCaptureAsync);
             HandleActivationArguments(_mainViewModel, Environment.GetCommandLineArgs().Skip(1));
+        }
+        else if (ApplicationLifetime is IActivityApplicationLifetime activityPlatform)
+        {
+            AddMobileTheme();
+            var viewModel = new MainViewModel();
+            MainViewModel.ApplyTheme(viewModel.Settings.ThemeMode);
+            activityPlatform.MainViewFactory = () => new MainView
+            {
+                DataContext = viewModel
+            };
         }
         else if (ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
         {
@@ -96,15 +107,27 @@ public partial class App : Application
         menu.Items.Add(new NativeMenuItemSeparator());
         menu.Items.Add(exitItem);
 
-        using var iconStream = AssetLoader.Open(new Uri("avares://LightDl.UI/Assets/avalonia-logo.ico"));
         _trayIcon = new TrayIcon
         {
-            Icon = new WindowIcon(iconStream),
             ToolTipText = "LightDl Download Manager",
             Menu = menu,
             IsVisible = true
         };
         _trayIcon.Clicked += (_, _) => ShowMainWindow();
+        UpdateDesktopIcons();
+        // Avalonia 12 creates the native tray icon when it is attached to the application.
+        TrayIcon.SetIcons(this, new TrayIcons { _trayIcon });
+    }
+
+    private void UpdateDesktopIcons()
+    {
+        var theme = ActualThemeVariant == ThemeVariant.Dark ? "dark" : "light";
+        using var iconStream = AssetLoader.Open(new Uri($"avares://LightDl.UI/Assets/lightdl-{theme}.ico"));
+        var icon = new WindowIcon(iconStream);
+        if (_mainWindow is not null)
+            _mainWindow.Icon = icon;
+        if (_trayIcon is not null)
+            _trayIcon.Icon = icon;
     }
 
     private void ShowMainWindow()
@@ -138,6 +161,7 @@ public partial class App : Application
             _mainWindow.Close();
         }
 
+        TrayIcon.SetIcons(this, null);
         _trayIcon?.Dispose();
         _trayIcon = null;
         _browserIntegrationService?.Dispose();

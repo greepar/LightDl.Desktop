@@ -53,7 +53,7 @@
 
         <StackPanel Spacing="6" IsVisible="{Binding IsNewTask}">
           <TextBlock Text="文件名" Classes="muted" />
-          <TextBox Text="{Binding FileName}" Watermark="留空时使用服务器提供的文件名" />
+          <TextBox Text="{Binding FileName}" PlaceholderText="留空时使用服务器提供的文件名" />
         </StackPanel>
 
         <StackPanel Spacing="6">
@@ -71,18 +71,18 @@
             <StackPanel Spacing="6">
               <TextBlock Text="Cookie" Classes="muted" />
               <TextBox Text="{Binding Cookie}"
-                       Watermark="例如：session=value; token=value"
+                       PlaceholderText="例如：session=value; token=value"
                        PasswordChar="●" />
             </StackPanel>
 
             <StackPanel Spacing="6">
               <TextBlock Text="Referer" Classes="muted" />
-              <TextBox Text="{Binding Referer}" Watermark="例如：https://example.com/" />
+              <TextBox Text="{Binding Referer}" PlaceholderText="例如：https://example.com/" />
             </StackPanel>
 
             <StackPanel Spacing="6">
               <TextBlock Text="User-Agent" Classes="muted" />
-              <TextBox Text="{Binding UserAgent}" Watermark="留空时使用设置中的全局 User-Agent" />
+              <TextBox Text="{Binding UserAgent}" PlaceholderText="留空时使用设置中的全局 User-Agent" />
             </StackPanel>
           </StackPanel>
         </Expander>

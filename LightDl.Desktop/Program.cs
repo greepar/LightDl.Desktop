@@ -53,6 +53,7 @@ internal static class Program
     public static AppBuilder BuildAvaloniaApp()
         => AppBuilder.Configure<App>()
             .UsePlatformDetect()
+            .UseWaylandWithFallback()
             .WithInterFont()
             .LogToTrace()
             .With(new Win32PlatformOptions
@@ -64,6 +65,7 @@ internal static class Program
             })
             .With(new X11PlatformOptions
             {
+                WmClass = "LightDl.Desktop",
                 RenderingMode =
                 [
                     X11RenderingMode.Glx,X11RenderingMode.Software
