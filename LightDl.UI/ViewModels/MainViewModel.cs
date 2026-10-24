@@ -47,6 +47,8 @@ public partial class MainViewModel : ViewModelBase
 
     public ObservableCollection<DownloadItemViewModel> Downloads { get; } = [];
 
+    public Func<DownloadItemViewModel, Exception, CancellationToken, Task<bool>>? ConfirmHttp3FallbackAsync { get; set; }
+
     public ISukiDialogManager DialogManager { get; } = new SukiDialogManager();
 
     public SettingsViewModel Settings { get; }
@@ -472,6 +474,7 @@ public partial class MainViewModel : ViewModelBase
         if (sender is not DownloadItemViewModel item)
             return;
 
+        item.ConfirmHttp3FallbackAsync = null;
         item.RemoveRequested -= OnRemoveRequested;
         item.StartRequested -= OnStartRequested;
         item.PropertyChanged -= OnDownloadPropertyChanged;
@@ -522,6 +525,8 @@ public partial class MainViewModel : ViewModelBase
 
     private void AttachDownload(DownloadItemViewModel item, bool insertAtStart = false)
     {
+        item.ConfirmHttp3FallbackAsync = (download, error, cancellationToken) =>
+            ConfirmHttp3FallbackAsync?.Invoke(download, error, cancellationToken) ?? Task.FromResult(false);
         item.SetUiUpdatesEnabled(_uiUpdatesEnabled);
         item.RemoveRequested += OnRemoveRequested;
         item.StartRequested += OnStartRequested;

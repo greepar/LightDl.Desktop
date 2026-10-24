@@ -8,8 +8,13 @@ public sealed class DownloadTaskStore
     private readonly SemaphoreSlim _saveLock = new(1, 1);
     private readonly string _tasksPath;
 
-    public DownloadTaskStore()
+    public DownloadTaskStore(string? tasksPath = null)
     {
+        if (tasksPath is not null)
+        {
+            _tasksPath = tasksPath;
+            return;
+        }
         var dataDirectory = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "LightDl");

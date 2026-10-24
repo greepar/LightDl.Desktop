@@ -22,6 +22,10 @@ public sealed class DownloadTaskRecord
 
     public string SizeText { get; set; } = "未知大小";
 
+    public string? ProtocolText { get; set; }
+
+    public bool UseHttp3Fallback { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; }
 
     public DateTimeOffset UpdatedAt { get; set; }

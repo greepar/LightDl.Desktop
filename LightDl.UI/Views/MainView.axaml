@@ -168,7 +168,10 @@
                         <ProgressBar Grid.Row="1" Grid.ColumnSpan="2" Minimum="0" Maximum="100"
                                      Value="{Binding ProgressPercentage}" Height="7" Margin="0,12,0,8" />
                         <Grid Grid.Row="2" Grid.ColumnSpan="2" ColumnDefinitions="*,Auto,Auto,Auto">
-                          <TextBlock Text="{Binding StatusText}" />
+                          <StackPanel Spacing="3">
+                            <TextBlock Text="{Binding StatusText}" TextWrapping="Wrap" />
+                            <TextBlock Text="{Binding ProtocolText}" Classes="muted" FontSize="12" />
+                          </StackPanel>
                           <TextBlock Grid.Column="1" Text="{Binding SizeText}" Classes="muted" Margin="14,0" />
                           <TextBlock Grid.Column="2" Text="{Binding SpeedText}" Classes="muted" Margin="14,0" />
                           <TextBlock Grid.Column="3" Text="{Binding RemainingText}" Classes="muted" Margin="14,0,0,0" />
@@ -459,7 +462,7 @@
               <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="vm:DownloadItemViewModel">
                   <Border Classes="mobile-card" Padding="15" Margin="0,0,0,10">
-                    <Grid RowDefinitions="Auto,Auto,Auto,Auto">
+                    <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto">
                       <Grid ColumnDefinitions="*,Auto">
                         <StackPanel Spacing="3">
                           <TextBlock Text="{Binding FileName}"
@@ -489,7 +492,10 @@
                         <TextBlock Grid.Column="2" Text="{Binding RemainingText}" Classes="mobile-muted" FontSize="11" />
                       </Grid>
 
-                      <StackPanel Grid.Row="3"
+                      <TextBlock Grid.Row="3" Text="{Binding ProtocolText}" Classes="mobile-muted"
+                                 FontSize="11" Margin="0,7,0,0" TextWrapping="Wrap" />
+
+                      <StackPanel Grid.Row="4"
                                   Orientation="Horizontal"
                                   HorizontalAlignment="Right"
                                   Spacing="7"

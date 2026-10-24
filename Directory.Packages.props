@@ -8,6 +8,7 @@
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageVersion Include="xunit" Version="2.9.3" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
+    <PackageVersion Include="Avalonia.Headless" Version="12.1.4" />
     <!-- Avalonia packages -->
     <!-- Important: keep version in sync! -->
     <PackageVersion Include="Avalonia" Version="12.1.4" />

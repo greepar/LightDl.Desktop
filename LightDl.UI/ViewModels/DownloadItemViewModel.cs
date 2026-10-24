@@ -25,6 +25,8 @@ public partial class DownloadItemViewModel : ViewModelBase
     private long _speedDropStartedTimestamp;
     private LightDownloadProgress? _pendingProgress;
     private bool _uiUpdatesEnabled = true;
+    private bool _useHttp3Fallback;
+    private object? _activeAttempt;
 
     public DownloadItemViewModel(
         string sourceUrl,
@@ -54,6 +56,8 @@ public partial class DownloadItemViewModel : ViewModelBase
         _headers = record.RequestHeaders;
         FileName = string.IsNullOrWhiteSpace(record.FileName) ? GetInitialFileName(record.SourceUrl) : record.FileName;
         FilePath = record.FilePath;
+        _useHttp3Fallback = record.UseHttp3Fallback;
+        ProtocolText = string.IsNullOrWhiteSpace(record.ProtocolText) ? "等待连接" : record.ProtocolText;
         SizeText = record.SizeText;
         ProgressPercentage = record.ProgressPercentage;
         State = record.State is DownloadState.Downloading or DownloadState.Queued
@@ -72,6 +76,8 @@ public partial class DownloadItemViewModel : ViewModelBase
     public event EventHandler? RemoveRequested;
 
     public event EventHandler? StartRequested;
+
+    public Func<DownloadItemViewModel, Exception, CancellationToken, Task<bool>>? ConfirmHttp3FallbackAsync { get; set; }
 
     public Guid Id { get; }
 
@@ -140,40 +146,112 @@ public partial class DownloadItemViewModel : ViewModelBase
         ResetDisplayedSpeed();
         State = DownloadState.Downloading;
         StatusText = "正在下载";
-        ProtocolText = _settings.Http3Mode switch
-        {
-            1 => "HTTP/3（强制）",
-            2 => "HTTP/2 / HTTP/1.1",
-            _ => "自动选择 H2/H3"
-        };
+        SetConnectingProtocol();
+        var cancellationToken = _cancellation.Token;
+        string? retryDestination = _settings.EnableResume && FilePath is { } previousPath &&
+            File.Exists(previousPath + ".lightdl") ? previousPath : null;
 
         try
         {
             Directory.CreateDirectory(_destinationDirectory);
-
-            using var downloader = new LightDownloader(CreateDownloadConfig(completion));
-
-            var request = (_requestedFileName is { Length: > 0 }
-                    ? LightDownloadRequest.ToFile(SourceUrl, Path.Combine(_destinationDirectory, _requestedFileName), _headers)
-                    : LightDownloadRequest.ToDirectory(SourceUrl, _destinationDirectory, _headers))
-                .OnFileInfo(info =>
+            while (true)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var attempt = new object();
+                _activeAttempt = attempt;
+                bool IsCurrentAttempt() => ReferenceEquals(_activeAttempt, attempt) &&
+                    State == DownloadState.Downloading && !cancellationToken.IsCancellationRequested;
+                var selectionProgress = new Progress<LightDownloadProtocolSelection>(selection =>
                 {
-                    FileName = info.FileName;
-                    SizeText = FormatBytes(info.Size);
+                    if (IsCurrentAttempt())
+                        ProtocolText = FormatProtocol(selection.SelectedVersion) +
+                            (selection.IsFallback ? "（H3 中断，已回退）" : "（测速选中）");
                 });
-
-            var progress = new Progress<LightDownloadProgress>(UpdateProgress);
-            var result = await downloader.DownloadAsync(request, progress, cancellationToken: _cancellation.Token);
-
-            if (downloader.SelectedHttpVersion is { } version && _settings.Http3Mode != 1)
-                ProtocolText = $"HTTP/{version.Major}.{version.Minor}";
-            FileName = result.FileName;
-            FilePath = result.FilePath;
-            ProgressPercentage = 100;
-            SpeedText = "--";
-            RemainingText = "已完成";
-            StatusText = result.Skipped ? "已存在" : "已完成";
-            State = DownloadState.Completed;
+                var config = DownloadConfigFactory.Create(_settings, selection =>
+                    ((IProgress<LightDownloadProtocolSelection>)selectionProgress).Report(selection));
+                if (_useHttp3Fallback)
+                {
+                    config.EnableHttp3 = false;
+                    config.ForceHttp3 = false;
+                }
+                var strictHttp3 = config.ForceHttp3;
+                using var attemptCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                Exception? connectionFailure = null;
+                if (strictHttp3)
+                {
+                    // Ask at the first transport failure instead of waiting through
+                    // the normal retry/backoff budget. Other errors retain retries.
+                    config.RetryHandler = retry =>
+                    {
+                        if (Http3FailurePolicy.CanOfferFallback(retry.Error) &&
+                            Interlocked.CompareExchange(ref connectionFailure, retry.Error, null) is null)
+                            attemptCancellation.Cancel();
+                    };
+                }
+                using var downloader = new LightDownloader(config);
+                string? resolvedDestination = retryDestination;
+                var fileInfo = new Progress<LightDownloadFileInfo>(info =>
+                {
+                    if (!IsCurrentAttempt()) return;
+                    FileName = info.FileName;
+                    FilePath = info.FilePath;
+                    SizeText = FormatBytes(info.Size);
+                    UpdateProtocol(downloader.SelectedHttpVersion);
+                });
+                var request = (retryDestination is { } destination
+                        ? LightDownloadRequest.ToFile(SourceUrl, destination, _headers)
+                        : _requestedFileName is { Length: > 0 }
+                            ? LightDownloadRequest.ToFile(SourceUrl, Path.Combine(_destinationDirectory, _requestedFileName), _headers)
+                            : LightDownloadRequest.ToDirectory(SourceUrl, _destinationDirectory, _headers))
+                    .OnFileInfo(info =>
+                    {
+                        resolvedDestination = info.FilePath;
+                        ((IProgress<LightDownloadFileInfo>)fileInfo).Report(info);
+                    });
+                var progress = new Progress<LightDownloadProgress>(value =>
+                {
+                    if (!IsCurrentAttempt()) return;
+                    UpdateProtocol(downloader.SelectedHttpVersion);
+                    UpdateProgress(value);
+                });
+                try
+                {
+                    var result = await downloader.DownloadAsync(request, progress,
+                        cancellationToken: attemptCancellation.Token);
+                    _activeAttempt = null;
+                    UpdateProtocol(downloader.SelectedHttpVersion);
+                    FileName = result.FileName;
+                    FilePath = result.FilePath;
+                    ProgressPercentage = 100;
+                    SpeedText = "--";
+                    RemainingText = "已完成";
+                    StatusText = result.Skipped ? "已存在" : "已完成";
+                    State = DownloadState.Completed;
+                    break;
+                }
+                catch (Exception error) when (strictHttp3 && !cancellationToken.IsCancellationRequested &&
+                    Http3FailurePolicy.CanOfferFallback(connectionFailure ?? error))
+                {
+                    _activeAttempt = null;
+                    var failure = connectionFailure ?? error;
+                    Console.Error.WriteLine(failure);
+                    FilePath = resolvedDestination ?? FilePath;
+                    ProtocolText = "HTTP/3（连接失败）";
+                    StatusText = "H3 连接失败，等待选择是否回退";
+                    SpeedText = "--";
+                    RemainingText = "--";
+                    var confirmed = ConfirmHttp3FallbackAsync is { } confirm &&
+                        await confirm(this, failure, cancellationToken).WaitAsync(cancellationToken);
+                    cancellationToken.ThrowIfCancellationRequested();
+                    if (!confirmed)
+                        throw new LightDownloadException("HTTP/3 连接失败，已保持强制 H3，未回退。", failure);
+                    _useHttp3Fallback = true;
+                    retryDestination = resolvedDestination;
+                    ResetDisplayedSpeed();
+                    StatusText = "正在回退到 H2 / H1.1";
+                    SetConnectingProtocol();
+                }
+            }
         }
         catch (OperationCanceledException) when (_cancellation.IsCancellationRequested)
         {
@@ -192,6 +270,7 @@ public partial class DownloadItemViewModel : ViewModelBase
         }
         finally
         {
+            _activeAttempt = null;
             completion.TrySetResult();
             if (ReferenceEquals(_downloadCompletion, completion))
                 _downloadCompletion = null;
@@ -478,15 +557,23 @@ public partial class DownloadItemViewModel : ViewModelBase
         RemainingText = "--";
     }
 
-    private LightDownloadConfig CreateDownloadConfig(TaskCompletionSource completion) => DownloadConfigFactory.Create(_settings,
-        selection => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+    private void SetConnectingProtocol() => ProtocolText = _useHttp3Fallback
+        ? "连接中（已允许 H2 / H1.1）"
+        : _settings.Http3Mode switch
         {
-            if (!ReferenceEquals(_downloadCompletion, completion) || State != DownloadState.Downloading)
-                return;
-            ProtocolText = selection.IsFallback
-                ? "HTTP/2（H3 连接中断，已回退）"
-                : $"HTTP/{selection.SelectedVersion.Major}（测速选中）";
-        }));
+            1 => "连接中（强制 HTTP/3）",
+            2 => "连接中（H2 / H1.1）",
+            _ => "连接中（自动 H2/H3）"
+        };
+
+    private void UpdateProtocol(Version? version)
+    {
+        if (version is not null)
+            ProtocolText = FormatProtocol(version) + (_useHttp3Fallback ? "（本任务已回退）" : "");
+    }
+
+    private static string FormatProtocol(Version version) => version.Major >= 2
+        ? $"HTTP/{version.Major}" : $"HTTP/{version.Major}.{version.Minor}";
 
     public DownloadTaskRecord ToRecord() => new()
     {
@@ -503,6 +590,8 @@ public partial class DownloadItemViewModel : ViewModelBase
         State = State,
         ProgressPercentage = ProgressPercentage,
         SizeText = SizeText,
+        ProtocolText = ProtocolText,
+        UseHttp3Fallback = _useHttp3Fallback,
         CreatedAt = _createdAt,
         UpdatedAt = DateTimeOffset.UtcNow
     };

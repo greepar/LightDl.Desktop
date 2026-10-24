@@ -25,7 +25,7 @@ See [BUILDING.md](BUILDING.md) for platform requirements and publishing commands
 
 ## HTTP/3
 
-Settings → Network → HTTP/3 mode offers automatic H2/H3 speed comparison (default), strict HTTP/3, and HTTP/3 disabled. Save settings before creating a new task. Existing tasks keep their settings. Automatic comparison requires the direct connection proxy setting; it skips small files and servers without range support. Strict mode requires HTTPS and fails when HTTP/3 is unavailable. Task details show the selected protocol.
+Settings → Network → HTTP/3 mode offers automatic H2/H3 speed comparison (default), strict HTTP/3, and HTTP/3 disabled. Save settings before creating a new task. Existing tasks keep their settings. Automatic comparison requires the direct connection proxy setting; it skips small files and servers without range support. Strict mode requires HTTPS and fails when HTTP/3 is unavailable. The task card and details show the negotiated protocol while downloading. If strict H3 encounters a connection/negotiation failure, a dialog offers H2/H1.1 for that task only. Declining keeps strict H3; accepting preserves resumable ranges and remembers the task choice across pause/restart. Global settings and other tasks remain unchanged.
 
 Desktop NativeAOT builds link MsQuic statically on Windows x64/arm64, Linux x64/arm64 and macOS x64/arm64. Windows x86 has no bundled QUIC support. Managed builds omit the MsQuic shared library by default; see [BUILDING.md](BUILDING.md) to opt in.
 

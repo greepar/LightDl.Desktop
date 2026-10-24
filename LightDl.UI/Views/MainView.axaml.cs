@@ -13,6 +13,7 @@ public partial class MainView : UserControl
 {
     private MainViewModel? _viewModel;
     private bool _isDialogOpen;
+    private readonly SemaphoreSlim _fallbackDialogLock = new(1, 1);
 
     public MainView()
     {
@@ -47,12 +48,16 @@ public partial class MainView : UserControl
     private void OnDataContextChanged(object? sender, EventArgs e)
     {
         if (_viewModel is not null)
+        {
             _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+            _viewModel.ConfirmHttp3FallbackAsync = null;
+        }
 
         _viewModel = DataContext as MainViewModel;
         if (_viewModel is null)
             return;
 
+        _viewModel.ConfirmHttp3FallbackAsync = ConfirmHttp3FallbackAsync;
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
         if (_viewModel.PendingBrowserCapture is not null)
             _ = ShowPendingBrowserDialogAsync();
@@ -145,6 +150,75 @@ public partial class MainView : UserControl
             if (viewModel.PendingBrowserCapture is not null)
                 _ = ShowPendingBrowserDialogAsync();
         }
+    }
+
+    private async Task<bool> ConfirmHttp3FallbackAsync(
+        DownloadItemViewModel item, Exception error, CancellationToken cancellationToken)
+    {
+        await _fallbackDialogLock.WaitAsync(cancellationToken);
+        try
+        {
+            // The browser capture/new-task dialogs share this host. Keep the
+            // failed task pending until the current dialog has closed.
+            while (_isDialogOpen)
+                await Task.Delay(100, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            if (_viewModel is not { } viewModel) return false;
+            _isDialogOpen = true;
+            var completion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            SukiUI.Dialogs.ISukiDialog? shownDialog = null;
+            var topLevel = TopLevel.GetTopLevel(this);
+            EventHandler<KeyEventArgs>? keyHandler = null;
+            void Complete(bool accepted)
+            {
+                completion.TrySetResult(accepted);
+                if (shownDialog is not null)
+                    viewModel.DialogManager.TryDismissDialog(shownDialog);
+            }
+            keyHandler = (_, e) =>
+            {
+                if (e.Key != Key.Escape) return;
+                e.Handled = true;
+                Complete(false);
+            };
+            topLevel?.AddHandler(InputElement.KeyDownEvent, keyHandler, RoutingStrategies.Tunnel, handledEventsToo: true);
+            try
+            {
+                // Show a stable summary instead of raw URLs/response messages.
+                var content = new TextBlock
+                {
+                    Text = $"“{item.FileName}”无法通过 HTTP/3 建立或维持连接。\n\n是否仅将当前下载回退到 HTTP/2 / HTTP/1.1？已有可续传分片会继续使用，全局强制 H3 设置保持不变。",
+                    TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+                    MaxWidth = 480
+                };
+                var shown = viewModel.DialogManager.CreateDialog()
+                    .WithTitle("HTTP/3 连接失败")
+                    .WithContent(content)
+                    .WithActionButton("保持 H3，停止本次下载", dialog => { shownDialog = dialog; Complete(false); }, true)
+                    .WithActionButton("回退 H2 / H1.1 继续", dialog => { shownDialog = dialog; Complete(true); }, true)
+                    .OnDismissed(_ => completion.TrySetResult(false))
+                    .TryShow();
+                if (!shown) return false;
+                // This method exclusively owns the host until its finally block.
+                using var registration = cancellationToken.Register(() =>
+                    Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                    {
+                        if (completion.TrySetCanceled(cancellationToken))
+                            viewModel.DialogManager.DismissDialog();
+                    }));
+                return await completion.Task;
+            }
+            finally
+            {
+                if (topLevel is not null)
+                    topLevel.RemoveHandler(InputElement.KeyDownEvent, keyHandler);
+                viewModel.DialogManager.DismissDialog();
+                _isDialogOpen = false;
+                if (viewModel.PendingBrowserCapture is not null)
+                    _ = ShowPendingBrowserDialogAsync();
+            }
+        }
+        finally { _fallbackDialogLock.Release(); }
     }
 
     private Task<DownloadDialogResult?> ShowDownloadDialogAsync(

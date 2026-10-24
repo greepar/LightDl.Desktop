@@ -85,6 +85,6 @@ Managed builds omit MsQuic by default:
 dotnet publish LightDl.Desktop/LightDl.Desktop.csproj -c Release -r win-x64 -p:PublishAot=false -p:PublishTrimmed=false -p:LightDlStaticQuic=false
 ```
 
-To explicitly include a shared library, add `-p:LightDlIncludeMsQuic=true`; Windows uses the runtime-pack DLL. On Unix also supply `-p:LightDlMsQuicLibrary=/absolute/path/to/libmsquic.so` (or `.dylib` on macOS). QUIC support still depends on the platform/network. For automatic speed comparison choose “不使用代理” in settings; system/custom proxy settings skip probing. Strict H3 never falls back.
+To explicitly include a shared library, add `-p:LightDlIncludeMsQuic=true`; Windows uses the runtime-pack DLL. On Unix also supply `-p:LightDlMsQuicLibrary=/absolute/path/to/libmsquic.so` (or `.dylib` on macOS). QUIC support still depends on the platform/network. For automatic speed comparison choose “不使用代理” in settings; system/custom proxy settings skip probing. Strict H3 only falls back after the user accepts the per-task connection-failure dialog; HTTP status, certificate and storage errors do not prompt. Task cards show the negotiated HTTP version during transfer.
 
 Run settings/configuration tests with `dotnet test tests/LightDl.UI.Tests/LightDl.UI.Tests.csproj -c Release`.
