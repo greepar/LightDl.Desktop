@@ -294,6 +294,80 @@ public sealed class Http3FallbackTests
         });
     }
 
+    [Theory]
+    [InlineData(WindowCloseAction.Exit, "退出应用")]
+    [InlineData(WindowCloseAction.RunInBackground, "最小化到后台")]
+    public async Task CloseConfirmationReturnsTheSelectedAction(WindowCloseAction expected, string buttonText)
+    {
+        await RunAsync(async (_, _) =>
+        {
+            var owner = new SukiWindow { Width = 1000, Height = 760 };
+            owner.Show();
+            var dialog = new CloseConfirmationWindow(new CloseConfirmationViewModel(true, true));
+            try
+            {
+                var result = dialog.ShowDialog<WindowCloseAction?>(owner);
+                var button = await FindButtonAsync(dialog, buttonText);
+                Assert.Contains(dialog.GetVisualDescendants().OfType<TextBlock>(), text =>
+                    text.IsEffectivelyVisible && text.Text?.Contains("未保存") == true);
+                button.Focus();
+                dialog.KeyPressQwerty(PhysicalKey.Space, RawInputModifiers.None);
+                dialog.KeyReleaseQwerty(PhysicalKey.Space, RawInputModifiers.None);
+                Assert.Equal(expected, await result.WaitAsync(TimeSpan.FromSeconds(5)));
+                Assert.True(owner.IsVisible);
+            }
+            finally { dialog.Close(); owner.Close(); }
+        });
+    }
+
+    [Fact]
+    public async Task EscapeCancelsTheCloseChoice()
+    {
+        await RunAsync(async (_, _) =>
+        {
+            var owner = new SukiWindow { Width = 1000, Height = 760 };
+            owner.Show();
+            var dialog = new CloseConfirmationWindow();
+            try
+            {
+                var result = dialog.ShowDialog<WindowCloseAction?>(owner);
+                dialog.KeyPressQwerty(PhysicalKey.Escape, RawInputModifiers.None);
+                owner.KeyReleaseQwerty(PhysicalKey.Escape, RawInputModifiers.None);
+                Assert.Null(await result.WaitAsync(TimeSpan.FromSeconds(5)));
+                Assert.True(owner.IsVisible);
+            }
+            finally { dialog.Close(); owner.Close(); }
+        });
+    }
+
+    [Fact]
+    public async Task ExitingPausesActiveDownloadsAndDoesNotStartQueuedDownloads()
+    {
+        await RunAsync(async (directory, origin) =>
+        {
+            origin.BlockBody = true;
+            var settings = new AppSettingsService(Path.Combine(directory, "settings.json"));
+            await settings.SaveAsync(new AppSettings
+            {
+                DefaultDownloadDirectory = directory, Http3Mode = 2, ProxyMode = 1, MaxConcurrentDownloads = 1
+            });
+            var store = new DownloadTaskStore(Path.Combine(directory, "downloads.json"));
+            var vm = new MainViewModel(settings, store, new BrowserHostRegistrationService());
+            await vm.AddDownloadFromDialogAsync("https://download.test/active.bin", directory, null, null, null, null);
+            await origin.BodyStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            var active = Assert.Single(vm.Downloads);
+            await vm.AddDownloadFromDialogAsync("https://download.test/queued.bin", directory, null, null, null, null);
+            var queued = vm.Downloads.Single(item => item != active);
+            var requests = origin.Requests.Count;
+            await vm.PrepareForExitAsync();
+            Assert.Equal(DownloadState.Paused, active.State);
+            Assert.Equal(DownloadState.Queued, queued.State);
+            Assert.Equal(0, vm.ActiveCount);
+            Assert.Equal(requests, origin.Requests.Count);
+            Assert.Equal(DownloadState.Paused, store.Load().Single(item => item.Id == active.Id).State);
+        });
+    }
+
     [Fact]
     public async Task PopupButtonsAndQueueWorkAndPauseDismissesOnlyCurrentPopup()
     {

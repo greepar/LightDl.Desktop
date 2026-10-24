@@ -277,6 +277,14 @@ public partial class DownloadItemViewModel : ViewModelBase
         }
     }
 
+    public async Task PauseAndWaitAsync()
+    {
+        var completion = _downloadCompletion;
+        if (completion is null) return;
+        _cancellation?.Cancel();
+        await completion.Task;
+    }
+
     [RelayCommand]
     private void Pause()
     {

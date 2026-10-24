@@ -29,6 +29,7 @@ public partial class App : Application
     private MainViewModel? _mainViewModel;
     private BrowserIntegrationService? _browserIntegrationService;
     private IClassicDesktopStyleApplicationLifetime? _desktopLifetime;
+    private bool _exitInProgress;
 
     public override void Initialize()
     {
@@ -100,7 +101,7 @@ public partial class App : Application
         showItem.Click += (_, _) => ShowMainWindow();
 
         var exitItem = new NativeMenuItem("退出");
-        exitItem.Click += (_, _) => Exit(desktop);
+        exitItem.Click += async (_, _) => await ExitAsync();
 
         var menu = new NativeMenu();
         menu.Items.Add(showItem);
@@ -151,8 +152,20 @@ public partial class App : Application
             ShowMainWindow();
     }
 
-    private void Exit(IClassicDesktopStyleApplicationLifetime desktop)
+    public async Task ExitAsync()
     {
+        if (_exitInProgress || _desktopLifetime is not { } desktop) return;
+        _exitInProgress = true;
+        try
+        {
+            if (_mainViewModel is not null)
+                await _mainViewModel.PrepareForExitAsync();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Console.Error.WriteLine(ex);
+        }
+
         if (_mainWindow is ITrayManagedWindow trayManagedWindow)
             trayManagedWindow.ExitRequested = true;
 

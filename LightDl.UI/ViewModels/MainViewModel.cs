@@ -19,6 +19,7 @@ public partial class MainViewModel : ViewModelBase
     private TaskCompletionSource<BrowserCaptureResponse>? _browserCaptureCompletion;
     private CancellationTokenSource? _statusResetCancellation;
     private bool _uiUpdatesEnabled = true;
+    private bool _isExiting;
 
     public MainViewModel() : this(
         new AppSettingsService(),
@@ -574,8 +575,16 @@ public partial class MainViewModel : ViewModelBase
         ScheduleDownloads();
     }
 
+    public async Task PrepareForExitAsync()
+    {
+        _isExiting = true;
+        await Task.WhenAll(Downloads.Select(item => item.PauseAndWaitAsync()));
+        await PersistDownloadsAsync();
+    }
+
     private void ScheduleDownloads()
     {
+        if (_isExiting) return;
         var availableSlots = Settings.MaxConcurrentDownloads - ActiveCount;
         if (availableSlots <= 0)
             return;

@@ -310,7 +310,6 @@
                   <ComboBoxItem Content="深色" />
                 </ComboBox>
                 <CheckBox Content="开机自动启动（静默到托盘）" IsChecked="{Binding Settings.StartWithSystem}" />
-                <CheckBox Content="关闭主窗口时最小化到托盘" IsChecked="{Binding Settings.CloseToTray}" />
                 <CheckBox Content="下载完成后显示系统通知" IsChecked="{Binding Settings.ShowCompletionNotification}" />
                 <CheckBox Content="启用浏览器自动接管" IsChecked="{Binding Settings.EnableBrowserIntegration}" />
               </StackPanel>

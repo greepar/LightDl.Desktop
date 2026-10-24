@@ -3,6 +3,8 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Interactivity;
 using LightDl.UI.Services;
+using LightDl.UI.Models;
+using LightDl.UI.Views;
 using LightDl.UI.ViewModels;
 using SukiUI.Controls;
 
@@ -12,6 +14,7 @@ public partial class MainWindow : SukiWindow, ITrayManagedWindow
 {
     private CancellationTokenSource? _backgroundGcCancellation;
     private bool _isWindowActive = true;
+    private CloseConfirmationWindow? _closeConfirmation;
 
     public bool ExitRequested { get; set; }
 
@@ -30,23 +33,40 @@ public partial class MainWindow : SukiWindow, ITrayManagedWindow
             UpdateBackgroundState();
     }
 
-    private void OnClosing(object? sender, WindowClosingEventArgs e)
+    private async void OnClosing(object? sender, WindowClosingEventArgs e)
     {
-        if (ExitRequested)
+        if (ExitRequested || e.CloseReason is WindowCloseReason.ApplicationShutdown or WindowCloseReason.OSShutdown)
             return;
 
-        if (DataContext is MainViewModel { Settings.CloseToTray: true })
+        e.Cancel = true;
+        if (_closeConfirmation is { } existingDialog)
         {
-            e.Cancel = true;
+            existingDialog.Activate();
+            return;
+        }
+        var viewModel = DataContext as MainViewModel;
+        _closeConfirmation = new CloseConfirmationWindow(new CloseConfirmationViewModel(
+            viewModel?.ActiveCount > 0, viewModel?.Settings.HasUnsavedChanges == true));
+        WindowCloseAction? action;
+        try { action = await _closeConfirmation.ShowDialog<WindowCloseAction?>(this); }
+        finally { _closeConfirmation = null; }
+        if (ExitRequested) return;
+        if (action == WindowCloseAction.RunInBackground)
+        {
             ShowInTaskbar = false;
             Hide();
             UpdateBackgroundState();
-            return;
         }
-
-        ExitRequested = true;
-        if (Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-            desktop.Shutdown();
+        else if (action == WindowCloseAction.Exit)
+        {
+            if (Application.Current is LightDl.UI.App app)
+                await app.ExitAsync();
+            else
+            {
+                ExitRequested = true;
+                Close();
+            }
+        }
     }
 
     private void OnActivated(object? sender, EventArgs e)
