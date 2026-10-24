@@ -14,11 +14,11 @@ Install mobile workloads after any pending system restart:
 dotnet workload install android ios
 ```
 
-## Prepare the HTTP/3 engine
+## Download engine
 
-Run `python3 eng/prepare-lightdl.py` before the first restore/build (Python 3 and Git required). This builds local NuGet package `LightDl.0.4.5-h3-desktop.1` from upstream commit `5cda174f75c598c07dd923bbd840249a14d97fcb`, which contains the verified H2/H3 comparison and static MsQuic support. No public NuGet release or expiring CI artifact is required. The checkout and package are cached under ignored `artifacts/`; `NuGet.Config` maps only LightDl to this local feed.
-
-After the engine is published on NuGet.org, the preview version/feed can be replaced with that official version. Until then, the pinned source is the reproducible dependency.
+LightDl `0.4.6` is restored directly from NuGet.org through the central package reference.
+It includes H2/H3 speed comparison, concurrent H3 ranges, and static MsQuic assets.
+No local preview feed, engine source checkout, or bootstrap packaging step is required.
 
 ## Desktop NativeAOT
 
@@ -34,7 +34,7 @@ Desktop window and tray icons follow the application's light/dark theme. Windows
 
 Linux prefers the native Avalonia Wayland backend via `UseWaylandWithFallback()`. If Wayland cannot initialize, Avalonia uses X11; Windows and macOS keep their platform backends. The Wayland window app ID is `io.lightdl.LightDl`, matching the desktop entry filename, while X11 uses `StartupWMClass=LightDl.Desktop`. Install the desktop entry and icon on KDE/GNOME so the taskbar can resolve the application icon. Native Wayland support is experimental; global menus, window icon updates, and blur effects do not yet have the same support as X11. The taskbar launcher uses the static icon from the desktop entry.
 
-StaticLink.Avalonia stays on `3.119.4.1` for SkiaSharp `3.119.4`. StaticLink.Avalonia.Native uses the latest available package, `12.1.3.1`; macOS NativeAOT publishing against Avalonia `12.1.4` must be validated on macOS.
+StaticLink.Avalonia stays on `3.119.4.1` for SkiaSharp `3.119.4`. StaticLink.Avalonia.Native uses `12.1.4.1`, aligned with Avalonia `12.1.4`; the desktop Actions matrix validates native builds on both macOS architectures.
 
 Linux NativeAOT publishing currently reports upstream trim/AOT analysis warnings (`IL2104`, `IL3053`) from SukiUI's DataGrid dependency, including DataGrid `12.1.2`. These warnings are not suppressed.
 

@@ -454,5 +454,5 @@ $RECYCLE.BIN/
 !.vscode/launch.json
 !.vscode/extensions.json
 
-# Local preview feed and pinned download-engine checkout
+# Local build artifacts, packaging tools, and verification outputs
 artifacts/

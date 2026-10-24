@@ -19,13 +19,14 @@ macOS builds include a signed `LightDl.app` ZIP and a DMG with an Applications s
 ## Build
 
 ```bash
-python3 eng/prepare-lightdl.py
 dotnet build LightDl.Desktop/LightDl.Desktop.csproj -c Release
 ```
 
 See [BUILDING.md](BUILDING.md) for platform requirements and publishing commands.
 
 ## HTTP/3
+
+The desktop uses the official LightDl `0.4.6` NuGet package. NativeAOT publishing enables `LightDlStaticQuic` by default on supported desktop architectures.
 
 Settings → Network → HTTP/3 mode offers automatic H2/H3 speed comparison (default), strict HTTP/3, and HTTP/3 disabled. Save settings before creating a new task. Existing tasks keep their settings. Automatic comparison requires the direct connection proxy setting; it skips small files and servers without range support. Strict mode requires HTTPS and fails when HTTP/3 is unavailable. The task card and details show the negotiated protocol while downloading. If strict H3 encounters a connection/negotiation failure, a dialog offers H2/H1.1 for that task only. Declining keeps strict H3; accepting preserves resumable ranges and remembers the task choice across pause/restart. Global settings and other tasks remain unchanged.
 
