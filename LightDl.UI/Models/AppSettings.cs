@@ -28,6 +28,10 @@ public sealed class AppSettings
 
     public int FileConflictPolicy { get; set; } = 3;
 
+    // 0 = auto H2/H3 comparison, 1 = strict H3, 2 = disable H3.
+    // Missing values in existing settings retain automatic mode.
+    public int Http3Mode { get; set; }
+
     public int ProxyMode { get; set; }
 
     public string ProxyUrl { get; set; } = string.Empty;

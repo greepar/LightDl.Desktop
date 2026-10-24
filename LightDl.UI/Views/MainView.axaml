@@ -179,7 +179,7 @@
                                 Padding="12,9"
                                 Margin="0,10,0,0"
                                 IsVisible="{Binding IsDetailsVisible}">
-                          <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto" ColumnSpacing="8" RowSpacing="4">
+                          <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="8" RowSpacing="4">
                             <TextBlock Text="保存位置：" Classes="muted" FontSize="12" />
                             <SelectableTextBlock Grid.Column="1"
                                                  Text="{Binding DetailsSavePath}"
@@ -193,6 +193,9 @@
                                                  Classes="muted"
                                                  FontSize="12"
                                                  TextWrapping="Wrap" />
+                            <TextBlock Grid.Row="2" Text="传输协议：" Classes="muted" FontSize="12" />
+                            <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding ProtocolText}"
+                                       Classes="muted" FontSize="12" TextWrapping="Wrap" />
                           </Grid>
                         </Border>
                       </Grid>
@@ -273,6 +276,18 @@
                     <NumericUpDown Value="{Binding Settings.MaxRetry}" Minimum="0" Maximum="100" />
                   </StackPanel>
                 </Grid>
+                <TextBlock Text="HTTP/3 模式" Classes="muted" />
+                <ComboBox Name="Http3ModeSelector" SelectedIndex="{Binding Settings.Http3Mode, Mode=TwoWay}"
+                          AutomationProperties.Name="HTTP/3 模式">
+                  <ComboBoxItem Content="自动测速选择 H2 / H3（推荐）" />
+                  <ComboBoxItem Content="强制 HTTP/3（不回退）" />
+                  <ComboBoxItem Content="禁用 HTTP/3（H2 / H1.1）" />
+                </ComboBox>
+                <TextBlock Text="{Binding Settings.Http3ModeDescription}" Classes="muted" TextWrapping="Wrap" />
+                <TextBlock Text="自动测速仅在直连设置下探测 H3；如需测速，请在下方代理中选择“不使用代理”。"
+                           Classes="muted" TextWrapping="Wrap" IsVisible="{Binding Settings.ShowHttp3ProxyNote}" />
+                <TextBlock Text="保存后，新建下载任务使用所选模式。正在下载的任务保持当前协议。"
+                           Classes="muted" TextWrapping="Wrap" />
                 <TextBlock Text="代理" Classes="muted" />
                 <ComboBox SelectedIndex="{Binding Settings.ProxyMode}">
                   <ComboBoxItem Content="使用系统代理" />

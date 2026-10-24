@@ -8,6 +8,8 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <PublishAot>true</PublishAot>
+        <LightDlStaticQuic Condition="'$(LightDlStaticQuic)' == '' and '$(PublishAot)' == 'true' and '$(RuntimeIdentifier)' != '' and '$(RuntimeIdentifier)' != 'win-x86'">true</LightDlStaticQuic>
+        <AppleMinOSVersion Condition="'$(LightDlStaticQuic)' == 'true' and $(RuntimeIdentifier.StartsWith('osx'))">14.0</AppleMinOSVersion>
         <PublishTrimmed>true</PublishTrimmed>
         <PublishSingleFile>true</PublishSingleFile>
         <TrimMode>full</TrimMode>

@@ -86,6 +86,9 @@ public partial class DownloadItemViewModel : ViewModelBase
     private string _statusText = "等待中";
 
     [ObservableProperty]
+    private string _protocolText = "等待连接";
+
+    [ObservableProperty]
     private string _sizeText = "未知大小";
 
     [ObservableProperty]
@@ -137,12 +140,18 @@ public partial class DownloadItemViewModel : ViewModelBase
         ResetDisplayedSpeed();
         State = DownloadState.Downloading;
         StatusText = "正在下载";
+        ProtocolText = _settings.Http3Mode switch
+        {
+            1 => "HTTP/3（强制）",
+            2 => "HTTP/2 / HTTP/1.1",
+            _ => "自动选择 H2/H3"
+        };
 
         try
         {
             Directory.CreateDirectory(_destinationDirectory);
 
-            using var downloader = new LightDownloader(CreateDownloadConfig());
+            using var downloader = new LightDownloader(CreateDownloadConfig(completion));
 
             var request = (_requestedFileName is { Length: > 0 }
                     ? LightDownloadRequest.ToFile(SourceUrl, Path.Combine(_destinationDirectory, _requestedFileName), _headers)
@@ -156,6 +165,8 @@ public partial class DownloadItemViewModel : ViewModelBase
             var progress = new Progress<LightDownloadProgress>(UpdateProgress);
             var result = await downloader.DownloadAsync(request, progress, cancellationToken: _cancellation.Token);
 
+            if (downloader.SelectedHttpVersion is { } version && _settings.Http3Mode != 1)
+                ProtocolText = $"HTTP/{version.Major}.{version.Minor}";
             FileName = result.FileName;
             FilePath = result.FilePath;
             ProgressPercentage = 100;
@@ -467,33 +478,15 @@ public partial class DownloadItemViewModel : ViewModelBase
         RemainingText = "--";
     }
 
-    private LightDownloadConfig CreateDownloadConfig()
-    {
-        var config = new LightDownloadConfig
+    private LightDownloadConfig CreateDownloadConfig(TaskCompletionSource completion) => DownloadConfigFactory.Create(_settings,
+        selection => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
         {
-            ChunkCount = _settings.ChunkCount,
-            MinChunkCount = _settings.MinChunkCount,
-            MaxChunkCount = _settings.MaxChunkCount,
-            EnableDynamicConcurrency = _settings.EnableDynamicConcurrency,
-            SegmentSize = _settings.SegmentSizeMb * 1024L * 1024L,
-            Timeout = TimeSpan.FromSeconds(_settings.TimeoutSeconds),
-            MaxRetry = _settings.MaxRetry,
-            EnableResume = _settings.EnableResume,
-            FileConflictPolicy = (LightDownloadFileConflictPolicy)_settings.FileConflictPolicy,
-            IgnoreSslErrors = _settings.IgnoreSslErrors,
-            HttpMessageHandlerFactory = DownloadPlatform.HttpMessageHandlerFactory,
-            UseProxy = _settings.ProxyMode != 1,
-            Proxy = _settings.ProxyMode == 2 ? new WebProxy(_settings.ProxyUrl) : null,
-            SpeedLimitProvider = _settings.SpeedLimitKib > 0
-                ? () => _settings.SpeedLimitKib * 1024d
-                : null
-        };
-
-        if (!string.IsNullOrWhiteSpace(_settings.UserAgent))
-            config.UserAgent = _settings.UserAgent;
-
-        return config;
-    }
+            if (!ReferenceEquals(_downloadCompletion, completion) || State != DownloadState.Downloading)
+                return;
+            ProtocolText = selection.IsFallback
+                ? "HTTP/2（H3 连接中断，已回退）"
+                : $"HTTP/{selection.SelectedVersion.Major}（测速选中）";
+        }));
 
     public DownloadTaskRecord ToRecord() => new()
     {

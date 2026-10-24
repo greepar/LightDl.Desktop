@@ -17,10 +17,17 @@ Download the package for your platform from [Releases](https://github.com/greepa
 ## Build
 
 ```bash
+python3 eng/prepare-lightdl.py
 dotnet build LightDl.Desktop/LightDl.Desktop.csproj -c Release
 ```
 
 See [BUILDING.md](BUILDING.md) for platform requirements and publishing commands.
+
+## HTTP/3
+
+Settings → Network → HTTP/3 mode offers automatic H2/H3 speed comparison (default), strict HTTP/3, and HTTP/3 disabled. Save settings before creating a new task. Existing tasks keep their settings. Automatic comparison requires the direct connection proxy setting; it skips small files and servers without range support. Strict mode requires HTTPS and fails when HTTP/3 is unavailable. Task details show the selected protocol.
+
+Desktop NativeAOT builds link MsQuic statically on Windows x64/arm64, Linux x64/arm64 and macOS x64/arm64. Windows x86 has no bundled QUIC support. Managed builds omit the MsQuic shared library by default; see [BUILDING.md](BUILDING.md) to opt in.
 
 ## License
 

@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - feat/http3-settings
     tags:
       - "v*"
   workflow_dispatch:
@@ -16,7 +17,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  DOTNET_VERSION: "10.0.x"
+  DOTNET_VERSION: "10.0.402"
   PROJECT_PATH: "LightDl.Desktop/LightDl.Desktop.csproj"
 
 jobs:
@@ -37,9 +38,9 @@ jobs:
             rid: linux-x64
           - runner: ubuntu-24.04-arm
             rid: linux-arm64
-          - runner: macos-14
+          - runner: macos-15-intel
             rid: osx-x64
-          - runner: macos-14
+          - runner: macos-15
             rid: osx-arm64
 
     steps:
@@ -70,7 +71,11 @@ jobs:
             libxrandr-dev \
             libxrender-dev \
             libxtst-dev \
+            libwayland-dev \
             zlib1g-dev
+
+      - name: Prepare pinned HTTP/3 download engine
+        run: python3 eng/prepare-lightdl.py
 
       - name: Restore
         run: dotnet restore ${{ env.PROJECT_PATH }} -r ${{ matrix.rid }}
@@ -95,13 +100,12 @@ jobs:
       - name: Verify single executable output
         shell: pwsh
         run: |
-          $files = Get-ChildItem "publish/${{ matrix.rid }}" -File
-          if ($files.Count -ne 1) {
-            $files | Format-Table FullName, Length
-            throw "Expected exactly one published file, found $($files.Count)."
-          }
-          if ($files[0].Name -like "LightDl.BrowserHost*") {
-            throw "BrowserHost must be integrated into LightDl.Desktop."
+          $directory = "publish/${{ matrix.rid }}"
+          $executable = if ($IsWindows) { "LightDl.Desktop.exe" } else { "LightDl.Desktop" }
+          $unexpected = Get-ChildItem $directory -Recurse -File | Where-Object { $_.Name -notin @($executable, "lightdl.png") }
+          if ($unexpected -or !(Test-Path "$directory/$executable")) {
+            Get-ChildItem $directory -Recurse | Format-Table FullName, Length
+            throw "Expected the desktop executable and optional launcher icon only; no MsQuic shared library."
           }
 
       - name: Create Windows archive
@@ -122,6 +126,22 @@ jobs:
           name: lightdl-desktop-${{ matrix.rid }}
           path: lightdl-desktop-${{ matrix.rid }}.zip
           if-no-files-found: error
+
+  settings-tests:
+    name: HTTP/3 settings tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - run: python3 eng/prepare-lightdl.py
+      - run: dotnet test tests/LightDl.UI.Tests/LightDl.UI.Tests.csproj -c Release --logger "trx;LogFileName=settings.trx"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: http3-settings-test-results
+          path: tests/LightDl.UI.Tests/TestResults/*.trx
 
   browser-extensions:
     name: Browser extensions
@@ -170,6 +190,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
     needs:
       - desktop
+      - settings-tests
       - browser-extensions
     runs-on: ubuntu-latest
     steps:

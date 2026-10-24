@@ -14,11 +14,19 @@ Install mobile workloads after any pending system restart:
 dotnet workload install android ios
 ```
 
+## Prepare the HTTP/3 engine
+
+Run `python3 eng/prepare-lightdl.py` before the first restore/build (Python 3 and Git required). This builds local NuGet package `LightDl.0.4.5-h3-desktop.1` from upstream commit `5cda174f75c598c07dd923bbd840249a14d97fcb`, which contains the verified H2/H3 comparison and static MsQuic support. No public NuGet release or expiring CI artifact is required. The checkout and package are cached under ignored `artifacts/`; `NuGet.Config` maps only LightDl to this local feed.
+
+After the engine is published on NuGet.org, the preview version/feed can be replaced with that official version. Until then, the pinned source is the reproducible dependency.
+
 ## Desktop NativeAOT
 
 ```powershell
 dotnet publish LightDl.Desktop/LightDl.Desktop.csproj -c Release -r win-x64
 ```
+
+The default NativeAOT desktop build statically links MsQuic on Windows x64/arm64, Linux x64/arm64 and macOS x64/arm64. Build on the target OS; Windows needs MSVC. These macOS static archives require macOS 14 or newer. Windows x86 does not include MsQuic and cannot use H3 without separately installed QUIC support. The patched runtime is currently verified with .NET runtime 10.0.12/10.0.13; CI uses SDK 10.0.402. The build rejects unsupported runtime versions instead of producing an unverified binary.
 
 Use `linux-x64`, `linux-arm64`, `osx-x64`, or `osx-arm64` on the matching build operating system. NativeAOT publishing is platform-specific.
 
@@ -66,3 +74,15 @@ Publishing and signing an iOS application must be performed on macOS or through 
 ## Mobile runtime note
 
 Android NativeAOT remains experimental. Validate startup, TLS downloads, file access, and resume behavior on physical devices before distribution.
+
+## Managed builds and HTTP/3
+
+Managed builds omit MsQuic by default:
+
+```bash
+dotnet publish LightDl.Desktop/LightDl.Desktop.csproj -c Release -r win-x64 -p:PublishAot=false -p:PublishTrimmed=false -p:LightDlStaticQuic=false
+```
+
+To explicitly include a shared library, add `-p:LightDlIncludeMsQuic=true`; Windows uses the runtime-pack DLL. On Unix also supply `-p:LightDlMsQuicLibrary=/absolute/path/to/libmsquic.so` (or `.dylib` on macOS). QUIC support still depends on the platform/network. For automatic speed comparison choose “不使用代理” in settings; system/custom proxy settings skip probing. Strict H3 never falls back.
+
+Run settings/configuration tests with `dotnet test tests/LightDl.UI.Tests/LightDl.UI.Tests.csproj -c Release`.

@@ -19,6 +19,7 @@ public partial class SettingsViewModel : ViewModelBase
         MaxRetry = settings.MaxRetry;
         EnableResume = settings.EnableResume;
         FileConflictPolicy = settings.FileConflictPolicy;
+        Http3Mode = settings.Http3Mode;
         ProxyMode = settings.ProxyMode;
         ProxyUrl = settings.ProxyUrl;
         UserAgent = settings.UserAgent;
@@ -42,7 +43,13 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty] private int _maxRetry;
     [ObservableProperty] private bool _enableResume;
     [ObservableProperty] private int _fileConflictPolicy;
-    [ObservableProperty] private int _proxyMode;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(Http3ModeDescription))]
+    [NotifyPropertyChangedFor(nameof(ShowHttp3ProxyNote))]
+    private int _http3Mode;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowHttp3ProxyNote))]
+    private int _proxyMode;
     [ObservableProperty] private string _proxyUrl;
     [ObservableProperty] private string _userAgent;
     [ObservableProperty] private bool _ignoreSslErrors;
@@ -51,6 +58,15 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty] private bool _showCompletionNotification;
     [ObservableProperty] private int _themeMode;
     [ObservableProperty] private bool _enableBrowserIntegration;
+
+    public string Http3ModeDescription => Http3Mode switch
+    {
+        1 => "所有请求仅使用 HTTP/3；服务器、网络或设备不支持时下载失败，不回退。仅支持 HTTPS。",
+        2 => "不探测 HTTP/3，使用 HTTP/2，并可回退到 HTTP/1.1。",
+        _ => "用等长分片实测 H2/H3 速度，后续持续使用更快的协议；H3 不可用时自动回退。小文件和不支持分片的文件不测速。"
+    };
+
+    public bool ShowHttp3ProxyNote => Http3Mode == 0 && ProxyMode != 1;
 
     public bool UsesCustomProxy => ProxyMode == 2;
 
@@ -70,6 +86,7 @@ public partial class SettingsViewModel : ViewModelBase
         MaxRetry = MaxRetry,
         EnableResume = EnableResume,
         FileConflictPolicy = FileConflictPolicy,
+        Http3Mode = Http3Mode,
         ProxyMode = ProxyMode,
         ProxyUrl = ProxyUrl,
         UserAgent = UserAgent,

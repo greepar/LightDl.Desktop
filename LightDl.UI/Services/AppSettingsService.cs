@@ -7,8 +7,13 @@ public sealed class AppSettingsService
 {
     private readonly string _settingsPath;
 
-    public AppSettingsService()
+    public AppSettingsService(string? settingsPath = null)
     {
+        if (settingsPath is not null)
+        {
+            _settingsPath = settingsPath;
+            return;
+        }
         var dataDirectory = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "LightDl");
@@ -74,6 +79,7 @@ public sealed class AppSettingsService
         settings.TimeoutSeconds = Math.Clamp(settings.TimeoutSeconds, 5, 600);
         settings.MaxRetry = Math.Clamp(settings.MaxRetry, 0, 100);
         settings.FileConflictPolicy = Math.Clamp(settings.FileConflictPolicy, 0, 3);
+        settings.Http3Mode = settings.Http3Mode is >= 0 and <= 2 ? settings.Http3Mode : 0;
         settings.ProxyMode = Math.Clamp(settings.ProxyMode, 0, 2);
         settings.ThemeMode = Math.Clamp(settings.ThemeMode, 0, 2);
         settings.ProxyUrl = settings.ProxyUrl.Trim();
