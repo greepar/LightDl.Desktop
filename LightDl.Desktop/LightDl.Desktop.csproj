@@ -38,4 +38,5 @@
         <Content Include="../LightDl.UI/Assets/lightdl-light.png" Link="lightdl.png"
                  CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     </ItemGroup>
+    <Import Project="../eng/WindowsX86Brotli.targets" />
 </Project>

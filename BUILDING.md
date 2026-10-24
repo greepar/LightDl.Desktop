@@ -38,6 +38,8 @@ StaticLink.Avalonia stays on `3.119.4.1` for SkiaSharp `3.119.4`. StaticLink.Ava
 
 Linux NativeAOT publishing currently reports upstream trim/AOT analysis warnings (`IL2104`, `IL3053`) from SukiUI's DataGrid dependency, including DataGrid `12.1.2`. These warnings are not suppressed.
 
+Windows x86 uses a local copy of the .NET static Brotli archives with DLL-export directives removed (`eng/WindowsX86Brotli.targets`). This avoids LLD MinGW adding a second underscore to MSVC stdcall export names. Function symbols/code and the NuGet cache are unchanged.
+
 ## Browser integration host
 
 The published `LightDl.Desktop` executable also serves as the Native Messaging host. The browser starts the same executable in host mode, while normal launches enter the Avalonia GUI. In LightDl Desktop, open `浏览器集成` and choose `注册 / 修复宿主` after installation.

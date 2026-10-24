@@ -1,0 +1,17 @@
+<Project>
+  <!-- LLD MinGW export-name decoration differs from MSVC for stdcall x86
+       symbols. Keep runtime archives intact and consume local static-only copies. -->
+  <Target Name="LightDlPrepareX86Brotli" AfterTargets="SetupOSSpecificProps"
+          Condition="'$(PublishAot)' == 'true' and '$(RuntimeIdentifier)' == 'win-x86'">
+    <PropertyGroup>
+      <_LightDlBrotliDirectory>$(NativeIntermediateOutputPath)lightdl-brotli/</_LightDlBrotliDirectory>
+    </PropertyGroup>
+    <Exec Command="python3 &quot;$(MSBuildThisFileDirectory)strip-x86-brotli-exports.py&quot; &quot;$(IlcSdkPath).&quot; &quot;$(_LightDlBrotliDirectory)&quot;" />
+    <ItemGroup>
+      <NativeLibrary Remove="$(IlcSdkPath)brotlicommon.lib;$(IlcSdkPath)brotlienc.lib;$(IlcSdkPath)brotlidec.lib" />
+      <LinkerArg Remove="&quot;$(IlcSdkPath)brotlicommon.lib&quot;;&quot;$(IlcSdkPath)brotlienc.lib&quot;;&quot;$(IlcSdkPath)brotlidec.lib&quot;" />
+      <NativeLibrary Include="$(_LightDlBrotliDirectory)brotlicommon.lib;$(_LightDlBrotliDirectory)brotlienc.lib;$(_LightDlBrotliDirectory)brotlidec.lib" />
+      <LinkerArg Include="&quot;$(_LightDlBrotliDirectory)brotlicommon.lib&quot;;&quot;$(_LightDlBrotliDirectory)brotlienc.lib&quot;;&quot;$(_LightDlBrotliDirectory)brotlidec.lib&quot;" />
+    </ItemGroup>
+  </Target>
+</Project>
