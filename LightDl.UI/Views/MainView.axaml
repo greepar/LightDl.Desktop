@@ -504,7 +504,7 @@
       </Grid>
     </Border>
     <Border Name="FloatingSettingsSave" IsVisible="{Binding Settings.HasUnsavedChanges}"
-            HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,24,54"
+            HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,44,74"
             ZIndex="10" CornerRadius="12" BoxShadow="0 4 18 0 #38000000">
       <Button Content="保存设置" Command="{Binding SaveSettingsCommand}"
               Background="#2874E8" Foreground="White" BorderThickness="0"
