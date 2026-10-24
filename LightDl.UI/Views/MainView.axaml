@@ -280,7 +280,7 @@
                 <TextBlock Text="协议" Classes="muted" />
                 <ComboBox Name="Http3ModeSelector" SelectedIndex="{Binding Settings.Http3Mode, Mode=TwoWay}"
                           AutomationProperties.Name="协议">
-                  <ComboBoxItem Content="自动测速选择 H2 / H3（推荐）" />
+                  <ComboBoxItem Content="自动选择H3" />
                   <ComboBoxItem Content="强制 HTTP/3（不回退）" />
                   <ComboBoxItem Content="禁用 HTTP/3（H2 / H1.1）" />
                 </ComboBox>
