@@ -165,6 +165,44 @@ public sealed class Http3FallbackTests
         });
     }
 
+    [Theory]
+    [InlineData(DownloadState.Paused)]
+    [InlineData(DownloadState.Completed)]
+    [InlineData(DownloadState.Failed)]
+    public async Task ResumeOrRestartDoesNotOverwriteRunningStatusWithQueuedText(DownloadState originalState)
+    {
+        await RunAsync(async (directory, origin) =>
+        {
+            origin.BlockBody = true;
+            var settings = new AppSettingsService(Path.Combine(directory, "settings.json"));
+            await settings.SaveAsync(new AppSettings { Http3Mode = 2, ProxyMode = 1 });
+            var store = new DownloadTaskStore(Path.Combine(directory, "downloads.json"));
+            await store.SaveAsync([new DownloadTaskRecord
+            {
+                SourceUrl = "https://download.test/file.bin", DestinationDirectory = directory,
+                FileName = "file.bin", State = originalState
+            }]);
+            var vm = new MainViewModel(settings, store, new BrowserHostRegistrationService());
+            var item = Assert.Single(vm.Downloads);
+            if (originalState == DownloadState.Paused) item.ResumeCommand.Execute(null);
+            else item.RestartCommand.Execute(null);
+            try
+            {
+                await origin.BodyStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+                Assert.Equal(DownloadState.Downloading, item.State);
+                Assert.Equal("正在下载", item.StatusText);
+                Assert.Equal(1, vm.ActiveCount);
+            }
+            finally
+            {
+                origin.ReleaseBody.TrySetResult();
+                for (var i = 0; i < 250 && item.State == DownloadState.Downloading; i++) await Task.Delay(20);
+                await store.SaveAsync(vm.Downloads.Select(download => download.ToRecord()));
+            }
+            Assert.Equal(DownloadState.Completed, item.State);
+        });
+    }
+
     [Fact]
     public async Task PopupButtonsAndQueueWorkAndPauseDismissesOnlyCurrentPopup()
     {

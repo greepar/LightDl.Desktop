@@ -375,8 +375,10 @@ public partial class DownloadItemViewModel : ViewModelBase
         ProgressPercentage = 0;
         SpeedText = "--";
         RemainingText = "--";
-        State = DownloadState.Queued;
         StatusText = "等待重新下载";
+        // Publishing Queued synchronously invokes the scheduler; initialize all
+        // queue text first so it cannot overwrite the new transfer's status.
+        State = DownloadState.Queued;
         StartRequested?.Invoke(this, EventArgs.Empty);
     }
 
@@ -385,10 +387,10 @@ public partial class DownloadItemViewModel : ViewModelBase
         if (State == DownloadState.Downloading)
             return;
 
-        State = DownloadState.Queued;
         StatusText = "等待中";
         SpeedText = "--";
         RemainingText = "--";
+        State = DownloadState.Queued;
     }
 
     partial void OnStateChanged(DownloadState value)
