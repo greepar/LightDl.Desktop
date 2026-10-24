@@ -14,6 +14,8 @@ The desktop application supports Windows, Linux, and macOS. This repository also
 
 Download the package for your platform from [Releases](https://github.com/greepar/LightDl.Desktop/releases).
 
+macOS builds include a signed `LightDl.app` ZIP and a DMG with an Applications shortcut. Choose `osx-arm64` for Apple Silicon or `osx-x64` for Intel (macOS 14+). Open the DMG and drag LightDl into Applications. CI uses ad-hoc signing by default; Developer ID signing and Apple notarization are enabled when the signing secrets documented in [BUILDING.md](BUILDING.md) are configured.
+
 ## Build
 
 ```bash

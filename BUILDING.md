@@ -88,3 +88,57 @@ dotnet publish LightDl.Desktop/LightDl.Desktop.csproj -c Release -r win-x64 -p:P
 To explicitly include a shared library, add `-p:LightDlIncludeMsQuic=true`; Windows uses the runtime-pack DLL. On Unix also supply `-p:LightDlMsQuicLibrary=/absolute/path/to/libmsquic.so` (or `.dylib` on macOS). QUIC support still depends on the platform/network. For automatic speed comparison choose “不使用代理” in settings; system/custom proxy settings skip probing. Strict H3 only falls back after the user accepts the per-task connection-failure dialog; HTTP status, certificate and storage errors do not prompt. Task cards show the negotiated HTTP version during transfer.
 
 Run settings/configuration tests with `dotnet test tests/LightDl.UI.Tests/LightDl.UI.Tests.csproj -c Release`.
+
+## macOS .app / DMG packaging and signing
+
+Packaging follows the `.app` layout and automatic ad-hoc signing approach in
+[PatchInstaller-Custom](https://github.com/greepar/PatchInstaller-Custom/tree/35d78baa0fc6d6e162061997abf2d65fec36b28f/PatchInstaller/Build),
+with LightDl's own icons, identifier `io.lightdl.LightDl`, and macOS 14 minimum.
+`dmgbuild` writes Finder's icon layout directly; no Finder Automation permission is required.
+
+Run on macOS with Python 3.12+ after NativeAOT publishing:
+
+```bash
+python3 -m venv artifacts/macos-tools
+artifacts/macos-tools/bin/python -m pip install -r eng/macos/requirements.txt
+artifacts/macos-tools/bin/python eng/macos/package.py publish/osx-arm64 --rid osx-arm64 --output artifacts/macos/osx-arm64
+artifacts/macos-tools/bin/python eng/macos/verify.py artifacts/macos/osx-arm64 --rid osx-arm64
+```
+
+Use `osx-x64` and an x64 publish for Intel. The packaging script checks the executable architecture.
+Outputs include `LightDl.app`, `lightdl-desktop-<rid>.zip` (containing the app),
+`lightdl-desktop-<rid>.dmg`, and SHA-256 checksums. Keep the executable inside the app bundle;
+browser native messaging and autostart use its actual `Contents/MacOS` path.
+The Actions artifacts preserve the app through `ditto` ZIP, which retains executable permissions
+and signatures; uploading an unarchived `.app` would lose these properties.
+
+Both app and DMG are signed and verified automatically. With no signing secrets,
+this is an **ad-hoc signature**, as in the reference repository: it verifies bundle integrity,
+but is **not Apple Developer ID signing or notarization**. Internet-downloaded ad-hoc apps
+may still be blocked by Gatekeeper. The build does not remove quarantine attributes or change
+system security settings.
+
+For Developer ID distribution, configure these repository Actions secrets:
+
+| Secret | Purpose |
+| --- | --- |
+| `MACOS_CERTIFICATE_P12_BASE64` | Base64-encoded Developer ID Application certificate **including its private key** |
+| `MACOS_CERTIFICATE_PASSWORD` | Password protecting the P12 (may be empty for an unencrypted P12) |
+| `MACOS_SIGN_IDENTITY` | Optional certificate SHA-1/name; auto-detected when the P12 has one Developer ID Application identity |
+| `APPLE_ID` | Apple developer account used for notarization |
+| `APPLE_TEAM_ID` | Apple Developer team identifier |
+| `APPLE_APP_SPECIFIC_PASSWORD` | App-specific password for notarization |
+
+The last three secrets enable notarization and must be supplied together. CI imports the P12
+into a temporary keychain, signs the app with hardened runtime and a secure timestamp,
+notarizes/staples both delivered formats, then removes the certificate/keychain even on failure.
+It never exports a local signing key or uploads credentials as build artifacts.
+Partially configured credentials fail instead of silently falling back to ad-hoc signing.
+Developer ID/notarization cannot be exercised without those credentials.
+
+For local Developer ID signing, select an existing Developer ID Application identity with
+`MACOS_SIGN_IDENTITY`, and optionally set `MACOS_NOTARY_PROFILE` to a stored `notarytool`
+keychain profile. An Apple Development certificate is not a Developer ID distribution certificate.
+The verification script extracts the ZIP and mounts the DMG read-only, validates both app signatures,
+checks the architecture/install layout, executes the packaged binary in native-messaging mode
+with an invalid frame (no GUI/download), and checks the delivered hashes.

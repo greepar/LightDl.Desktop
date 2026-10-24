@@ -52,6 +52,12 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
+      - name: Setup Python for macOS packaging
+        if: runner.os == 'macOS'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
       - name: Install Linux native dependencies
         if: runner.os == 'Linux'
         run: |
@@ -108,13 +114,40 @@ jobs:
             throw "Expected the desktop executable and optional launcher icon only; no MsQuic shared library."
           }
 
+      - name: Install macOS packaging tools
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          python3 -m venv "$RUNNER_TEMP/lightdl-macos-tools"
+          "$RUNNER_TEMP/lightdl-macos-tools/bin/python" -m pip install -r eng/macos/requirements.txt
+
+      - name: Configure optional Developer ID signing and notarization
+        if: runner.os == 'macOS'
+        env:
+          MACOS_CERTIFICATE_P12_BASE64: ${{ secrets.MACOS_CERTIFICATE_P12_BASE64 }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+          MACOS_SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+        run: python3 eng/macos/configure-signing.py
+
+      - name: Package signed macOS app and DMG
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          package_dir="$RUNNER_TEMP/lightdl-packages/${{ matrix.rid }}"
+          "$RUNNER_TEMP/lightdl-macos-tools/bin/python" eng/macos/package.py "publish/${{ matrix.rid }}" --rid "${{ matrix.rid }}" --output "$package_dir"
+          "$RUNNER_TEMP/lightdl-macos-tools/bin/python" eng/macos/verify.py "$package_dir" --rid "${{ matrix.rid }}"
+          cp "$package_dir"/lightdl-desktop-${{ matrix.rid }}.{zip,dmg,sha256} .
+
       - name: Create Windows archive
         if: runner.os == 'Windows'
         shell: pwsh
         run: Compress-Archive -Path "publish/${{ matrix.rid }}/*" -DestinationPath "lightdl-desktop-${{ matrix.rid }}.zip"
 
       - name: Create Unix archive
-        if: runner.os != 'Windows'
+        if: runner.os == 'Linux'
         shell: bash
         run: |
           cd "publish/${{ matrix.rid }}"
@@ -124,8 +157,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: lightdl-desktop-${{ matrix.rid }}
-          path: lightdl-desktop-${{ matrix.rid }}.zip
+          path: lightdl-desktop-${{ matrix.rid }}.*
           if-no-files-found: error
+
+      - name: Remove temporary macOS signing keychain
+        if: always() && runner.os == 'macOS'
+        run: python3 eng/macos/configure-signing.py --cleanup
 
   settings-tests:
     name: HTTP/3 settings tests
@@ -203,5 +240,8 @@ jobs:
       - name: Upload release assets
         uses: softprops/action-gh-release@v2
         with:
-          files: artifacts/*.zip
+          files: |
+            artifacts/*.zip
+            artifacts/*.dmg
+            artifacts/*.sha256
           generate_release_notes: true
