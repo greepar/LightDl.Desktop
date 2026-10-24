@@ -20,6 +20,7 @@ def verify_app(app, architecture):
     run("codesign", "--verify", "--deep", "--strict", "--verbose=2", app)
     metadata = plistlib.loads((app / "Contents/Info.plist").read_bytes())
     assert metadata["CFBundleIdentifier"] == "io.lightdl.LightDl"
+    assert metadata["CFBundleName"] == metadata["CFBundleDisplayName"] == "Light Downloader Manager"
     assert metadata["LSMinimumSystemVersion"] == "14.0"
     executable = app / "Contents/MacOS" / metadata["CFBundleExecutable"]
     assert run("lipo", "-archs", executable, capture=True).strip() == architecture

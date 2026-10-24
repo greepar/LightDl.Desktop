@@ -1,0 +1,17 @@
+<suki:SukiWindow xmlns="https://github.com/avaloniaui"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:suki="using:SukiUI.Controls"
+                 xmlns:app="using:LightDl.UI"
+                 xmlns:views="using:LightDl.UI.Views"
+                 x:Class="LightDl.UI.Views.AboutWindow"
+                 x:DataType="views:AboutWindow"
+                 Title="About Light Downloader Manager" Width="440" SizeToContent="Height"
+                 CanResize="False" CanMinimize="False" CanMaximize="False"
+                 ShowInTaskbar="False" WindowStartupLocation="CenterOwner">
+  <StackPanel Margin="24,16,24,24" Spacing="14">
+    <TextBlock Text="{x:Static app:App.DisplayName}" FontSize="22" FontWeight="SemiBold" TextWrapping="Wrap" />
+    <TextBlock Text="{Binding VersionText}" Opacity="0.65" />
+    <TextBlock Text="高性能并发下载管理器" />
+    <Button Content="关闭" Click="CloseAboutWindow" HorizontalAlignment="Right" Padding="18,10" />
+  </StackPanel>
+</suki:SukiWindow>

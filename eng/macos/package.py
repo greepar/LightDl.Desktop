@@ -100,12 +100,12 @@ def main():
     (macos / EXECUTABLE).chmod(0o755)
     metadata = {
         "CFBundleDevelopmentRegion": "zh_CN",
-        "CFBundleDisplayName": "LightDl",
+        "CFBundleDisplayName": "Light Downloader Manager",
         "CFBundleExecutable": EXECUTABLE,
         "CFBundleIconFile": "AppIcon.icns",
         "CFBundleIdentifier": IDENTIFIER,
         "CFBundleInfoDictionaryVersion": "6.0",
-        "CFBundleName": "LightDl",
+        "CFBundleName": "Light Downloader Manager",
         "CFBundlePackageType": "APPL",
         "CFBundleShortVersionString": version,
         "CFBundleVersion": version,

@@ -14,6 +14,10 @@ namespace LightDl.UI;
 
 public partial class App : Application
 {
+    public const string DisplayName = "Light Downloader Manager";
+
+    public App() => Name = DisplayName;
+
     private const string SilentArgument = "--silent";
 
     public static bool StartMinimizedToTray { get; set; }
@@ -25,6 +29,7 @@ public partial class App : Application
     public static Func<IStyle>? MobileThemeFactory { get; set; }
 
     private Window? _mainWindow;
+    private AboutWindow? _aboutWindow;
     private TrayIcon? _trayIcon;
     private MainViewModel? _mainViewModel;
     private BrowserIntegrationService? _browserIntegrationService;
@@ -34,6 +39,14 @@ public partial class App : Application
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
+        if (OperatingSystem.IsMacOS())
+        {
+            var menu = new NativeMenu();
+            var about = new NativeMenuItem($"About {DisplayName}");
+            about.Click += (_, _) => ShowAboutWindow();
+            menu.Items.Add(about);
+            NativeMenu.SetMenu(this, menu);
+        }
     }
 
     public override void OnFrameworkInitializationCompleted()
@@ -87,6 +100,22 @@ public partial class App : Application
         }
 
         base.OnFrameworkInitializationCompleted();
+    }
+
+    private void ShowAboutWindow()
+    {
+        if (_aboutWindow is { } existing)
+        {
+            existing.Activate();
+            return;
+        }
+        var window = new AboutWindow();
+        _aboutWindow = window;
+        window.Closed += (_, _) => _aboutWindow = null;
+        if (_mainWindow is { IsVisible: true } owner)
+            _ = window.ShowDialog(owner);
+        else
+            window.Show();
     }
 
     private void AddMobileTheme()
