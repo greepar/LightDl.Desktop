@@ -313,7 +313,6 @@
                 <CheckBox Content="关闭主窗口时最小化到托盘" IsChecked="{Binding Settings.CloseToTray}" />
                 <CheckBox Content="下载完成后显示系统通知" IsChecked="{Binding Settings.ShowCompletionNotification}" />
                 <CheckBox Content="启用浏览器自动接管" IsChecked="{Binding Settings.EnableBrowserIntegration}" />
-                <Button Content="保存设置" Command="{Binding SaveSettingsCommand}" HorizontalAlignment="Right" Padding="24,10" />
               </StackPanel>
             </Border>
           </StackPanel>
@@ -330,7 +329,6 @@
             <StackPanel Orientation="Horizontal" Spacing="8">
               <Button Content="注册 / 修复宿主" Command="{Binding RegisterBrowserHostCommand}" />
               <Button Content="移除宿主" Command="{Binding UnregisterBrowserHostCommand}" />
-              <Button Content="保存设置" Command="{Binding SaveSettingsCommand}" />
             </StackPanel>
             <TextBlock Text="扩展源码位于 browser-extensions/automatic。Chromium 扩展 ID 已固定，可用于 Chrome 和 Edge；Firefox 使用固定扩展 ID。" Classes="muted" TextWrapping="Wrap" />
           </StackPanel>
@@ -504,6 +502,13 @@
           </ScrollViewer>
         </Panel>
       </Grid>
+    </Border>
+    <Border Name="FloatingSettingsSave" IsVisible="{Binding Settings.HasUnsavedChanges}"
+            HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,24,54"
+            ZIndex="10" CornerRadius="12" BoxShadow="0 4 18 0 #38000000">
+      <Button Content="保存设置" Command="{Binding SaveSettingsCommand}"
+              Background="#2874E8" Foreground="White" BorderThickness="0"
+              CornerRadius="12" Padding="26,13" FontWeight="SemiBold" />
     </Border>
   </Panel>
 </UserControl>

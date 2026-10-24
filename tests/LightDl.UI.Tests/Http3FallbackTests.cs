@@ -256,6 +256,45 @@ public sealed class Http3FallbackTests
     }
 
     [Fact]
+    public async Task FloatingSaveStaysInCornerAndOnlyHidesAfterSuccessfulSave()
+    {
+        await RunAsync(async (directory, _) =>
+        {
+            var settingsService = new AppSettingsService(Path.Combine(directory, "settings.json"));
+            await settingsService.SaveAsync(new AppSettings { DefaultDownloadDirectory = directory });
+            var vm = new MainViewModel(settingsService, new DownloadTaskStore(Path.Combine(directory, "downloads.json")),
+                new BrowserHostRegistrationService()) { SelectedSection = "settings" };
+            var view = new MainView { DataContext = vm };
+            var window = new SukiWindow { Content = view, Width = 1000, Height = 760 };
+            window.Show();
+            try
+            {
+                window.UpdateLayout();
+                var floating = view.FindControl<Border>("FloatingSettingsSave")!;
+                Assert.False(floating.IsVisible);
+                vm.Settings.MaxRetry++;
+                window.UpdateLayout();
+                Assert.True(floating.IsVisible);
+                var position = floating.TranslatePoint(default, window);
+                foreach (var scroll in view.GetVisualDescendants().OfType<ScrollViewer>())
+                    scroll.Offset = new Vector(0, 10000);
+                window.UpdateLayout();
+                Assert.Equal(position, floating.TranslatePoint(default, window));
+                vm.SelectedSection = "all";
+                Assert.True(floating.IsVisible);
+                vm.Settings.DefaultDownloadDirectory = string.Empty;
+                await vm.SaveSettingsCommand.ExecuteAsync(null);
+                Assert.True(floating.IsVisible);
+                vm.Settings.DefaultDownloadDirectory = directory;
+                await vm.SaveSettingsCommand.ExecuteAsync(null);
+                Assert.False(floating.IsVisible);
+                Assert.Equal(vm.Settings.MaxRetry, settingsService.Load().MaxRetry);
+            }
+            finally { window.Close(); }
+        });
+    }
+
+    [Fact]
     public async Task PopupButtonsAndQueueWorkAndPauseDismissesOnlyCurrentPopup()
     {
         await RunAsync(async (directory, _) =>

@@ -1,10 +1,14 @@
+using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
+using LightDl.UI.Services;
 using LightDl.UI.Models;
 
 namespace LightDl.UI.ViewModels;
 
 public partial class SettingsViewModel : ViewModelBase
 {
+    private string _savedSnapshot;
+
     public SettingsViewModel(AppSettings settings)
     {
         DefaultDownloadDirectory = settings.DefaultDownloadDirectory;
@@ -29,7 +33,27 @@ public partial class SettingsViewModel : ViewModelBase
         ShowCompletionNotification = settings.ShowCompletionNotification;
         ThemeMode = settings.ThemeMode;
         EnableBrowserIntegration = settings.EnableBrowserIntegration;
+        _savedSnapshot = SerializeSnapshot(ToModel());
+        PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName != nameof(HasUnsavedChanges))
+                UpdateUnsavedChanges();
+        };
     }
+
+    [ObservableProperty] private bool _hasUnsavedChanges;
+
+    public void MarkSaved(AppSettings submittedSettings)
+    {
+        _savedSnapshot = SerializeSnapshot(submittedSettings);
+        UpdateUnsavedChanges();
+    }
+
+    private void UpdateUnsavedChanges() =>
+        HasUnsavedChanges = _savedSnapshot != SerializeSnapshot(ToModel());
+
+    private static string SerializeSnapshot(AppSettings settings) =>
+        JsonSerializer.Serialize(settings, AppSettingsJsonContext.Default.AppSettings);
 
     [ObservableProperty] private string _defaultDownloadDirectory;
     [ObservableProperty] private int _maxConcurrentDownloads;

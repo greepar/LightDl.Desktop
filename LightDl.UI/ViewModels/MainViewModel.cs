@@ -252,8 +252,20 @@ public partial class MainViewModel : ViewModelBase
             }
         }
 
-        await _settingsService.SaveAsync(Settings.ToModel());
-        ApplyTheme(Settings.ThemeMode);
+        // SaveAsync normalizes its argument. Keep an independent copy of the
+        // submitted UI values, so edits made while saving stay marked unsaved.
+        var submittedSettings = Settings.ToModel();
+        try
+        {
+            await _settingsService.SaveAsync(Settings.ToModel());
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            StatusMessage = $"设置保存失败：{ex.Message}";
+            return;
+        }
+        Settings.MarkSaved(submittedSettings);
+        ApplyTheme(submittedSettings.ThemeMode);
         StatusMessage = "设置已保存，新配置将在后续下载中生效";
         ScheduleDownloads();
     }

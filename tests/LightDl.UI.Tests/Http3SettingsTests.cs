@@ -93,6 +93,38 @@ public sealed class Http3SettingsTests : IDisposable
         Assert.Same(callback, config.ProtocolSelectionHandler);
     }
 
+    [Fact]
+    public void UnsavedChangesTrackAllEditsAndHideWhenValuesAreRestored()
+    {
+        var vm = new SettingsViewModel(new AppSettings());
+        Assert.False(vm.HasUnsavedChanges);
+        vm.Http3Mode = 1;
+        Assert.True(vm.HasUnsavedChanges);
+        vm.UserAgent = "changed";
+        vm.Http3Mode = 0;
+        Assert.True(vm.HasUnsavedChanges);
+        vm.UserAgent = string.Empty;
+        Assert.False(vm.HasUnsavedChanges);
+    }
+
+    [Fact]
+    public void SavingAnEarlierSnapshotKeepsNewerEditsUnsaved()
+    {
+        var vm = new SettingsViewModel(new AppSettings());
+        vm.MaxRetry = 12;
+        var submitted = vm.ToModel();
+        vm.MaxRetry = 14;
+        vm.MarkSaved(submitted);
+        Assert.True(vm.HasUnsavedChanges);
+        vm.MaxRetry = 12;
+        Assert.False(vm.HasUnsavedChanges);
+        vm.ProxyMode = 1;
+        vm.MarkSaved(vm.ToModel());
+        Assert.False(vm.HasUnsavedChanges);
+        vm.ProxyMode = 0;
+        Assert.True(vm.HasUnsavedChanges);
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_directory)) Directory.Delete(_directory, true);
