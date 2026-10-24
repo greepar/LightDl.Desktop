@@ -133,7 +133,8 @@
                             Margin="0,0,0,10"
                             PointerPressed="SelectDownloadItem">
                       <Border.ContextMenu>
-                        <ContextMenu Theme="{DynamicResource SukiContextMenuStyle}">
+                        <ContextMenu Theme="{DynamicResource SukiContextMenuStyle}"
+                                     Opened="OnDownloadContextMenuOpened" Closed="OnDownloadContextMenuClosed">
                           <MenuItem Header="详情" Command="{Binding ToggleDetailsCommand}" />
                           <Separator />
                           <MenuItem Header="打开文件" Command="{Binding OpenFileCommand}" IsVisible="{Binding CanOpenFile}" />

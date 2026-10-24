@@ -6,6 +6,9 @@ using Avalonia.Headless;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
+using Avalonia.LogicalTree;
+using Avalonia.Input;
+using Avalonia.Controls.Primitives;
 using LightDl.UI.Views;
 using SukiUI;
 using SukiUI.Controls;
@@ -200,6 +203,55 @@ public sealed class Http3FallbackTests
                 await store.SaveAsync(vm.Downloads.Select(download => download.ToRecord()));
             }
             Assert.Equal(DownloadState.Completed, item.State);
+        });
+    }
+
+    [Fact]
+    public async Task TaskContextMenuDismissesOnOutsideClickAndStillExecutesMenuItems()
+    {
+        await RunAsync(async (directory, _) =>
+        {
+            var store = new DownloadTaskStore(Path.Combine(directory, "downloads.json"));
+            await store.SaveAsync([new DownloadTaskRecord
+            {
+                SourceUrl = "https://download.test/file.bin", DestinationDirectory = directory,
+                FileName = "file.bin", State = DownloadState.Paused
+            }]);
+            var vm = new MainViewModel(new AppSettingsService(Path.Combine(directory, "settings.json")),
+                store, new BrowserHostRegistrationService());
+            var view = new MainView { DataContext = vm };
+            var window = new Window { Content = view, Width = 1000, Height = 760 };
+            window.Show();
+            try
+            {
+                window.UpdateLayout();
+                var card = view.GetVisualDescendants().OfType<Border>().Single(b => b.ContextMenu is not null);
+                var menu = card.ContextMenu!;
+                menu.Open(card);
+                window.UpdateLayout();
+                Assert.True(menu.IsOpen);
+                // Reproduce the native popup failing to dismiss: disable the
+                // framework's default path and exercise the owning-window guard.
+                var popup = menu.GetLogicalAncestors().OfType<Popup>().Single();
+                popup.IsLightDismissEnabled = false;
+                window.MouseDown(new Point(950, 650), MouseButton.Left);
+                window.MouseUp(new Point(950, 650), MouseButton.Left);
+                Assert.False(menu.IsOpen);
+
+                menu.Open(card);
+                await Task.Delay(100);
+                window.UpdateLayout();
+                var details = menu.GetVisualDescendants().OfType<MenuItem>().First(m => Equals(m.Header, "详情"));
+                var root = TopLevel.GetTopLevel(details)!;
+                var point = details.TranslatePoint(new Point(details.Bounds.Width / 2, details.Bounds.Height / 2), root)!.Value;
+                Assert.True(details.Bounds.Width > 0 && details.Bounds.Height > 0, details.Bounds.ToString());
+                root.MouseMove(point);
+                root.MouseDown(point, MouseButton.Left);
+                root.MouseUp(point, MouseButton.Left);
+                Assert.True(Assert.Single(vm.Downloads).IsDetailsVisible);
+                Assert.False(menu.IsOpen);
+            }
+            finally { window.Close(); }
         });
     }
 

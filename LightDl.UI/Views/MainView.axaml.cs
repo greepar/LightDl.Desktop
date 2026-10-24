@@ -1,4 +1,6 @@
 using System.ComponentModel;
+using Avalonia;
+using Avalonia.VisualTree;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Input;
@@ -13,12 +15,56 @@ public partial class MainView : UserControl
 {
     private MainViewModel? _viewModel;
     private bool _isDialogOpen;
+    private ContextMenu? _downloadContextMenu;
+    private TopLevel? _contextMenuOwner;
     private readonly SemaphoreSlim _fallbackDialogLock = new(1, 1);
 
     public MainView()
     {
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
+        DetachedFromVisualTree += (_, _) => CloseDownloadContextMenu();
+    }
+
+    private void OnDownloadContextMenuOpened(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not ContextMenu menu || ReferenceEquals(menu, _downloadContextMenu)) return;
+        CloseDownloadContextMenu();
+        _downloadContextMenu = menu;
+        _contextMenuOwner = TopLevel.GetTopLevel(this);
+        // Observe the owning window in the tunnel, including handled clicks on
+        // buttons and empty content. Native popup dismissal can miss these clicks.
+        _contextMenuOwner?.AddHandler(InputElement.PointerPressedEvent, OnContextMenuOwnerPointerPressed,
+            RoutingStrategies.Tunnel, handledEventsToo: true);
+    }
+
+    private void OnDownloadContextMenuClosed(object? sender, RoutedEventArgs e)
+    {
+        if (ReferenceEquals(sender, _downloadContextMenu))
+            ReleaseContextMenuOwner();
+    }
+
+    private void OnContextMenuOwnerPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (_downloadContextMenu is not { } menu) return;
+        if (e.Source is Visual source && (ReferenceEquals(source, menu) || menu.IsVisualAncestorOf(source)))
+            return;
+        CloseDownloadContextMenu();
+        // Preserve the original click so navigation/buttons still work normally.
+    }
+
+    private void CloseDownloadContextMenu()
+    {
+        var menu = _downloadContextMenu;
+        ReleaseContextMenuOwner();
+        menu?.Close();
+    }
+
+    private void ReleaseContextMenuOwner()
+    {
+        _contextMenuOwner?.RemoveHandler(InputElement.PointerPressedEvent, OnContextMenuOwnerPointerPressed);
+        _contextMenuOwner = null;
+        _downloadContextMenu = null;
     }
 
     private void SelectDownloadItem(object? sender, PointerPressedEventArgs e)
