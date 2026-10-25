@@ -30,6 +30,7 @@ internal static class Program
         }
 
         var readyFile = args.FirstOrDefault(arg => arg.StartsWith("--update-ready=", StringComparison.Ordinal))?[15..];
+        App.SkipFirstRunForUpdate = readyFile is not null;
         args = args.Where(arg => !arg.StartsWith("--update-ready=", StringComparison.Ordinal)).ToArray();
         var updates = new DesktopUpdateService(typeof(Program).Assembly.GetName().Version?.ToString(3) ?? "1.0.3");
         UpdatePlatform.Service = updates;
@@ -49,21 +50,28 @@ internal static class Program
         };
         StartupPlatform.ConfigureAutoStartAsync = AutoStartService.ConfigureAsync;
 
-        using var singleInstance = new SingleInstanceManager();
-        if (!singleInstance.IsPrimary)
+        if ((OperatingSystem.IsWindows() && !System.Runtime.CompilerServices.RuntimeFeature.IsDynamicCodeSupported) ||
+            (OperatingSystem.IsLinux() && DesktopExecutable.AppImagePath is not null))
+            DesktopInstallationService.Current = new DesktopInstallationService(DesktopExecutable.ProcessPath!);
+
+        using (var singleInstance = new SingleInstanceManager())
         {
-            singleInstance.ForwardAsync(args).GetAwaiter().GetResult();
-            return;
-        }
-
-        singleInstance.ArgumentsReceived += arguments =>
-            Dispatcher.UIThread.Post(() =>
+            if (!singleInstance.IsPrimary)
             {
-                if (Application.Current is App app)
-                    app.HandleExternalArguments(arguments);
-            });
+                singleInstance.ForwardAsync(args).GetAwaiter().GetResult();
+                return;
+            }
 
-        BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+            singleInstance.ArgumentsReceived += arguments =>
+                Dispatcher.UIThread.Post(() =>
+                {
+                    if (Application.Current is App app)
+                        app.HandleExternalArguments(arguments);
+                });
+
+            BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+        }
+        DesktopInstallationService.Current?.RelaunchInstalled(args);
     }
 
     // Avalonia configuration, don't remove; also used by visual designer.

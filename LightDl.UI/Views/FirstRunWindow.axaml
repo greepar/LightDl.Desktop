@@ -1,0 +1,34 @@
+<suki:SukiWindow xmlns="https://github.com/avaloniaui"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:suki="using:SukiUI.Controls"
+                 xmlns:views="using:LightDl.UI.Views"
+                 x:Class="LightDl.UI.Views.FirstRunWindow"
+                 x:DataType="views:FirstRunWindow"
+                 Title="欢迎使用 LightDl" Icon="avares://LightDl.UI/Assets/lightdl-light.ico" Width="560" SizeToContent="Height"
+                 CanResize="False" CanMinimize="False" CanMaximize="False"
+                 ShowInTaskbar="False" WindowStartupLocation="CenterOwner">
+  <StackPanel Margin="26,18,26,26" Spacing="18">
+    <Image Source="avares://LightDl.UI/Assets/lightdl-light.png" Width="72" Height="72" HorizontalAlignment="Left" />
+    <TextBlock Name="ChoiceTitle" Text="选择使用方式" FontSize="24" FontWeight="SemiBold" />
+    <TextBlock Text="安装到系统后，会创建应用菜单入口并配置图标，后续可以直接从菜单启动。无需管理员权限。"
+               TextWrapping="Wrap" />
+    <Border Background="#10808080" CornerRadius="8" Padding="12">
+      <StackPanel Spacing="5">
+        <TextBlock Text="安装目录" Opacity="0.65" />
+        <Grid Name="DirectoryPicker" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+          <TextBox Name="InstallDirectoryBox" PlaceholderText="选择安装目录" TextChanged="DirectoryChanged" />
+          <Button Grid.Column="1" Content="浏览…" Click="BrowseDirectory" />
+        </Grid>
+        <TextBlock Name="InstallPathPreview" TextWrapping="Wrap" Opacity="0.65" FontSize="12" />
+      </StackPanel>
+    </Border>
+    <TextBlock Name="PortableHint" Text="直接运行会保留当前位置，不创建系统快捷方式。以后仍可在设置中选择安装。"
+               TextWrapping="Wrap" Opacity="0.65" />
+    <CheckBox Name="RememberChoiceBox" Content="记住我的选择（此路径下次不再询问）" IsChecked="False" />
+    <TextBlock Name="InstallStatus" TextWrapping="Wrap" IsVisible="False" />
+    <StackPanel Name="ChoiceButtons" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
+      <Button Name="PortableButton" Content="直接运行" Click="RunPortable" Padding="20,11" />
+      <Button Content="安装到系统" Click="Install" Background="#2874E8" Foreground="White" Padding="20,11" />
+    </StackPanel>
+  </StackPanel>
+</suki:SukiWindow>

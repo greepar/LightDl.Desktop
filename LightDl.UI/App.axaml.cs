@@ -22,6 +22,7 @@ public partial class App : Application
     private const string SilentArgument = "--silent";
 
     public static bool StartMinimizedToTray { get; set; }
+    public static bool SkipFirstRunForUpdate { get; set; }
 
     public static Func<Window>? DesktopWindowFactory { get; set; }
 
@@ -37,6 +38,10 @@ public partial class App : Application
     private IClassicDesktopStyleApplicationLifetime? _desktopLifetime;
     private bool _exitInProgress;
     private DispatcherTimer? _updateCheckTimer;
+    private bool _installationPromptActive;
+    private bool _installationPromptShown;
+    private FirstRunWindow? _firstRunWindow;
+    private readonly List<string[]> _pendingDesktopArguments = [];
 
     public override void Initialize()
     {
@@ -60,32 +65,14 @@ public partial class App : Application
                 Styles.Add(desktopTheme);
 
             desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
-            _mainViewModel = new MainViewModel();
-            MainViewModel.ApplyTheme(_mainViewModel.Settings.ThemeMode);
-            _mainWindow = DesktopWindowFactory?.Invoke() ?? new Window
-            {
-                Title = "LightDl",
-                Width = 1180,
-                Height = 760,
-                Content = new MainView()
-            };
-            _mainWindow.DataContext = _mainViewModel;
-            _mainViewModel.Updates.UpdateDiscovered += ShowUpdatePromptIfVisible;
-            _mainWindow.Activated += (_, _) => ShowUpdatePromptIfVisible();
-            _mainWindow.PropertyChanged += (_, e) =>
-            {
-                if (e.Property == Window.IsVisibleProperty || e.Property == Window.WindowStateProperty)
-                    Dispatcher.UIThread.Post(ShowUpdatePromptIfVisible);
-            };
-            if (StartMinimizedToTray)
-                _mainWindow.ShowInTaskbar = false;
+            if (!StartMinimizedToTray && !SkipFirstRunForUpdate &&
+                DesktopInstallationService.Current is { NeedsChoice: true } installation)
+                ShowFirstRunWindow(desktop, installation);
             else
-                desktop.MainWindow = _mainWindow;
-            CreateTrayIcon(desktop);
-            ActualThemeVariantChanged += (_, _) => UpdateDesktopIcons();
-            _browserIntegrationService = new BrowserIntegrationService();
-            _browserIntegrationService.Start(HandleBrowserCaptureAsync);
-            HandleActivationArguments(_mainViewModel, Environment.GetCommandLineArgs().Skip(1));
+            {
+                if (SkipFirstRunForUpdate) _installationPromptShown = true;
+                InitializeDesktop(desktop);
+            }
         }
         else if (ApplicationLifetime is IActivityApplicationLifetime activityPlatform)
         {
@@ -109,11 +96,92 @@ public partial class App : Application
         }
 
         base.OnFrameworkInitializationCompleted();
-        if (_mainViewModel is not null && UpdatePlatform.Service is not null)
+        StartDesktopServices();
+    }
+
+    private void InitializeDesktop(IClassicDesktopStyleApplicationLifetime desktop)
+    {
+        _mainViewModel = new MainViewModel();
+        MainViewModel.ApplyTheme(_mainViewModel.Settings.ThemeMode);
+        _mainWindow = DesktopWindowFactory?.Invoke() ?? new Window
         {
-            Dispatcher.UIThread.Post(() =>
+            Title = "LightDl",
+            Width = 1180,
+            Height = 760,
+            Content = new MainView()
+        };
+        _mainWindow.DataContext = _mainViewModel;
+        _mainViewModel.Updates.UpdateDiscovered += ShowUpdatePromptIfVisible;
+        _mainWindow.Activated += async (_, _) =>
+        {
+            await ShowInstallationChoiceAsync();
+            ShowUpdatePromptIfVisible();
+        };
+        _mainWindow.PropertyChanged += (_, e) =>
+        {
+            if (e.Property == Window.IsVisibleProperty || e.Property == Window.WindowStateProperty)
+                Dispatcher.UIThread.Post(ShowUpdatePromptIfVisible);
+        };
+        if (StartMinimizedToTray)
+            _mainWindow.ShowInTaskbar = false;
+        else
+            desktop.MainWindow = _mainWindow;
+        CreateTrayIcon(desktop);
+        ActualThemeVariantChanged += (_, _) => UpdateDesktopIcons();
+        _browserIntegrationService = new BrowserIntegrationService();
+        _browserIntegrationService.Start(HandleBrowserCaptureAsync);
+        HandleActivationArguments(_mainViewModel, Environment.GetCommandLineArgs().Skip(1));
+        foreach (var arguments in _pendingDesktopArguments) HandleExternalArguments(arguments);
+        _pendingDesktopArguments.Clear();
+    }
+
+    private void ShowFirstRunWindow(IClassicDesktopStyleApplicationLifetime desktop, DesktopInstallationService installation)
+    {
+        _installationPromptActive = true;
+        _installationPromptShown = true;
+        var welcome = new FirstRunWindow(installation) { ShowInTaskbar = true };
+        _firstRunWindow = welcome;
+        desktop.MainWindow = welcome;
+        welcome.Closed += (_, _) =>
+        {
+            _firstRunWindow = null;
+            _installationPromptActive = false;
+            if (!welcome.ContinueRequested || installation.RestartPath is not null)
+            {
+                _exitInProgress = true;
+                desktop.Shutdown();
+                return;
+            }
+            // Construct the main view, task list, tray and browser server only after the choice.
+            InitializeDesktop(desktop);
+            _mainWindow!.Show();
+            StartDesktopServices();
+        };
+    }
+
+    private void StartDesktopServices()
+    {
+        if (_updateCheckTimer is null && _mainViewModel is not null && UpdatePlatform.Service is not null)
+        {
+            Dispatcher.UIThread.Post(async () =>
             {
                 UpdatePlatform.StartupCompleted?.Invoke();
+                if (DesktopInstallationService.Current is { IsInstalledCopy: true })
+                {
+                    try
+                    {
+                        if (_mainViewModel.Settings.StartWithSystem && StartupPlatform.ConfigureAutoStartAsync is { } configure)
+                            await configure(true);
+                        var registration = new BrowserHostRegistrationService();
+                        if (registration.IsRegistered()) await registration.RegisterAsync();
+                    }
+                    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
+                    {
+                        _mainViewModel.StatusMessage = "安装后启动路径更新失败：" + ex.Message;
+                    }
+                }
+                await ShowInstallationChoiceAsync();
+                if (_exitInProgress) return;
                 CheckForUpdatesAutomatically();
             }, DispatcherPriority.Background);
             _updateCheckTimer = new DispatcherTimer { Interval = TimeSpan.FromHours(6) };
@@ -131,8 +199,30 @@ public partial class App : Application
 
     private void ShowUpdatePromptIfVisible()
     {
-        _mainViewModel?.Updates.TryShowUpdatePrompt(!_exitInProgress &&
+        _mainViewModel?.Updates.TryShowUpdatePrompt(!_exitInProgress && !_installationPromptActive &&
             _mainWindow is { IsVisible: true, WindowState: not WindowState.Minimized });
+    }
+
+    public async Task ShowInstallationChoiceAsync(bool fromSettings = false)
+    {
+        if (_exitInProgress || _installationPromptActive || (!fromSettings && _installationPromptShown) ||
+            DesktopInstallationService.Current is not { } installation || (!fromSettings && !installation.NeedsChoice) ||
+            _mainWindow is not { IsVisible: true, WindowState: not WindowState.Minimized } owner)
+            return;
+        if (fromSettings && _mainViewModel?.Settings.HasUnsavedChanges == true)
+        {
+            _mainViewModel.StatusMessage = "请先保存设置，再安装到系统。";
+            return;
+        }
+        _installationPromptActive = true;
+        _installationPromptShown = true;
+        try
+        {
+            var installed = await new FirstRunWindow(installation, fromSettings).ShowDialog<bool>(owner);
+            if (installed && installation.RestartPath is not null)
+                await ExitAsync();
+        }
+        finally { _installationPromptActive = false; }
     }
 
     private void ShowAboutWindow()
@@ -209,6 +299,11 @@ public partial class App : Application
     public void HandleExternalArguments(IEnumerable<string> arguments)
     {
         var receivedArguments = arguments.ToArray();
+        if (_firstRunWindow is not null)
+        {
+            _pendingDesktopArguments.Add(receivedArguments);
+            return;
+        }
         HandleActivationArguments(_mainViewModel, receivedArguments);
         if (receivedArguments.Length == 0 || receivedArguments.Any(argument => !IsSilentArgument(argument)))
             ShowMainWindow();

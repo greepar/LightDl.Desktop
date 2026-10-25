@@ -62,6 +62,13 @@ public partial class MainViewModel : ViewModelBase
     public SettingsViewModel Settings { get; }
     public Func<Task<bool?>>? ConfirmLeaveSettingsAsync { get; set; }
     public bool ShowSettingsSave => IsSettingsPage && Settings.HasUnsavedChanges;
+    public bool CanInstallToSystem => DesktopInstallationService.Current is not null;
+
+    [RelayCommand]
+    private async Task InstallToSystemAsync()
+    {
+        if (Application.Current is App app) await app.ShowInstallationChoiceAsync(fromSettings: true);
+    }
 
     public async Task<bool> RememberWindowCloseActionAsync(WindowCloseAction action)
     {

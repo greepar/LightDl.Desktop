@@ -205,3 +205,30 @@ macOS accepts `-Python /path/to/venv/bin/python` for its existing signing/DMG to
 No Bash build scripts or Bash workflow steps are required. The generated AppImage still contains a
 minimal POSIX `AppRun` launcher so end users do not need PowerShell installed. Platform-specific
 native tools (Linux appimagetool, macOS codesign/hdiutil) remain required on their build OS.
+
+## First-run installation choice
+
+Published Windows NativeAOT EXEs and Linux AppImages ask on their first interactive launch whether to
+install or run directly. Opening the prompt does not copy the application or register desktop entries.
+Choosing direct execution creates no menu entry or icon. The unchecked-by-default "Remember my choice"
+checkbox controls whether the portable source path is prompted again on later launches.
+The initial prompt is the only window: the main UI, task list, tray and capture server are initialized
+after choosing direct execution. Installing restarts into the installed application's main UI.
+Closing the initial prompt exits without saving a choice; it asks again on a later launch.
+Silent startup defers the prompt until the main UI is opened. Development runs and macOS do not show it.
+
+Both the initial dialog and Settings → Install to System allow entering or browsing for an installation
+directory. The settings entry remains available after choosing portable use and ignores the first-run
+remembered choice. A settings installation requires saving pending settings before restarting.
+
+By default, an explicit install copies the original file into `%LOCALAPPDATA%\LightDl\LightDl.Desktop.exe` on Windows,
+or `${XDG_DATA_HOME:-~/.local/share}/lightdl/LightDl.AppImage` on Linux. It preserves the downloaded original.
+Windows creates a current-user Start menu shortcut using the EXE's embedded icon. Linux installs an icon
+under `icons/hicolor/512x512/apps/lightdl.png` and `applications/io.lightdl.LightDl.desktop` in the user data
+root, with the correct app ID/window class. The selected directory must be writable by the current user; no elevation is requested.
+Menu entries and icons always remain in the user profile, even when choosing a custom program directory.
+The installed copy records its real target path so it is recognized after relaunch and can self-update.
+An existing different installation is not overwritten; use its updater or move it aside explicitly first.
+After successful installation the current process exits and the installed copy starts after the single-instance
+lock has been released. Existing enabled autostart and registered Native Messaging paths are repaired by
+the installed copy; installation does not enable either feature if it was not already configured.

@@ -331,6 +331,10 @@
                 </ComboBox>
                 <CheckBox Content="下载完成后显示系统通知" IsChecked="{Binding Settings.ShowCompletionNotification}" />
                 <CheckBox Content="启用浏览器自动接管" IsChecked="{Binding Settings.EnableBrowserIntegration}" />
+                <StackPanel Spacing="6" IsVisible="{Binding CanInstallToSystem}">
+                  <TextBlock Text="可随时选择安装目录，创建或修复应用菜单入口和图标。" Classes="muted" TextWrapping="Wrap" />
+                  <Button Content="安装到系统…" Command="{Binding InstallToSystemCommand}" HorizontalAlignment="Left" />
+                </StackPanel>
               </StackPanel>
             </Border>
             <Border Name="SettingsUpdateCard" Classes="card" Padding="18" IsVisible="{Binding Updates.IsSupported}">
