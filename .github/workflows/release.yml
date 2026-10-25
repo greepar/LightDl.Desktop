@@ -2,9 +2,6 @@ name: LightDl Desktop Release
 
 on:
   push:
-    branches:
-      - main
-      - feat/http3-settings
     tags:
       - "v*"
   workflow_dispatch:
