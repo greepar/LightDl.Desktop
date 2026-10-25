@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:LightDl.UI.ViewModels"
+             xmlns:suki="using:SukiUI.Controls"
              mc:Ignorable="d"
              d:DesignWidth="390"
              d:DesignHeight="844"
@@ -94,7 +95,6 @@
           <StackPanel Grid.Row="3" Spacing="2">
             <Button Content="浏览器集成" Classes="nav" Classes.selected="{Binding IsBrowserSelected}" Command="{Binding SelectSectionCommand}" CommandParameter="browser" />
             <Button Content="设置" Classes="nav" Classes.selected="{Binding IsSettingsSelected}" Command="{Binding SelectSectionCommand}" CommandParameter="settings" />
-            <Button Content="发现新版本 · 查看" IsVisible="{Binding Updates.HasUpdate}" Command="{Binding SelectSectionCommand}" CommandParameter="settings" />
           </StackPanel>
         </Grid>
       </Border>
@@ -333,7 +333,7 @@
                 <CheckBox Content="启用浏览器自动接管" IsChecked="{Binding Settings.EnableBrowserIntegration}" />
               </StackPanel>
             </Border>
-            <Border Classes="card" Padding="18" IsVisible="{Binding Updates.IsSupported}">
+            <Border Name="SettingsUpdateCard" Classes="card" Padding="18" IsVisible="{Binding Updates.IsSupported}">
               <StackPanel Spacing="12">
                 <TextBlock Text="软件更新" FontSize="18" FontWeight="SemiBold" />
                 <Border Height="1" Background="#24808080" Margin="0,0,0,8" />
@@ -364,7 +364,10 @@
                   <Button Content="重启安装" Command="{Binding Updates.InstallUpdateCommand}" IsVisible="{Binding Updates.IsReadyToInstall}" Margin="0,0,8,8" />
                 </WrapPanel>
                 <Expander Header="版本说明" IsVisible="{Binding Updates.HasUpdate}">
-                  <TextBlock Text="{Binding Updates.ReleaseNotes}" TextWrapping="Wrap" />
+                  <StackPanel Spacing="10">
+                    <TextBlock Text="{Binding Updates.ReleaseNotes}" TextWrapping="Wrap" />
+                    <Button Content="查看完整 Release" Command="{Binding Updates.OpenReleasePageCommand}" HorizontalAlignment="Left" />
+                  </StackPanel>
                 </Expander>
               </StackPanel>
             </Border>
@@ -566,5 +569,6 @@
               Background="#2874E8" Foreground="White" BorderThickness="0"
               CornerRadius="12" Padding="26,13" FontWeight="SemiBold" />
     </Border>
+    <suki:SukiDialogHost Name="UpdateDialogHost" Manager="{Binding Updates.PromptDialogManager}" ZIndex="20" />
   </Panel>
 </UserControl>

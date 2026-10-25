@@ -70,6 +70,13 @@ public partial class App : Application
                 Content = new MainView()
             };
             _mainWindow.DataContext = _mainViewModel;
+            _mainViewModel.Updates.UpdateDiscovered += ShowUpdatePromptIfVisible;
+            _mainWindow.Activated += (_, _) => ShowUpdatePromptIfVisible();
+            _mainWindow.PropertyChanged += (_, e) =>
+            {
+                if (e.Property == Window.IsVisibleProperty || e.Property == Window.WindowStateProperty)
+                    Dispatcher.UIThread.Post(ShowUpdatePromptIfVisible);
+            };
             if (StartMinimizedToTray)
                 _mainWindow.ShowInTaskbar = false;
             else
@@ -120,6 +127,12 @@ public partial class App : Application
         if (_mainViewModel?.Updates is { AutomaticChecksEnabled: true } updates &&
             updates.CheckForUpdatesCommand.CanExecute(null))
             _ = updates.CheckForUpdatesCommand.ExecuteAsync(null);
+    }
+
+    private void ShowUpdatePromptIfVisible()
+    {
+        _mainViewModel?.Updates.TryShowUpdatePrompt(!_exitInProgress &&
+            _mainWindow is { IsVisible: true, WindowState: not WindowState.Minimized });
     }
 
     private void ShowAboutWindow()

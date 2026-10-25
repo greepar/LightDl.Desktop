@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Write release download links and reject missing/unexpected release assets."""
 import argparse
+import subprocess
 from pathlib import Path
 from urllib.parse import quote
 
@@ -29,13 +30,23 @@ def main():
     if actual != expected:
         parser.error(f"Release asset mismatch: missing={sorted(expected - actual)}, unexpected={sorted(actual - expected)}")
     base = f"https://github.com/{args.repository}/releases/download/{quote(args.tag, safe='')}"
-    lines = ["## Downloads / 下载", "", "| Platform / 平台 | Architecture / 架构 | Download / 下载 |",
+    lines = ["<!-- lightdl-downloads:start -->", "## Downloads / 下载", "", "| Platform / 平台 | Architecture / 架构 | Download / 下载 |",
              "| --- | --- | --- |"]
     for platform, architecture, name in PACKAGES:
         label = "AppImage" if name.endswith(".AppImage") else "DMG" if name.endswith(".dmg") else "ZIP"
         lines.append(f"| {platform} | {architecture} | [{label}]({base}/{name}) |")
     lines += ["", "Linux: make the AppImage executable, then run it (`chmod +x lightdl-desktop-linux-*.AppImage`).",
-              "", "macOS: open the DMG and drag LightDl into Applications.", ""]
+              "", "macOS: open the DMG and drag LightDl into Applications.", "", "<!-- lightdl-downloads:end -->", ""]
+    # GitHub auto-generated notes can contain only a compare link for direct commits.
+    # Include actual commit subjects so the application has useful version notes to show.
+    root = Path(__file__).resolve().parents[1]
+    previous = subprocess.run(["git", "describe", "--tags", "--abbrev=0", "--match", "v*", "HEAD^"],
+                              cwd=root, capture_output=True, text=True, check=False)
+    revision = f"{previous.stdout.strip()}..HEAD" if previous.returncode == 0 else "HEAD"
+    commits = subprocess.run(["git", "log", "--no-merges", "--format=%s", revision],
+                             cwd=root, capture_output=True, text=True, check=True)
+    subjects = [line.strip() for line in commits.stdout.splitlines() if line.strip()]
+    lines += ["## 更新内容", ""] + [f"- {subject}" for subject in subjects] + [""]
     args.output.write_text("\n".join(lines), encoding="utf-8")
 
 

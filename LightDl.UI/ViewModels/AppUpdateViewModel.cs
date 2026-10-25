@@ -11,6 +11,11 @@ public partial class AppUpdateViewModel : ViewModelBase
     private readonly Func<Func<Task>, Task> _installAndExit;
     private UpdateRelease? _release;
     private PreparedUpdate? _prepared;
+    private string? _promptedVersion;
+    public event Action? UpdateDiscovered;
+    public SukiUI.Dialogs.ISukiDialogManager PromptDialogManager { get; } = new SukiUI.Dialogs.SukiDialogManager();
+    public string AvailableVersion => _release?.Version ?? "";
+    [ObservableProperty] private bool _isUpdatePromptOpen;
 
     public AppUpdateViewModel(DesktopUpdateService? service, SettingsViewModel settings, Func<Func<Task>, Task>? installAndExit = null)
     {
@@ -70,17 +75,42 @@ public partial class AppUpdateViewModel : ViewModelBase
         {
             _release = await _service.CheckAsync(ct);
             HasUpdate = _release is not null;
-            ReleaseNotes = _release?.Notes ?? "";
+            ReleaseNotes = _release is null ? "" : ReleaseNotesFormatter.Format(_release.Notes);
+            OnPropertyChanged(nameof(AvailableVersion));
             Status = _release is null ? $"当前已是最新版本（{CurrentVersion}）" : $"发现新版本 {_release.Version}，可以下载更新。";
         }
         catch (Exception ex) { Status = "检查更新失败：" + ex.Message; }
         finally { IsBusy = false; }
+        if (_release is not null) UpdateDiscovered?.Invoke();
+    }
+
+    public void TryShowUpdatePrompt(bool mainWindowVisible)
+    {
+        if (!mainWindowVisible || _release is null || IsReadyToInstall || _promptedVersion == _release.Version) return;
+        _promptedVersion = _release.Version;
+        IsUpdatePromptOpen = true;
+    }
+
+    [RelayCommand]
+    private void DismissUpdatePrompt() => IsUpdatePromptOpen = false;
+
+    [RelayCommand]
+    private void OpenReleasePage()
+    {
+        if (_release is null) return;
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(
+                $"{UpdateFeed.Repository}/releases/tag/v{_release.Version}") { UseShellExecute = true });
+        }
+        catch (Exception ex) { Status = "无法打开 Release 页面：" + ex.Message; }
     }
 
     [RelayCommand(CanExecute = nameof(CanDownload), IncludeCancelCommand = true)]
     private async Task DownloadUpdateAsync(CancellationToken ct)
     {
         if (_service is null || _release is null) return;
+        IsUpdatePromptOpen = false;
         IsBusy = true;
         Progress = 0;
         Status = "正在下载并验证更新…";

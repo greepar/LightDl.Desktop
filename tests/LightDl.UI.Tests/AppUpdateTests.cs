@@ -206,7 +206,7 @@ public sealed class AppUpdateTests(HeadlessAppFixture fixture) : IDisposable
             {
                 await viewModel.Updates.CheckForUpdatesCommand.ExecuteAsync(null);
                 Assert.True(viewModel.Updates.HasUpdate);
-                var buttons = view.GetLogicalDescendants().OfType<Button>().ToArray();
+                var buttons = view.FindControl<Border>("SettingsUpdateCard")!.GetLogicalDescendants().OfType<Button>().ToArray();
                 var download = Assert.Single(buttons, b => b.Content as string == "下载更新");
                 Assert.Same(viewModel.Updates.DownloadUpdateCommand, download.Command);
                 Assert.True(download.IsVisible);
@@ -214,6 +214,14 @@ public sealed class AppUpdateTests(HeadlessAppFixture fixture) : IDisposable
                 Assert.Contains("1.0.4", viewModel.Updates.Status);
                 Assert.Same(viewModel.Updates.InstallUpdateCommand,
                     Assert.Single(buttons, b => b.Content as string == "重启安装").Command);
+                var host = view.FindControl<SukiUI.Controls.SukiDialogHost>("UpdateDialogHost");
+                Assert.NotNull(host);
+                Assert.Same(viewModel.Updates.PromptDialogManager, host.Manager);
+                viewModel.Updates.TryShowUpdatePrompt(true);
+                window.UpdateLayout();
+                Assert.True(viewModel.Updates.IsUpdatePromptOpen);
+                viewModel.Updates.PromptDialogManager.DismissDialog();
+                Assert.False(viewModel.Updates.IsUpdatePromptOpen);
             }
             finally { window.Close(); }
             return true;
@@ -255,6 +263,55 @@ public sealed class AppUpdateTests(HeadlessAppFixture fixture) : IDisposable
         Assert.False(settings.ToModel().CheckForUpdatesAutomatically);
         settings.MarkSaved(settings.ToModel());
         Assert.True(updates.InstallUpdateCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public async Task UpdatePromptWaitsForVisibleUiAndDoesNotRepeatSameVersion()
+    {
+        using var client = new HttpClient(new StaticHandler(Feed(DesktopUpdateService.GetRuntimeId()).ToJsonString()));
+        var vm = new AppUpdateViewModel(new DesktopUpdateService("1.0.3", client), new SettingsViewModel(new AppSettings()));
+        var discovered = 0;
+        vm.UpdateDiscovered += () => { discovered++; vm.TryShowUpdatePrompt(false); };
+        await vm.CheckForUpdatesCommand.ExecuteAsync(null);
+        Assert.Equal(1, discovered);
+        Assert.True(vm.HasUpdate);
+        Assert.False(vm.IsUpdatePromptOpen);
+        vm.TryShowUpdatePrompt(true);
+        Assert.True(vm.IsUpdatePromptOpen);
+        Assert.Equal("1.0.4", vm.AvailableVersion);
+        vm.DismissUpdatePromptCommand.Execute(null);
+        Assert.False(vm.IsUpdatePromptOpen);
+        await vm.CheckForUpdatesCommand.ExecuteAsync(null);
+        vm.TryShowUpdatePrompt(true);
+        Assert.False(vm.IsUpdatePromptOpen);
+        Assert.Equal(0, vm.Progress);
+        Assert.False(vm.IsReadyToInstall);
+    }
+
+    [Fact]
+    public void NotesRemoveDownloadTableAndKeepActualChanges()
+    {
+        const string body = "## Downloads / 下载\n\n| Platform | Download |\n| Linux | [AppImage](https://example.com/file) |\n\nLinux: chmod +x file\n\n## What's Changed\n* **Fix resume** by @author\n\n**Full Changelog**: https://example.com/compare";
+        var notes = ReleaseNotesFormatter.Format(body);
+        Assert.Contains("Fix resume", notes);
+        Assert.DoesNotContain("AppImage", notes);
+        Assert.DoesNotContain("chmod", notes);
+        Assert.DoesNotContain("**", notes);
+        Assert.DoesNotContain("https://", notes);
+    }
+
+    [Fact]
+    public void DownloadOnlyBodyShowsHonestFallbackInsteadOfInventedChanges()
+    {
+        var notes = ReleaseNotesFormatter.Format("## Downloads / 下载\n| Linux | URL |\n\n**Full Changelog**: https://example.com/compare");
+        Assert.Contains("未提供具体更新说明", notes);
+    }
+
+    [Fact]
+    public void MarkedDownloadsAreRemovedWithoutEatingFollowingChanges()
+    {
+        var notes = ReleaseNotesFormatter.Format("<!-- lightdl-downloads:start -->\n## Downloads\n| URL |\n<!-- lightdl-downloads:end -->\n\n## 更新内容\n- [修复任务](https://example.com)\n");
+        Assert.Equal("更新内容\n• 修复任务", notes);
     }
 
     public void Dispose()

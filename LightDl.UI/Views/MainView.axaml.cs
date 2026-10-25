@@ -15,6 +15,7 @@ public partial class MainView : UserControl
 {
     private MainViewModel? _viewModel;
     private bool _isDialogOpen;
+    private bool _updatePromptDisplayed;
     private ContextMenu? _downloadContextMenu;
     private TopLevel? _contextMenuOwner;
     private readonly SemaphoreSlim _fallbackDialogLock = new(1, 1);
@@ -96,6 +97,9 @@ public partial class MainView : UserControl
         if (_viewModel is not null)
         {
             _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+            _viewModel.Updates.PropertyChanged -= OnUpdatePropertyChanged;
+            _viewModel.Updates.PromptDialogManager.DismissDialog();
+            _updatePromptDisplayed = false;
             _viewModel.ConfirmHttp3FallbackAsync = null;
             _viewModel.ConfirmLeaveSettingsAsync = null;
         }
@@ -107,6 +111,8 @@ public partial class MainView : UserControl
         _viewModel.ConfirmHttp3FallbackAsync = ConfirmHttp3FallbackAsync;
         _viewModel.ConfirmLeaveSettingsAsync = ConfirmLeaveSettingsAsync;
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
+        _viewModel.Updates.PropertyChanged += OnUpdatePropertyChanged;
+        RefreshUpdatePrompt();
         if (_viewModel.PendingBrowserCapture is not null)
             _ = ShowPendingBrowserDialogAsync();
     }
@@ -118,6 +124,34 @@ public partial class MainView : UserControl
         {
             _ = ShowPendingBrowserDialogAsync();
         }
+    }
+
+    private void OnUpdatePropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(AppUpdateViewModel.IsUpdatePromptOpen)) RefreshUpdatePrompt();
+    }
+
+    private void RefreshUpdatePrompt()
+    {
+        if (_viewModel?.Updates is not { } updates) return;
+        if (!updates.IsUpdatePromptOpen)
+        {
+            if (_updatePromptDisplayed) updates.PromptDialogManager.DismissDialog();
+            return;
+        }
+        if (_updatePromptDisplayed) return;
+        _updatePromptDisplayed = true;
+        // Use SukiUI's host and its standard show/dismiss animation, without activating the OS window.
+        var shown = updates.PromptDialogManager.CreateDialog()
+            .WithTitle($"发现新版本 v{updates.AvailableVersion}")
+            .WithContent(new UpdatePromptView { DataContext = updates })
+            .OnDismissed(_ =>
+            {
+                _updatePromptDisplayed = false;
+                updates.DismissUpdatePromptCommand.Execute(null);
+            })
+            .TryShow();
+        if (!shown) _updatePromptDisplayed = false;
     }
 
     private Task<bool?> ConfirmLeaveSettingsAsync()
