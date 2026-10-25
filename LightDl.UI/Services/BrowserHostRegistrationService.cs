@@ -130,6 +130,9 @@ public sealed class BrowserHostRegistrationService
 
     private static string? FindHostExecutable()
     {
+        if (DesktopExecutable.AppImagePath is { } appImagePath)
+            return appImagePath;
+
         var executableName = OperatingSystem.IsWindows() ? "LightDl.Desktop.exe" : "LightDl.Desktop";
         var installedPath = Path.Combine(AppContext.BaseDirectory, executableName);
         if (File.Exists(installedPath))

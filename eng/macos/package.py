@@ -5,7 +5,6 @@ Inspired by greepar/PatchInstaller-Custom's macOS app/DMG packaging. Uses dmgbui
 for Finder layout without driving Finder or requesting Automation permissions.
 """
 import argparse
-import hashlib
 import json
 import os
 import pathlib
@@ -139,14 +138,13 @@ def main():
     dmg = output / f"{stem}.dmg"
     for path in (archive, dmg):
         path.unlink(missing_ok=True)
-    run("ditto", "-c", "-k", "--sequesterRsrc", "--keepParent", app, archive)
     keychain = os.environ.get("MACOS_SIGN_KEYCHAIN", "")
     if args.notary_profile:
+        run("ditto", "-c", "-k", "--sequesterRsrc", "--keepParent", app, archive)
         notarize(archive, args.notary_profile, keychain)
         run("xcrun", "stapler", "staple", app)
         run("xcrun", "stapler", "validate", app)
         archive.unlink()
-        run("ditto", "-c", "-k", "--sequesterRsrc", "--keepParent", app, archive)
     dmgbuild.build_dmg(str(dmg), "LightDl", settings={
         "format": "UDZO", "filesystem": "HFS+", "files": [str(app)],
         "symlinks": {"Applications": "/Applications"}, "icon": str(resources / "AppIcon.icns"),
@@ -163,13 +161,7 @@ def main():
         run("xcrun", "stapler", "validate", dmg)
         run("spctl", "--assess", "--type", "execute", "--verbose=2", app)
     run("hdiutil", "verify", dmg)
-    checksums = output / f"{stem}.sha256"
-    lines = []
-    for path in (archive, dmg):
-        with path.open("rb") as stream:
-            lines.append(f"{hashlib.file_digest(stream, 'sha256').hexdigest()}  {path.name}\n")
-    checksums.write_text("".join(lines))
-    print(f"Created {app}\nCreated {archive}\nCreated {dmg}\nSigning: {'ad-hoc (not notarized)' if args.identity == '-' else 'Developer ID'}", flush=True)
+    print(f"Created {app}\nCreated {dmg}\nSigning: {'ad-hoc (not notarized)' if args.identity == '-' else 'Developer ID'}", flush=True)
 
 
 if __name__ == "__main__":

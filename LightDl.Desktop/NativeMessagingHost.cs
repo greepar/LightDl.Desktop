@@ -135,7 +135,7 @@ internal static class NativeMessagingHost
 
     private static void TryStartDesktop()
     {
-        var executablePath = Environment.ProcessPath;
+        var executablePath = DesktopExecutable.ProcessPath;
         if (string.IsNullOrWhiteSpace(executablePath) ||
             string.Equals(Path.GetFileNameWithoutExtension(executablePath), "dotnet", StringComparison.OrdinalIgnoreCase))
             return;

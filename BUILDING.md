@@ -107,11 +107,10 @@ artifacts/macos-tools/bin/python eng/macos/verify.py artifacts/macos/osx-arm64 -
 ```
 
 Use `osx-x64` and an x64 publish for Intel. The packaging script checks the executable architecture.
-Outputs include `LightDl.app`, `lightdl-desktop-<rid>.zip` (containing the app),
-`lightdl-desktop-<rid>.dmg`, and SHA-256 checksums. Keep the executable inside the app bundle;
-browser native messaging and autostart use its actual `Contents/MacOS` path.
-The Actions artifacts preserve the app through `ditto` ZIP, which retains executable permissions
-and signatures; uploading an unarchived `.app` would lose these properties.
+The script creates `LightDl.app` for staging and `lightdl-desktop-<rid>.dmg` for distribution.
+Only the DMG is uploaded to Actions artifacts and Releases; no macOS ZIP or separate checksum file is published.
+When notarization is configured, a temporary app ZIP is used for Apple's submission and removed afterward.
+Keep the executable inside the installed app bundle; browser native messaging and autostart use its actual `Contents/MacOS` path.
 
 Both app and DMG are signed and verified automatically. With no signing secrets,
 this is an **ad-hoc signature**, as in the reference repository: it verifies bundle integrity,
@@ -143,3 +142,19 @@ keychain profile. An Apple Development certificate is not a Developer ID distrib
 The verification script extracts the ZIP and mounts the DMG read-only, validates both app signatures,
 checks the architecture/install layout, executes the packaged binary in native-messaging mode
 with an invalid frame (no GUI/download), and checks the delivered hashes.
+
+## Linux AppImage and release downloads
+
+CI packages Linux x64/ARM64 publishes into `lightdl-desktop-linux-<arch>.AppImage` using appimagetool `1.9.1`.
+The AppDir contains the executable, launcher entry and icon. No loose PNG or Linux ZIP is distributed.
+Run `bash eng/linux/package-appimage.sh publish/linux-x64 linux-x64 artifacts /path/to/appimagetool-x86_64.AppImage`
+to package locally; `desktop-file-validate` must be installed. Verify with
+`python3 eng/linux/verify-appimage.py artifacts/lightdl-desktop-linux-x64.AppImage --rid linux-x64`.
+The verification exercises the actual AppImage's native messaging entry point without a GUI or FUSE.
+
+Mark downloaded AppImages executable before launching. Browser native messaging registration and autostart
+persist the outer `APPIMAGE` path, not the temporary mount. Register them again after moving the AppImage.
+Desktop integration tools can install its bundled launcher/icon; the file manager's thumbnail support depends on the desktop.
+
+Tagged releases publish Windows ZIPs, Linux AppImages, macOS DMGs and browser extension ZIPs.
+`eng/release-notes.py` verifies the expected asset set and generates a download table above the automatic changelog.

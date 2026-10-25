@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify both delivered archives, including signatures after extraction/mounting."""
+"""Verify the delivered DMG, including signatures after mounting."""
 import argparse
 import json
 import pathlib
@@ -46,9 +46,6 @@ def main():
     architecture = "arm64" if args.rid == "osx-arm64" else "x86_64"
     stem = f"lightdl-desktop-{args.rid}"
     with tempfile.TemporaryDirectory(prefix="lightdl-archive-verify-") as temporary:
-        extracted = pathlib.Path(temporary) / "zip"
-        run("ditto", "-x", "-k", directory / f"{stem}.zip", extracted)
-        verify_app(extracted / "LightDl.app", architecture)
         mount = pathlib.Path(temporary) / "mounted"
         dmg = directory / f"{stem}.dmg"
         run("codesign", "--verify", "--strict", "--verbose=2", dmg)
@@ -62,12 +59,7 @@ def main():
                 assert store["Applications"]["Iloc"] == (410, 160)
         finally:
             run("hdiutil", "detach", mount)
-        for line in (directory / f"{stem}.sha256").read_text().splitlines():
-            import hashlib
-            expected, name = line.split("  ", 1)
-            with (directory / name).open("rb") as stream:
-                assert hashlib.file_digest(stream, "sha256").hexdigest() == expected
-    print("ZIP and DMG verified: app signatures, executable startup, architectures, layout and checksums.")
+    print("DMG verified: app signatures, executable startup, architectures and layout.")
 
 
 if __name__ == "__main__":

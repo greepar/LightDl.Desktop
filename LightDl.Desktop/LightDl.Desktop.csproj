@@ -35,7 +35,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\LightDl.UI\LightDl.UI.csproj" />
-        <Content Include="../LightDl.UI/Assets/lightdl-light.png" Link="lightdl.png"
+        <Content Include="../LightDl.UI/Assets/lightdl-light.png" Link="lightdl.png" Condition="$(RuntimeIdentifier.StartsWith('linux'))"
                  CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     </ItemGroup>
     <Import Project="../eng/WindowsX86Brotli.targets" />

@@ -1,6 +1,7 @@
 using System.Security;
 using System.Runtime.Versioning;
 using Microsoft.Win32;
+using LightDl.UI.Services;
 
 namespace LightDl.Desktop;
 
@@ -94,7 +95,7 @@ X-GNOME-Autostart-enabled=true
 
     private static IReadOnlyList<string> GetLaunchArguments()
     {
-        var processPath = Environment.ProcessPath
+        var processPath = DesktopExecutable.ProcessPath
             ?? throw new InvalidOperationException("无法确定 LightDl 可执行文件路径");
         var arguments = new List<string> { processPath };
         if (string.Equals(Path.GetFileNameWithoutExtension(processPath), "dotnet", StringComparison.OrdinalIgnoreCase))
