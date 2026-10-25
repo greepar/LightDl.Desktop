@@ -7,7 +7,7 @@ namespace LightDl.UI.Views;
 public partial class AboutWindow : SukiWindow
 {
     public string VersionText { get; } = "版本 " +
-        (Assembly.GetEntryAssembly()?.GetName().Version?.ToString(3) ?? "1.0.2");
+        (Assembly.GetEntryAssembly()?.GetName().Version?.ToString(3) ?? "1.0.3");
 
     public AboutWindow()
     {
