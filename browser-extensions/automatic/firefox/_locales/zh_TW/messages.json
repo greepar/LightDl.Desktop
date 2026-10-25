@@ -1,0 +1,26 @@
+{
+  "extensionName": {
+    "message": "LightDl 自动接管"
+  },
+  "extensionDescription": {
+    "message": "将浏览器下载发送到本机 LightDl，使用更快的并发下载和断点续传。"
+  },
+  "heading": {
+    "message": "浏览器自动接管"
+  },
+  "summary": {
+    "message": "下载任务会通过 Native Messaging 发送到同一台电脑上的 LightDl。"
+  },
+  "requireApp": {
+    "message": "需要安装并运行 LightDl Desktop"
+  },
+  "requireHost": {
+    "message": "需要在 LightDl 中注册浏览器宿主"
+  },
+  "fallback": {
+    "message": "接管失败或被拒绝时，浏览器会恢复原下载"
+  },
+  "privacy": {
+    "message": "下载 URL 和必要 Cookie 仅用于本机下载，不会发送到开发者服务器。"
+  }
+}

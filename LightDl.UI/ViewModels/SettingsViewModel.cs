@@ -44,6 +44,7 @@ public partial class SettingsViewModel : ViewModelBase
         StartWithSystem = settings.StartWithSystem;
         ShowCompletionNotification = settings.ShowCompletionNotification;
         ThemeMode = settings.ThemeMode;
+        LanguageMode = settings.LanguageMode;
         EnableBrowserIntegration = settings.EnableBrowserIntegration;
         CheckForUpdatesAutomatically = settings.CheckForUpdatesAutomatically;
     }
@@ -51,13 +52,13 @@ public partial class SettingsViewModel : ViewModelBase
     public void DiscardChanges()
     {
         var saved = JsonSerializer.Deserialize(_savedSnapshot, AppSettingsJsonContext.Default.AppSettings)
-            ?? throw new InvalidOperationException("无法恢复已保存的设置。");
+            ?? throw new InvalidOperationException(L.T("无法恢复已保存的设置。"));
         ApplyModel(saved);
         UpdateUnsavedChanges();
     }
 
     public AppSettings GetSavedModel() => JsonSerializer.Deserialize(_savedSnapshot, AppSettingsJsonContext.Default.AppSettings)
-        ?? throw new InvalidOperationException("无法读取已保存设置。");
+        ?? throw new InvalidOperationException(L.T("无法读取已保存设置。"));
 
     public void MarkCloseBehaviorSaved(int behavior)
     {
@@ -109,14 +110,15 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty] private bool _startWithSystem;
     [ObservableProperty] private bool _showCompletionNotification;
     [ObservableProperty] private int _themeMode;
+    [ObservableProperty] private int _languageMode;
     [ObservableProperty] private bool _enableBrowserIntegration;
     [ObservableProperty] private bool _checkForUpdatesAutomatically;
 
     public string Http3ModeDescription => Http3Mode switch
     {
-        1 => "所有请求仅使用 HTTP/3；服务器、网络或设备不支持时下载失败，不回退。仅支持 HTTPS。",
-        2 => "不探测 HTTP/3，使用 HTTP/2，并可回退到 HTTP/1.1。",
-        _ => "用等长分片实测 H2/H3 速度，后续持续使用更快的协议；H3 不可用时自动回退。小文件和不支持分片的文件不测速。"
+        1 => L.T("所有请求仅使用 HTTP/3；服务器、网络或设备不支持时下载失败，不回退。仅支持 HTTPS。"),
+        2 => L.T("不探测 HTTP/3，使用 HTTP/2，并可回退到 HTTP/1.1。"),
+        _ => L.T("用等长分片实测 H2/H3 速度，后续持续使用更快的协议；H3 不可用时自动回退。小文件和不支持分片的文件不测速。")
     };
 
     public bool ShowHttp3ProxyNote => Http3Mode == 0 && ProxyMode != 1;
@@ -149,6 +151,7 @@ public partial class SettingsViewModel : ViewModelBase
         StartWithSystem = StartWithSystem,
         ShowCompletionNotification = ShowCompletionNotification,
         ThemeMode = ThemeMode,
+        LanguageMode = LanguageMode,
         EnableBrowserIntegration = EnableBrowserIntegration,
         CheckForUpdatesAutomatically = CheckForUpdatesAutomatically
     };

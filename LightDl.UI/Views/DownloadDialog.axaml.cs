@@ -28,7 +28,7 @@ public partial class DownloadDialog : UserControl
 
         var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
         {
-            Title = "选择下载目录",
+            Title = L.T("选择下载目录"),
             AllowMultiple = false
         });
 

@@ -61,8 +61,8 @@ public sealed class Http3FallbackTests(HeadlessAppFixture fixture)
                 Assert.Same(item, download);
                 Assert.All(origin.Requests, version => Assert.Equal(3, version.Major));
                 Assert.Equal(DownloadState.Downloading, item.State);
-                Assert.Contains("等待选择", item.StatusText);
-                Assert.Contains("连接失败", item.ProtocolText);
+                Assert.Equal(L.T("H3 连接失败，等待选择是否回退"), item.StatusText);
+                Assert.Equal(L.T("HTTP/3（连接失败）"), item.ProtocolText);
                 await Task.Delay(10, ct);
                 return accept;
             };
@@ -74,7 +74,7 @@ public sealed class Http3FallbackTests(HeadlessAppFixture fixture)
             if (accept)
             {
                 Assert.Contains($"HTTP/{(tcpVersion == 1 ? "1.1" : "2")}", item.ProtocolText);
-                Assert.Contains("本任务已回退", item.ProtocolText);
+                Assert.Contains(L.T("（本任务已回退）"), item.ProtocolText);
                 Assert.Equal(origin.Payload, await File.ReadAllBytesAsync(item.FilePath!));
                 var record = item.ToRecord();
                 record.State = DownloadState.Paused;
@@ -200,7 +200,7 @@ public sealed class Http3FallbackTests(HeadlessAppFixture fixture)
             {
                 await origin.BodyStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
                 Assert.Equal(DownloadState.Downloading, item.State);
-                Assert.Equal("正在下载", item.StatusText);
+                Assert.Equal(L.T("正在下载"), item.StatusText);
                 Assert.Equal(1, vm.ActiveCount);
             }
             finally
@@ -248,7 +248,7 @@ public sealed class Http3FallbackTests(HeadlessAppFixture fixture)
                 menu.Open(card);
                 await Task.Delay(100);
                 window.UpdateLayout();
-                var details = menu.GetVisualDescendants().OfType<MenuItem>().First(m => Equals(m.Header, "详情"));
+                var details = menu.GetVisualDescendants().OfType<MenuItem>().First(m => Equals(m.Header, L.T("详情")));
                 var root = TopLevel.GetTopLevel(details)!;
                 var point = details.TranslatePoint(new Point(details.Bounds.Width / 2, details.Bounds.Height / 2), root)!.Value;
                 Assert.True(details.Bounds.Width > 0 && details.Bounds.Height > 0, details.Bounds.ToString());
@@ -320,9 +320,9 @@ public sealed class Http3FallbackTests(HeadlessAppFixture fixture)
             try
             {
                 var result = dialog.ShowDialog<WindowCloseAction?>(owner);
-                var button = await FindButtonAsync(dialog, buttonText);
+                var button = await FindButtonAsync(dialog, L.T(buttonText));
                 Assert.Contains(dialog.GetVisualDescendants().OfType<TextBlock>(), text =>
-                    text.IsEffectivelyVisible && text.Text?.Contains("未保存") == true);
+                    text.IsEffectivelyVisible && text.Text == L.T("有未保存的设置，退出后这些修改将丢失。"));
                 button.Focus();
                 dialog.KeyPressQwerty(PhysicalKey.Space, RawInputModifiers.None);
                 dialog.KeyReleaseQwerty(PhysicalKey.Space, RawInputModifiers.None);
@@ -400,17 +400,17 @@ public sealed class Http3FallbackTests(HeadlessAppFixture fixture)
             var secondResult = vm.ConfirmHttp3FallbackAsync!(second, error, CancellationToken.None);
             try
             {
-                await FindButtonAsync(window, "回退 H2 / H1.1 继续");
+                await FindButtonAsync(window, L.T("回退 H2 / H1.1 继续"));
                 Assert.False(secondResult.IsCompleted);
                 canceled.Cancel();
                 await Assert.ThrowsAnyAsync<OperationCanceledException>(() => firstResult);
                 await WaitForDialogTextAsync(window, "second.bin");
-                var yes = await FindButtonAsync(window, "回退 H2 / H1.1 继续");
+                var yes = await FindButtonAsync(window, L.T("回退 H2 / H1.1 继续"));
                 yes.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
                 Assert.True(await secondResult.WaitAsync(TimeSpan.FromSeconds(5)));
                 var thirdResult = vm.ConfirmHttp3FallbackAsync(first, error, CancellationToken.None);
                 await WaitForDialogTextAsync(window, "first.bin");
-                var no = await FindButtonAsync(window, "保持 H3，停止本次下载");
+                var no = await FindButtonAsync(window, L.T("保持 H3，停止本次下载"));
                 no.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
                 Assert.False(await thirdResult.WaitAsync(TimeSpan.FromSeconds(5)));
             }

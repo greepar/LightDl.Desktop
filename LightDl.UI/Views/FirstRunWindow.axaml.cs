@@ -18,16 +18,17 @@ public partial class FirstRunWindow : SukiWindow
     {
         _installation = installation;
         InitializeComponent();
+        WindowsShortcutOptions.IsVisible = OperatingSystem.IsWindows();
         DataContext = this;
         InstallDirectoryBox.Text = Path.GetDirectoryName(InstallPath);
         UpdatePathPreview();
         if (fromSettings)
         {
-            Title = "安装到系统";
-            ChoiceTitle.Text = "安装到系统";
-            PortableButton.Content = "取消";
+            Title = L.T("安装到系统");
+            ChoiceTitle.Text = L.T("安装到系统");
+            PortableButton.Content = L.T("取消");
             RememberChoiceBox.IsVisible = false;
-            PortableHint.Text = "可以重新选择安装目录。取消不会修改现有设置或使用方式。";
+            PortableHint.Text = L.T("可以重新选择安装目录。取消不会修改现有设置或使用方式。");
         }
         else WindowStartupLocation = WindowStartupLocation.CenterScreen;
         _fromSettings = fromSettings;
@@ -41,8 +42,8 @@ public partial class FirstRunWindow : SukiWindow
     private void UpdatePathPreview()
     {
         if (InstallPathPreview is null) return;
-        try { InstallPathPreview.Text = "程序位置：" + DesktopInstallationService.ResolveInstallPath(InstallDirectoryBox.Text ?? ""); }
-        catch (IOException) { InstallPathPreview.Text = "请选择有效的安装目录。"; }
+        try { InstallPathPreview.Text = L.T("程序位置：") + DesktopInstallationService.ResolveInstallPath(InstallDirectoryBox.Text ?? ""); }
+        catch (IOException) { InstallPathPreview.Text = L.T("请选择有效的安装目录。"); }
     }
 
     private async void BrowseDirectory(object? sender, RoutedEventArgs e)
@@ -51,14 +52,14 @@ public partial class FirstRunWindow : SukiWindow
         {
             var folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
             {
-                Title = "选择 LightDl 安装目录", AllowMultiple = false
+                Title = L.T("选择 LightDl 安装目录"), AllowMultiple = false
             });
             if (folders.Count > 0 && folders[0].TryGetLocalPath() is { } path) InstallDirectoryBox.Text = path;
         }
         catch (Exception ex)
         {
             InstallStatus.IsVisible = true;
-            InstallStatus.Text = "无法打开目录选择器，请直接填写目录：" + ex.Message;
+            InstallStatus.Text = L.T("无法打开目录选择器，请直接填写目录：") + ex.Message;
         }
     }
 
@@ -80,19 +81,22 @@ public partial class FirstRunWindow : SukiWindow
         _installing = true;
         ChoiceButtons.IsEnabled = false;
         DirectoryPicker.IsEnabled = false;
+        WindowsShortcutOptions.IsEnabled = false;
         InstallStatus.IsVisible = true;
-        InstallStatus.Text = "正在安装并配置应用菜单…";
+        InstallStatus.Text = L.T("正在安装并配置应用菜单…");
         try
         {
-            await _installation.InstallAsync(InstallDirectoryBox.Text, rememberChoice: _fromSettings || RememberChoiceBox.IsChecked == true);
+            await _installation.InstallAsync(InstallDirectoryBox.Text, rememberChoice: _fromSettings || RememberChoiceBox.IsChecked == true,
+                createDesktopShortcut: CreateDesktopShortcutBox.IsChecked == true,
+                createStartMenuShortcut: CreateStartMenuShortcutBox.IsChecked == true);
             _installing = false;
             ContinueRequested = true;
             Close(true);
         }
         catch (Exception ex)
         {
-            InstallStatus.Text = "安装失败：" + ex.Message + "\n你仍可以选择直接运行。";
+            InstallStatus.Text = L.T("安装失败：") + ex.Message + L.T("\n你仍可以选择直接运行。");
         }
-        finally { _installing = false; ChoiceButtons.IsEnabled = true; DirectoryPicker.IsEnabled = true; }
+        finally { _installing = false; ChoiceButtons.IsEnabled = true; DirectoryPicker.IsEnabled = true; WindowsShortcutOptions.IsEnabled = true; }
     }
 }

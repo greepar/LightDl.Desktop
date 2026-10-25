@@ -13,7 +13,7 @@ using LightDl.UI.Services.Updates;
 
 namespace LightDl.UI;
 
-public partial class App : Application
+public partial class App : Application, Localization.ILocalizable
 {
     public const string DisplayName = "Light Downloader Manager";
 
@@ -42,14 +42,19 @@ public partial class App : Application
     private bool _installationPromptShown;
     private FirstRunWindow? _firstRunWindow;
     private readonly List<string[]> _pendingDesktopArguments = [];
+    private SukiUI.SukiTheme? _desktopTheme;
+    private NativeMenuItem? _aboutMenuItem;
 
     public override void Initialize()
     {
+        L.ConfigureAtStartup(new AppSettingsService().Load().LanguageMode);
+        L.Register(this);
         AvaloniaXamlLoader.Load(this);
         if (OperatingSystem.IsMacOS())
         {
             var menu = new NativeMenu();
-            var about = new NativeMenuItem($"About {DisplayName}");
+            var about = new NativeMenuItem(L.F($"关于 {DisplayName}"));
+            _aboutMenuItem = about;
             about.Click += (_, _) => ShowAboutWindow();
             menu.Items.Add(about);
             NativeMenu.SetMenu(this, menu);
@@ -62,7 +67,10 @@ public partial class App : Application
         {
             _desktopLifetime = desktop;
             if (DesktopThemeFactory?.Invoke() is { } desktopTheme)
+            {
                 Styles.Add(desktopTheme);
+                _desktopTheme = desktopTheme as SukiUI.SukiTheme;
+            }
 
             desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
             if (!StartMinimizedToTray && !SkipFirstRunForUpdate &&
@@ -177,7 +185,7 @@ public partial class App : Application
                     }
                     catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
                     {
-                        _mainViewModel.StatusMessage = "安装后启动路径更新失败：" + ex.Message;
+                        _mainViewModel.StatusMessage = L.T("安装后启动路径更新失败：") + ex.Message;
                     }
                 }
                 await ShowInstallationChoiceAsync();
@@ -211,7 +219,7 @@ public partial class App : Application
             return;
         if (fromSettings && _mainViewModel?.Settings.HasUnsavedChanges == true)
         {
-            _mainViewModel.StatusMessage = "请先保存设置，再安装到系统。";
+            _mainViewModel.StatusMessage = L.T("请先保存设置，再安装到系统。");
             return;
         }
         _installationPromptActive = true;
@@ -247,12 +255,24 @@ public partial class App : Application
             Styles.Add(mobileTheme);
     }
 
+    public void RefreshLanguage()
+    {
+        if (_desktopTheme is not null) _desktopTheme.Locale = L.CultureName;
+        if (_aboutMenuItem is not null) _aboutMenuItem.Header = L.F($"关于 {DisplayName}");
+        if (_trayIcon is not null)
+        {
+            _trayIcon.ToolTipText = L.T("LightDl 下载管理器");
+            if (_trayIcon.Menu?.Items[0] is NativeMenuItem show) show.Header = L.T("显示 LightDl");
+            if (_trayIcon.Menu?.Items[2] is NativeMenuItem exit) exit.Header = L.T("退出");
+        }
+    }
+
     private void CreateTrayIcon(IClassicDesktopStyleApplicationLifetime desktop)
     {
-        var showItem = new NativeMenuItem("显示 LightDl");
+        var showItem = new NativeMenuItem(L.T("显示 LightDl"));
         showItem.Click += (_, _) => ShowMainWindow();
 
-        var exitItem = new NativeMenuItem("退出");
+        var exitItem = new NativeMenuItem(L.T("退出"));
         exitItem.Click += async (_, _) => await ExitAsync();
 
         var menu = new NativeMenu();
@@ -262,7 +282,7 @@ public partial class App : Application
 
         _trayIcon = new TrayIcon
         {
-            ToolTipText = "LightDl Download Manager",
+            ToolTipText = L.T("LightDl 下载管理器"),
             Menu = menu,
             IsVisible = true
         };
@@ -329,9 +349,9 @@ public partial class App : Application
     public async Task InstallUpdateAndExitAsync(Func<Task> startInstaller)
     {
         if (_exitInProgress || _desktopLifetime is not { } desktop)
-            throw new InvalidOperationException("应用正在退出，请稍后重试。");
+            throw new InvalidOperationException(L.T("应用正在退出，请稍后重试。"));
         if (_mainViewModel?.Settings.HasUnsavedChanges == true)
-            throw new InvalidOperationException("请先保存设置，再重启安装。");
+            throw new InvalidOperationException(L.T("请先保存设置，再重启安装。"));
         _exitInProgress = true;
         try
         {

@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "LightDl Automatic Integration",
-  "version": "0.1.1",
-  "description": "Send browser downloads to the local LightDl desktop app for faster, resumable downloading.",
+  "name": "__MSG_extensionName__",
+  "version": "0.1.2",
+  "description": "__MSG_extensionDescription__",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAodZ2BYUADpkAK2FiJBA316ldvolPKVTCl+RDIk4jo3E5ytv842Zp+JHNeouvLc9QFYmmn9k0u1xuigInX0Cm2+Gm1t6qt9+jtV99ceiiiWxeG5WNXHpdLjCDYjxqwH472XTe0qFui/mnuK7jVZO0hyIpI7A55CM0PXF4htsu3aFEsZTt7DLvwPhlbI0F2dkFjdA4/rwdOp6Wjgn4srOK/iYoe1LJWr2ZQskCaqINgHwzhbv1J0aRC1VEgTrUf3UytS8N3b05x2yS3W3M2O+DGMvV2FGMtYE7AAXdZMXcwqvQW+pf/jzXJNRHQUNCjNDsyb8HYvQVcli17CNb21T0FQIDAQAB",
   "homepage_url": "https://github.com/greepar/LightDl.Desktop",
   "icons": {
@@ -11,10 +11,17 @@
     "48": "icons/icon-48.png",
     "128": "icons/icon-128.png"
   },
-  "permissions": ["downloads", "cookies", "nativeMessaging", "storage"],
-  "host_permissions": ["<all_urls>"],
+  "permissions": [
+    "downloads",
+    "cookies",
+    "nativeMessaging",
+    "storage"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
   "action": {
-    "default_title": "LightDl Automatic Integration",
+    "default_title": "__MSG_extensionName__",
     "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon-16.png",
@@ -23,5 +30,6 @@
   },
   "background": {
     "service_worker": "background.js"
-  }
+  },
+  "default_locale": "en"
 }

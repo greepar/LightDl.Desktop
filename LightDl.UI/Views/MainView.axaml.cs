@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using Avalonia;
 using Avalonia.VisualTree;
+using Avalonia.LogicalTree;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Input;
@@ -23,8 +24,39 @@ public partial class MainView : UserControl
     public MainView()
     {
         InitializeComponent();
+        SettingsScrollViewer.PropertyChanged += (_, e) =>
+        {
+            if (e.Property == ScrollViewer.OffsetProperty ||
+                (e.Property == IsVisibleProperty && !SettingsScrollViewer.IsVisible))
+                CloseSettingsDropdowns();
+        };
         DataContextChanged += OnDataContextChanged;
         DetachedFromVisualTree += (_, _) => CloseDownloadContextMenu();
+    }
+
+    private void CloseSettingsDropdowns()
+    {
+        foreach (var selector in SettingsScrollViewer.GetLogicalDescendants().OfType<ComboBox>())
+            if (selector.IsDropDownOpen) selector.IsDropDownOpen = false;
+    }
+
+    private async void ExportBrowserExtension(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: string browser } button || TopLevel.GetTopLevel(this) is not Window owner) return;
+        button.IsEnabled = false;
+        try
+        {
+            var downloads = await owner.StorageProvider.TryGetWellKnownFolderAsync(WellKnownFolder.Downloads);
+            var directory = downloads?.TryGetLocalPath() ?? Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
+            var export = await Services.BrowserExtensionBundle.ExportAsync(browser, directory);
+            await new BrowserExtensionWindow(browser, export).ShowDialog(owner);
+        }
+        catch (Exception ex)
+        {
+            if (_viewModel is not null) _viewModel.StatusMessage = L.T("无法释放浏览器扩展：") + ex.Message;
+        }
+        finally { button.IsEnabled = true; }
     }
 
     private void OnDownloadContextMenuOpened(object? sender, RoutedEventArgs e)
@@ -84,7 +116,7 @@ public partial class MainView : UserControl
 
         var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
         {
-            Title = "选择默认下载目录",
+            Title = L.T("选择默认下载目录"),
             AllowMultiple = false
         });
 
@@ -143,7 +175,7 @@ public partial class MainView : UserControl
         _updatePromptDisplayed = true;
         // Use SukiUI's host and its standard show/dismiss animation, without activating the OS window.
         var shown = updates.PromptDialogManager.CreateDialog()
-            .WithTitle($"发现新版本 v{updates.AvailableVersion}")
+            .WithTitle(L.F($"发现新版本 v{updates.AvailableVersion}"))
             .WithContent(new UpdatePromptView { DataContext = updates })
             .OnDismissed(_ =>
             {
@@ -276,15 +308,15 @@ public partial class MainView : UserControl
                 // Show a stable summary instead of raw URLs/response messages.
                 var content = new TextBlock
                 {
-                    Text = $"“{item.FileName}”无法通过 HTTP/3 建立或维持连接。\n\n是否仅将当前下载回退到 HTTP/2 / HTTP/1.1？已有可续传分片会继续使用，全局强制 H3 设置保持不变。",
+                    Text = L.F($"“{item.FileName}”无法通过 HTTP/3 建立或维持连接。\n\n是否仅将当前下载回退到 HTTP/2 / HTTP/1.1？已有可续传分片会继续使用，全局强制 H3 设置保持不变。"),
                     TextWrapping = Avalonia.Media.TextWrapping.Wrap,
                     MaxWidth = 480
                 };
                 var shown = viewModel.DialogManager.CreateDialog()
-                    .WithTitle("HTTP/3 连接失败")
+                    .WithTitle(L.T("HTTP/3 连接失败"))
                     .WithContent(content)
-                    .WithActionButton("保持 H3，停止本次下载", dialog => { shownDialog = dialog; Complete(false); }, true)
-                    .WithActionButton("回退 H2 / H1.1 继续", dialog => { shownDialog = dialog; Complete(true); }, true)
+                    .WithActionButton(L.T("保持 H3，停止本次下载"), dialog => { shownDialog = dialog; Complete(false); }, true)
+                    .WithActionButton(L.T("回退 H2 / H1.1 继续"), dialog => { shownDialog = dialog; Complete(true); }, true)
                     .OnDismissed(_ => completion.TrySetResult(false))
                     .TryShow();
                 if (!shown) return false;

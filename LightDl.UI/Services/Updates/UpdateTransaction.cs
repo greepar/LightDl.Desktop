@@ -26,14 +26,14 @@ public sealed class UpdateTransaction
             !Regex.IsMatch(Path.GetFileName(Stage), @"^\.lightdl-update-[a-f0-9]{32}$") ||
             Path.GetDirectoryName(Path.GetFullPath(Stage)) != Path.GetDirectoryName(Path.GetFullPath(Target)) ||
             !Regex.IsMatch(ExecutableHash, "^[A-Fa-f0-9]{64}$") || ParentPid <= 0)
-            throw new InvalidDataException("更新事务路径无效。");
+            throw new InvalidDataException(L.T("更新事务路径无效。"));
         UpdateFeed.ParseVersion(Version);
         if (IsBundle && !Target.EndsWith(".app", StringComparison.Ordinal))
-            throw new InvalidDataException("更新目标不是应用包。");
+            throw new InvalidDataException(L.T("更新目标不是应用包。"));
         foreach (var path in new[] { Stage, Target, Candidate, Backup })
             if (File.Exists(path) || Directory.Exists(path))
                 if ((File.GetAttributes(path) & FileAttributes.ReparsePoint) != 0)
-                    throw new InvalidDataException("更新路径不能是符号链接。");
+                    throw new InvalidDataException(L.T("更新路径不能是符号链接。"));
     }
 
     public static async Task<string> HashAsync(string path, CancellationToken ct = default)
@@ -44,7 +44,7 @@ public sealed class UpdateTransaction
 
     public static UpdateTransaction Load(string path) =>
         JsonSerializer.Deserialize(File.ReadAllText(path), UpdateJsonContext.Default.UpdateTransaction)
-        ?? throw new InvalidDataException("更新事务不存在。");
+        ?? throw new InvalidDataException(L.T("更新事务不存在。"));
 
     public void Save() => File.WriteAllText(PlanFile,
         JsonSerializer.Serialize(this, UpdateJsonContext.Default.UpdateTransaction));
@@ -78,7 +78,7 @@ public static class UpdateInstaller
         }
         catch (Exception ex)
         {
-            TryWriteStatus($"更新未完成：{ex.Message}\n事务目录：{plan?.Stage}");
+            TryWriteStatus(L.F($"更新未完成：{ex.Message}\n事务目录：{plan?.Stage}"));
             return 1;
         }
     }
@@ -89,13 +89,13 @@ public static class UpdateInstaller
     {
         plan.Validate();
         if (File.Exists(plan.Backup) || Directory.Exists(plan.Backup))
-            throw new IOException("备份已存在，已取消替换。");
+            throw new IOException(L.T("备份已存在，已取消替换。"));
         var oldMoved = false;
         var newMoved = false;
         try
         {
             if (!string.Equals(await UpdateTransaction.HashAsync(plan.Executable, ct), plan.ExecutableHash, StringComparison.OrdinalIgnoreCase))
-                throw new InvalidDataException("待安装程序的校验值发生变化。");
+                throw new InvalidDataException(L.T("待安装程序的校验值发生变化。"));
             if (plan.IsBundle) await MacUpdateBundle.VerifyAsync(plan.Candidate, plan.Target, plan.Version, ct);
             await MoveWithRetryAsync(plan.Target, plan.Backup, plan.IsBundle, ct);
             oldMoved = true;
@@ -111,24 +111,24 @@ public static class UpdateInstaller
                 using var rollbackTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(60));
                 if (newMoved) await MoveWithRetryAsync(plan.Target, plan.Candidate, plan.IsBundle, rollbackTimeout.Token);
                 if (oldMoved) await MoveWithRetryAsync(plan.Backup, plan.Target, plan.IsBundle, rollbackTimeout.Token);
-                report?.Invoke($"更新失败，旧版本已恢复：{error.Message}");
+                report?.Invoke(L.F($"更新失败，旧版本已恢复：{error.Message}"));
                 if (File.Exists(plan.Target) || Directory.Exists(plan.Target))
                     await launch(plan, true, rollbackTimeout.Token);
             }
             catch (Exception rollbackError)
             {
-                throw new IOException($"更新失败；自动恢复未完成，请从 {plan.Backup} 恢复程序。{rollbackError.Message}", error);
+                throw new IOException(L.F($"更新失败；自动恢复未完成，请从 {plan.Backup} 恢复程序。{rollbackError.Message}"), error);
             }
-            throw new IOException("旧版本已保留或恢复：" + error.Message, error);
+            throw new IOException(L.T("旧版本已保留或恢复：") + error.Message, error);
         }
         // Once the new application is ready, a bookkeeping failure must not replace a running app.
         try { File.WriteAllText(Path.Combine(plan.Stage, "completed"), plan.Version); }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            report?.Invoke($"已启动 {plan.Version}，旧版备份保留在 {plan.Backup}：{ex.Message}");
+            report?.Invoke(L.F($"已启动 {plan.Version}，旧版备份保留在 {plan.Backup}：{ex.Message}"));
             return;
         }
-        report?.Invoke($"已更新到 {plan.Version}。");
+        report?.Invoke(L.F($"已更新到 {plan.Version}。"));
         // Keep the backup until a later application startup cleans this completed transaction.
     }
 
@@ -159,7 +159,7 @@ public static class UpdateInstaller
             File.Delete(plan.ReadyFile);
             info.ArgumentList.Add("--update-ready=" + plan.ReadyFile);
         }
-        using var process = Process.Start(info) ?? throw new IOException("无法启动更新后的程序。");
+        using var process = Process.Start(info) ?? throw new IOException(L.T("无法启动更新后的程序。"));
         if (rollback) return;
         var ready = false;
         try
@@ -173,10 +173,10 @@ public static class UpdateInstaller
                     ready = true;
                     return;
                 }
-                if (process.HasExited) throw new IOException("新版程序在启动完成前退出。");
+                if (process.HasExited) throw new IOException(L.T("新版程序在启动完成前退出。"));
                 await Task.Delay(200, ct);
             }
-            throw new TimeoutException("新版程序未能完成启动。");
+            throw new TimeoutException(L.T("新版程序未能完成启动。"));
         }
         finally
         {

@@ -1,0 +1,26 @@
+{
+  "extensionName": {
+    "message": "LightDl Automatic Integration"
+  },
+  "extensionDescription": {
+    "message": "Send browser downloads to the local LightDl desktop app for faster, resumable downloading."
+  },
+  "heading": {
+    "message": "Browser download capture"
+  },
+  "summary": {
+    "message": "Downloads are sent to LightDl on this computer through Native Messaging."
+  },
+  "requireApp": {
+    "message": "Install and run LightDl Desktop."
+  },
+  "requireHost": {
+    "message": "Register the browser host in LightDl."
+  },
+  "fallback": {
+    "message": "Your browser resumes the original download if capture fails or is declined."
+  },
+  "privacy": {
+    "message": "Download URLs and required cookies are used only for local downloads, never sent to developer servers."
+  }
+}

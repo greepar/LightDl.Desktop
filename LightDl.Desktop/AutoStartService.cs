@@ -96,7 +96,7 @@ X-GNOME-Autostart-enabled=true
     private static IReadOnlyList<string> GetLaunchArguments()
     {
         var processPath = DesktopExecutable.ProcessPath
-            ?? throw new InvalidOperationException("无法确定 LightDl 可执行文件路径");
+            ?? throw new InvalidOperationException(L.T("无法确定 LightDl 可执行文件路径"));
         var arguments = new List<string> { processPath };
         if (string.Equals(Path.GetFileNameWithoutExtension(processPath), "dotnet", StringComparison.OrdinalIgnoreCase))
         {

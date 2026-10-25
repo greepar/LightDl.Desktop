@@ -1,4 +1,4 @@
-﻿using Avalonia;
+using Avalonia;
 using Avalonia.Threading;
 using LightDl.Desktop.Views;
 using LightDl.UI;
@@ -45,7 +45,7 @@ internal static class Program
         App.DesktopWindowFactory = static () => new MainWindow();
         App.DesktopThemeFactory = static () => new SukiTheme
         {
-            Locale = "zh-CN",
+            Locale = L.CultureName,
             ThemeColor = SukiColor.Blue
         };
         StartupPlatform.ConfigureAutoStartAsync = AutoStartService.ConfigureAsync;

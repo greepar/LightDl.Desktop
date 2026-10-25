@@ -87,11 +87,14 @@ public sealed class DesktopInstallationTests(HeadlessAppFixture fixture) : IDisp
             try
             {
                 var buttons = window.GetLogicalDescendants().OfType<Button>().Select(b => b.Content as string).ToArray();
-                Assert.Contains("安装到系统", buttons);
-                Assert.Contains("直接运行", buttons);
+                Assert.Contains(L.T("安装到系统"), buttons);
+                Assert.Contains(L.T("直接运行"), buttons);
                 Assert.True(installation.NeedsChoice);
                 Assert.False(File.Exists(installation.InstallPath));
                 Assert.False(window.ContinueRequested);
+                Assert.Equal(OperatingSystem.IsWindows(), window.FindControl<StackPanel>("WindowsShortcutOptions")!.IsVisible);
+                Assert.True(window.FindControl<CheckBox>("CreateDesktopShortcutBox")!.IsChecked);
+                Assert.True(window.FindControl<CheckBox>("CreateStartMenuShortcutBox")!.IsChecked);
             }
             finally { window.Close(); }
         }, default);
@@ -178,7 +181,7 @@ public sealed class DesktopInstallationTests(HeadlessAppFixture fixture) : IDisp
                 Assert.False(window.FindControl<CheckBox>("RememberChoiceBox")!.IsVisible);
                 Assert.NotNull(window.FindControl<TextBox>("InstallDirectoryBox"));
                 var cancel = window.FindControl<Button>("PortableButton")!;
-                Assert.Equal("取消", cancel.Content);
+                Assert.Equal(L.T("取消"), cancel.Content);
                 cancel.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
                 Assert.False(await result);
                 Assert.False(window.ContinueRequested);

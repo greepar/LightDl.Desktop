@@ -30,7 +30,7 @@ namespace LightDl.Android
             DownloadPlatform.EnsureDownloadDirectoryAccessAsync = MainActivity.EnsureDownloadDirectoryAccessAsync;
             App.MobileThemeFactory = static () => new SemiTheme
             {
-                Locale = CultureInfo.GetCultureInfo("zh-CN")
+                Locale = CultureInfo.GetCultureInfo(LightDl.UI.Localization.L.CultureName)
             };
 #if LIGHTDL_ANDROID_PLATFORM_HTTP
             DownloadPlatform.HttpMessageHandlerFactory = static () => new AndroidMessageHandler

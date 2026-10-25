@@ -51,6 +51,9 @@ public sealed class AppSettings
 
     public int ThemeMode { get; set; }
 
+    // 0 = system language, 1 = Simplified Chinese, 2 = English.
+    public int LanguageMode { get; set; }
+
     public bool EnableBrowserIntegration { get; set; } = true;
 
     public bool CheckForUpdatesAutomatically { get; set; } = true;

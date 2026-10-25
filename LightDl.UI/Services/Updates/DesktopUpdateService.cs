@@ -31,7 +31,7 @@ public sealed class DesktopUpdateService
         var arch = RuntimeInformation.ProcessArchitecture switch
         {
             Architecture.X64 => "x64", Architecture.Arm64 => "arm64", Architecture.X86 => "x86",
-            _ => throw new PlatformNotSupportedException("不支持此架构的自动更新。")
+            _ => throw new PlatformNotSupportedException(L.T("不支持此架构的自动更新。"))
         };
         return platform + "-" + arch;
     }
@@ -51,10 +51,10 @@ public sealed class DesktopUpdateService
     {
         // A development DLL cannot be copied and executed as an independent helper.
         if (!string.IsNullOrEmpty(Assembly.GetEntryAssembly()?.Location))
-            throw new InvalidOperationException("请使用 Release 单文件版本进行自动安装；开发运行可检查更新。");
+            throw new InvalidOperationException(L.T("请使用 Release 单文件版本进行自动安装；开发运行可检查更新。"));
         string target;
         if (OperatingSystem.IsLinux())
-            target = DesktopExecutable.AppImagePath ?? throw new InvalidOperationException("Linux 自动更新需要从 AppImage 启动。");
+            target = DesktopExecutable.AppImagePath ?? throw new InvalidOperationException(L.T("Linux 自动更新需要从 AppImage 启动。"));
         else if (OperatingSystem.IsMacOS())
         {
             var directory = new DirectoryInfo(AppContext.BaseDirectory);
@@ -62,11 +62,11 @@ public sealed class DesktopUpdateService
             target = directory.FullName;
             if (!target.EndsWith(".app", StringComparison.Ordinal) || target.StartsWith("/Volumes/", StringComparison.Ordinal) ||
                 target.Contains("/AppTranslocation/", StringComparison.Ordinal))
-                throw new InvalidOperationException("请先把 LightDl 拖入“应用程序”或 ~/Applications，再运行更新。");
+                throw new InvalidOperationException(L.T("请先把 LightDl 拖入“应用程序”或 ~/Applications，再运行更新。"));
         }
-        else target = Environment.ProcessPath ?? throw new IOException("无法确定当前程序位置。");
+        else target = Environment.ProcessPath ?? throw new IOException(L.T("无法确定当前程序位置。"));
         if ((File.GetAttributes(target) & (FileAttributes.ReparsePoint | FileAttributes.ReadOnly)) != 0)
-            throw new IOException("程序路径是符号链接或只读，请移到当前用户可写的位置后重试。");
+            throw new IOException(L.T("程序路径是符号链接或只读，请移到当前用户可写的位置后重试。"));
         return Path.GetFullPath(target);
     }
 
@@ -81,7 +81,7 @@ public sealed class DesktopUpdateService
                 using var identity = WindowsIdentity.GetCurrent();
                 var security = new DirectorySecurity();
                 security.SetAccessRuleProtection(isProtected: true, preserveInheritance: false);
-                security.AddAccessRule(new FileSystemAccessRule(identity.User ?? throw new IOException("无法确定当前用户。"),
+                security.AddAccessRule(new FileSystemAccessRule(identity.User ?? throw new IOException(L.T("无法确定当前用户。")),
                     FileSystemRights.FullControl, InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit,
                     PropagationFlags.None, AccessControlType.Allow));
                 new DirectoryInfo(stage).Create(security);
@@ -90,7 +90,7 @@ public sealed class DesktopUpdateService
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            throw new IOException("程序所在目录不可写。请将程序移到当前用户可写的位置后重试。", ex);
+            throw new IOException(L.T("程序所在目录不可写。请将程序移到当前用户可写的位置后重试。"), ex);
         }
         var plan = new UpdateTransaction
         {
@@ -101,7 +101,7 @@ public sealed class DesktopUpdateService
         try
         {
             if (UpdateFeed.ParseVersion(release.Version) <= UpdateFeed.ParseVersion(CurrentVersion))
-                throw new InvalidDataException("更新版本必须高于当前版本。");
+                throw new InvalidDataException(L.T("更新版本必须高于当前版本。"));
             var package = Path.Combine(stage, release.AssetName);
             await UpdateFeed.DownloadAsync(_client, release, package, progress, ct);
             if (plan.IsBundle) await MacUpdateBundle.StageAsync(package, plan, ct);
@@ -133,7 +133,7 @@ public sealed class DesktopUpdateService
         using var zip = ZipFile.OpenRead(archive);
         var entries = zip.Entries.Where(e => e.FullName == "LightDl.Desktop.exe").ToArray();
         if (entries.Length != 1 || entries[0].Length <= 0 || entries[0].Length > UpdateFeed.MaximumPackageSize)
-            throw new InvalidDataException("Windows 更新包中没有唯一有效的 LightDl.Desktop.exe。");
+            throw new InvalidDataException(L.T("Windows 更新包中没有唯一有效的 LightDl.Desktop.exe。"));
         await using var input = entries[0].Open();
         await using var output = new FileStream(destination, FileMode.CreateNew, FileAccess.Write, FileShare.None);
         var buffer = new byte[81920];
@@ -141,10 +141,10 @@ public sealed class DesktopUpdateService
         while ((length = await input.ReadAsync(buffer, ct)) != 0)
         {
             if (output.Length + length > entries[0].Length)
-                throw new InvalidDataException("解压数据超出预期大小。");
+                throw new InvalidDataException(L.T("解压数据超出预期大小。"));
             await output.WriteAsync(buffer.AsMemory(0, length), ct);
         }
-        if (output.Length != entries[0].Length) throw new InvalidDataException("解压后的程序大小无效。");
+        if (output.Length != entries[0].Length) throw new InvalidDataException(L.T("解压后的程序大小无效。"));
     }
 
     public static async Task VerifyExecutableAsync(string path, Architecture architecture, CancellationToken ct)
@@ -155,22 +155,22 @@ public sealed class DesktopUpdateService
         await file.ReadExactlyAsync(header, ct);
         if (OperatingSystem.IsWindows())
         {
-            if (header[0] != 'M' || header[1] != 'Z') throw new InvalidDataException("更新程序不是 Windows EXE。");
+            if (header[0] != 'M' || header[1] != 'Z') throw new InvalidDataException(L.T("更新程序不是 Windows EXE。"));
             var offset = BitConverter.ToInt32(header, 60);
-            if (offset < 64 || offset > file.Length - 6) throw new InvalidDataException("EXE 文件头无效。");
+            if (offset < 64 || offset > file.Length - 6) throw new InvalidDataException(L.T("EXE 文件头无效。"));
             file.Position = offset;
             var pe = new byte[6];
             await file.ReadExactlyAsync(pe, ct);
             var machine = architecture switch { Architecture.X64 => 0x8664, Architecture.X86 => 0x14c, Architecture.Arm64 => 0xaa64, _ => 0 };
             if (pe[0] != 'P' || pe[1] != 'E' || pe[2] != 0 || pe[3] != 0 || BitConverter.ToUInt16(pe, 4) != machine)
-                throw new InvalidDataException("EXE 架构与当前进程不匹配。");
+                throw new InvalidDataException(L.T("EXE 架构与当前进程不匹配。"));
         }
         else if (OperatingSystem.IsLinux())
         {
             if (!header.AsSpan(0, 4).SequenceEqual(new byte[] { 0x7f, 0x45, 0x4c, 0x46 }) || header[4] != 2 || header[5] != 1 ||
                 BitConverter.ToUInt16(header, 18) != (architecture == Architecture.Arm64 ? 183 : 62) ||
                 !header.AsSpan(8, 3).SequenceEqual(new byte[] { 0x41, 0x49, 2 }))
-                throw new InvalidDataException("AppImage 文件头或架构无效。");
+                throw new InvalidDataException(L.T("AppImage 文件头或架构无效。"));
         }
     }
 
@@ -190,7 +190,7 @@ public sealed class DesktopUpdateService
             }
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException or System.Text.Json.JsonException)
-        { UpdateInstaller.TryWriteStatus("新版启动确认失败：" + ex.Message); }
+        { UpdateInstaller.TryWriteStatus(L.T("新版启动确认失败：") + ex.Message); }
     }
 
     public void CleanupCompletedUpdates()
@@ -227,14 +227,14 @@ public sealed class PreparedUpdate(UpdateTransaction plan) : IDisposable
         info.ArgumentList.Add("--apply-update");
         info.ArgumentList.Add(plan.PlanFile);
         foreach (var name in new[] { "APPIMAGE", "APPDIR", "ARGV0", "OWD" }) info.Environment.Remove(name);
-        using var process = Process.Start(info) ?? throw new IOException("无法启动更新安装程序。");
+        using var process = Process.Start(info) ?? throw new IOException(L.T("无法启动更新安装程序。"));
         try
         {
             var deadline = DateTime.UtcNow.AddSeconds(15);
             while (!File.Exists(Path.Combine(plan.Stage, "helper-ready")))
             {
-                if (process.HasExited) throw new IOException("更新辅助进程未能初始化。");
-                if (DateTime.UtcNow > deadline) throw new TimeoutException("更新辅助进程初始化超时。");
+                if (process.HasExited) throw new IOException(L.T("更新辅助进程未能初始化。"));
+                if (DateTime.UtcNow > deadline) throw new TimeoutException(L.T("更新辅助进程初始化超时。"));
                 await Task.Delay(100);
             }
             _started = true;

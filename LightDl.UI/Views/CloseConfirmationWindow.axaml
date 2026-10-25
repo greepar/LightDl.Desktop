@@ -1,20 +1,21 @@
 <suki:SukiWindow xmlns="https://github.com/avaloniaui"
-                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:loc="using:LightDl.UI.Localization"
+                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:suki="using:SukiUI.Controls"
                  xmlns:vm="using:LightDl.UI.ViewModels"
                  x:Class="LightDl.UI.Views.CloseConfirmationWindow"
                  x:DataType="vm:CloseConfirmationViewModel"
-                 Title="关闭 LightDl" Width="470" SizeToContent="Height"
+                 Title="{loc:Text Key='关闭 LightDl'}" Width="470" SizeToContent="Height"
                  CanResize="False" CanMinimize="False" CanMaximize="False"
                  ShowInTaskbar="False" WindowStartupLocation="CenterOwner">
   <StackPanel Margin="24,16,24,24" Spacing="18">
     <TextBlock Text="{Binding Message}" TextWrapping="Wrap" />
-    <TextBlock Text="有未保存的设置，退出后这些修改将丢失。"
+    <TextBlock Text="{loc:Text Key='有未保存的设置，退出后这些修改将丢失。'}"
                IsVisible="{Binding HasUnsavedSettings}" TextWrapping="Wrap" Opacity="0.65" />
-    <CheckBox Content="记住我的选择" IsChecked="{Binding RememberChoice, Mode=TwoWay}" />
+    <CheckBox Content="{loc:Text Key='记住我的选择'}" IsChecked="{Binding RememberChoice, Mode=TwoWay}" />
     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
-      <Button Content="退出应用" Command="{Binding ExitCommand}" Padding="18,10" />
-      <Button Content="最小化到后台" Command="{Binding RunInBackgroundCommand}"
+      <Button Content="{loc:Text Key='退出应用'}" Command="{Binding ExitCommand}" Padding="18,10" />
+      <Button Content="{loc:Text Key='最小化到后台'}" Command="{Binding RunInBackgroundCommand}"
               Background="#2874E8" Foreground="White" Padding="18,10" />
     </StackPanel>
   </StackPanel>

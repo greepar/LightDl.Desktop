@@ -207,13 +207,13 @@ public sealed class AppUpdateTests(HeadlessAppFixture fixture) : IDisposable
                 await viewModel.Updates.CheckForUpdatesCommand.ExecuteAsync(null);
                 Assert.True(viewModel.Updates.HasUpdate);
                 var buttons = view.FindControl<Border>("SettingsUpdateCard")!.GetLogicalDescendants().OfType<Button>().ToArray();
-                var download = Assert.Single(buttons, b => b.Content as string == "下载更新");
+                var download = Assert.Single(buttons, b => b.Content as string == L.T("下载更新"));
                 Assert.Same(viewModel.Updates.DownloadUpdateCommand, download.Command);
                 Assert.True(download.IsVisible);
                 Assert.True(download.Command!.CanExecute(null));
                 Assert.Contains("1.0.4", viewModel.Updates.Status);
                 Assert.Same(viewModel.Updates.InstallUpdateCommand,
-                    Assert.Single(buttons, b => b.Content as string == "重启安装").Command);
+                    Assert.Single(buttons, b => b.Content as string == L.T("重启安装")).Command);
                 var host = view.FindControl<SukiUI.Controls.SukiDialogHost>("UpdateDialogHost");
                 Assert.NotNull(host);
                 Assert.Same(viewModel.Updates.PromptDialogManager, host.Manager);
@@ -304,7 +304,7 @@ public sealed class AppUpdateTests(HeadlessAppFixture fixture) : IDisposable
     public void DownloadOnlyBodyShowsHonestFallbackInsteadOfInventedChanges()
     {
         var notes = ReleaseNotesFormatter.Format("## Downloads / 下载\n| Linux | URL |\n\n**Full Changelog**: https://example.com/compare");
-        Assert.Contains("未提供具体更新说明", notes);
+        Assert.Equal(L.T("此版本未提供具体更新说明，可在完整 Release 页面查看。"), notes);
     }
 
     [Fact]

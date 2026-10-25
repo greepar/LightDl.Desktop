@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="using:LightDl.UI.Localization"
+                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:LightDl.UI.ViewModels"
@@ -14,6 +15,13 @@
   </Design.DataContext>
 
   <UserControl.Styles>
+    <Style Selector="ComboBox">
+      <Setter Property="SelectionBoxItemTemplate">
+        <DataTemplate x:DataType="TextBlock">
+          <TextBlock Text="{Binding Text}" />
+        </DataTemplate>
+      </Setter>
+    </Style>
     <Style Selector="Border.floating-settings-save">
       <Setter Property="Opacity" Value="0" />
       <Setter Property="Transitions">
@@ -82,19 +90,19 @@
         <Grid RowDefinitions="Auto,Auto,*,Auto">
           <StackPanel Spacing="2" Margin="6,4,6,20">
             <TextBlock Text="LightDl" FontSize="24" FontWeight="Bold" />
-            <TextBlock Text="Download Manager" Classes="muted" />
+            <TextBlock Text="{loc:Text Key='下载管理器'}" Classes="muted" />
           </StackPanel>
 
           <StackPanel Grid.Row="1" Spacing="2">
-            <Button Content="全部任务" Classes="nav" Classes.selected="{Binding IsAllSelected}" Command="{Binding SelectSectionCommand}" CommandParameter="all" />
-            <Button Content="正在下载" Classes="nav" Classes.selected="{Binding IsDownloadingSelected}" Command="{Binding SelectSectionCommand}" CommandParameter="downloading" />
-            <Button Content="已完成" Classes="nav" Classes.selected="{Binding IsCompletedSelected}" Command="{Binding SelectSectionCommand}" CommandParameter="completed" />
-            <Button Content="下载失败" Classes="nav" Classes.selected="{Binding IsFailedSelected}" Command="{Binding SelectSectionCommand}" CommandParameter="failed" />
+            <Button Content="{loc:Text Key='全部任务'}" Classes="nav" Classes.selected="{Binding IsAllSelected}" Command="{Binding SelectSectionCommand}" CommandParameter="all" />
+            <Button Content="{loc:Text Key='正在下载'}" Classes="nav" Classes.selected="{Binding IsDownloadingSelected}" Command="{Binding SelectSectionCommand}" CommandParameter="downloading" />
+            <Button Content="{loc:Text Key='已完成'}" Classes="nav" Classes.selected="{Binding IsCompletedSelected}" Command="{Binding SelectSectionCommand}" CommandParameter="completed" />
+            <Button Content="{loc:Text Key='下载失败'}" Classes="nav" Classes.selected="{Binding IsFailedSelected}" Command="{Binding SelectSectionCommand}" CommandParameter="failed" />
           </StackPanel>
 
           <StackPanel Grid.Row="3" Spacing="2">
-            <Button Content="浏览器集成" Classes="nav" Classes.selected="{Binding IsBrowserSelected}" Command="{Binding SelectSectionCommand}" CommandParameter="browser" />
-            <Button Content="设置" Classes="nav" Classes.selected="{Binding IsSettingsSelected}" Command="{Binding SelectSectionCommand}" CommandParameter="settings" />
+            <Button Content="{loc:Text Key='浏览器集成'}" Classes="nav" Classes.selected="{Binding IsBrowserSelected}" Command="{Binding SelectSectionCommand}" CommandParameter="browser" />
+            <Button Content="{loc:Text Key='设置'}" Classes="nav" Classes.selected="{Binding IsSettingsSelected}" Command="{Binding SelectSectionCommand}" CommandParameter="settings" />
           </StackPanel>
         </Grid>
       </Border>
@@ -102,10 +110,10 @@
       <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto" Margin="12,12,16,12">
         <Grid ColumnDefinitions="*,Auto" Margin="4,2,4,14" IsVisible="{Binding IsDownloadsPage}">
           <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-            <Button Content="+ 新建任务"
+            <Button Content="{loc:Text Key='+ 新建任务'}"
                     Click="OpenNewDownloadDialog"
                     Padding="18,10" />
-            <Button Content="全部暂停"
+            <Button Content="{loc:Text Key='全部暂停'}"
                     Command="{Binding PauseAllCommand}"
                     Padding="18,10" />
           </StackPanel>
@@ -131,8 +139,8 @@
                         VerticalAlignment="Center"
                         Spacing="8"
                         IsVisible="{Binding HasNoVisibleDownloads}">
-              <TextBlock Text="暂无符合条件的任务" FontSize="18" FontWeight="SemiBold" />
-              <TextBlock Text="添加下载链接，或从左侧切换其他分类" Classes="muted" />
+              <TextBlock Text="{loc:Text Key='暂无符合条件的任务'}" FontSize="18" FontWeight="SemiBold" />
+              <TextBlock Text="{loc:Text Key='添加下载链接，或从左侧切换其他分类'}" Classes="muted" />
             </StackPanel>
             <ScrollViewer HorizontalScrollBarVisibility="Disabled" IsVisible="{Binding HasVisibleDownloads}">
               <ItemsControl ItemsSource="{Binding VisibleDownloads}">
@@ -147,22 +155,22 @@
                       <Border.ContextMenu>
                         <ContextMenu Theme="{DynamicResource SukiContextMenuStyle}"
                                      Opened="OnDownloadContextMenuOpened" Closed="OnDownloadContextMenuClosed">
-                          <MenuItem Header="详情" Command="{Binding ToggleDetailsCommand}" />
+                          <MenuItem Header="{loc:Text Key='详情'}" Command="{Binding ToggleDetailsCommand}" />
                           <Separator />
-                          <MenuItem Header="打开文件" Command="{Binding OpenFileCommand}" IsVisible="{Binding CanOpenFile}" />
-                          <MenuItem Header="打开文件夹" Command="{Binding OpenFolderCommand}" />
-                          <MenuItem Header="复制下载链接" Command="{Binding CopyUrlCommand}" />
-                          <MenuItem Header="复制文件名" Command="{Binding CopyFileNameCommand}" />
-                          <MenuItem Header="复制文件路径" Command="{Binding CopyFilePathCommand}" IsVisible="{Binding HasLocalFile}" />
+                          <MenuItem Header="{loc:Text Key='打开文件'}" Command="{Binding OpenFileCommand}" IsVisible="{Binding CanOpenFile}" />
+                          <MenuItem Header="{loc:Text Key='打开文件夹'}" Command="{Binding OpenFolderCommand}" />
+                          <MenuItem Header="{loc:Text Key='复制下载链接'}" Command="{Binding CopyUrlCommand}" />
+                          <MenuItem Header="{loc:Text Key='复制文件名'}" Command="{Binding CopyFileNameCommand}" />
+                          <MenuItem Header="{loc:Text Key='复制文件路径'}" Command="{Binding CopyFilePathCommand}" IsVisible="{Binding HasLocalFile}" />
                           <Separator />
-                          <MenuItem Header="暂停下载" Command="{Binding PauseCommand}" IsVisible="{Binding IsActive}" />
-                          <MenuItem Header="继续下载" Command="{Binding ResumeCommand}" IsVisible="{Binding CanResume}" />
-                          <MenuItem Header="重新下载" Command="{Binding RestartCommand}" IsVisible="{Binding CanRestart}" />
+                          <MenuItem Header="{loc:Text Key='暂停下载'}" Command="{Binding PauseCommand}" IsVisible="{Binding IsActive}" />
+                          <MenuItem Header="{loc:Text Key='继续下载'}" Command="{Binding ResumeCommand}" IsVisible="{Binding CanResume}" />
+                          <MenuItem Header="{loc:Text Key='重新下载'}" Command="{Binding RestartCommand}" IsVisible="{Binding CanRestart}" />
                           <Separator />
-                          <MenuItem Header="仅删除任务"
+                          <MenuItem Header="{loc:Text Key='仅删除任务'}"
                                     Command="{Binding RemoveCommand}"
                                     IsVisible="{Binding IsCompleted}" />
-                          <MenuItem Header="删除任务及本地文件"
+                          <MenuItem Header="{loc:Text Key='删除任务及本地文件'}"
                                     Command="{Binding RemoveWithFileCommand}"
                                     IsVisible="{Binding CanDeleteLocalFile}" />
                         </ContextMenu>
@@ -173,10 +181,10 @@
                           <TextBlock Text="{Binding SourceUrl}" Classes="muted" FontSize="12" TextTrimming="CharacterEllipsis" />
                         </StackPanel>
                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
-                          <Button Content="暂停" Command="{Binding PauseCommand}" IsVisible="{Binding IsActive}" />
-                          <Button Content="继续" Command="{Binding ResumeCommand}" IsVisible="{Binding CanResume}" />
-                          <Button Content="打开" Command="{Binding OpenFileCommand}" IsVisible="{Binding CanOpenFile}" />
-                          <Button Content="打开文件夹" Command="{Binding OpenFolderCommand}" IsVisible="{Binding IsCompleted}" />
+                          <Button Content="{loc:Text Key='暂停'}" Command="{Binding PauseCommand}" IsVisible="{Binding IsActive}" />
+                          <Button Content="{loc:Text Key='继续'}" Command="{Binding ResumeCommand}" IsVisible="{Binding CanResume}" />
+                          <Button Content="{loc:Text Key='打开'}" Command="{Binding OpenFileCommand}" IsVisible="{Binding CanOpenFile}" />
+                          <Button Content="{loc:Text Key='打开文件夹'}" Command="{Binding OpenFolderCommand}" IsVisible="{Binding IsCompleted}" />
                         </StackPanel>
                         <ProgressBar Grid.Row="1" Grid.ColumnSpan="2" Minimum="0" Maximum="100"
                                      Value="{Binding ProgressPercentage}" Height="7" Margin="0,12,0,8" />
@@ -193,20 +201,20 @@
                                 Margin="0,10,0,0"
                                 IsVisible="{Binding IsDetailsVisible}">
                           <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="8" RowSpacing="4">
-                            <TextBlock Text="保存位置：" Classes="muted" FontSize="12" />
+                            <TextBlock Text="{loc:Text Key='保存位置：'}" Classes="muted" FontSize="12" />
                             <SelectableTextBlock Grid.Column="1"
                                                  Text="{Binding DetailsSavePath}"
                                                  Classes="muted"
                                                  FontSize="12"
                                                  TextWrapping="Wrap" />
-                            <TextBlock Grid.Row="1" Text="下载地址：" Classes="muted" FontSize="12" />
+                            <TextBlock Grid.Row="1" Text="{loc:Text Key='下载地址：'}" Classes="muted" FontSize="12" />
                             <SelectableTextBlock Grid.Row="1"
                                                  Grid.Column="1"
                                                  Text="{Binding SourceUrl}"
                                                  Classes="muted"
                                                  FontSize="12"
                                                  TextWrapping="Wrap" />
-                            <TextBlock Grid.Row="2" Text="传输协议：" Classes="muted" FontSize="12" />
+                            <TextBlock Grid.Row="2" Text="{loc:Text Key='传输协议：'}" Classes="muted" FontSize="12" />
                             <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding ProtocolText}"
                                        Classes="muted" FontSize="12" TextWrapping="Wrap" />
                           </Grid>
@@ -220,59 +228,59 @@
           </Panel>
         </Grid>
 
-        <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled" IsVisible="{Binding IsSettingsPage}">
+        <ScrollViewer Name="SettingsScrollViewer" Grid.Row="1" HorizontalScrollBarVisibility="Disabled" IsVisible="{Binding IsSettingsPage}">
           <StackPanel Spacing="12">
             <Border Classes="card" Padding="18">
               <StackPanel Spacing="12">
-                <TextBlock Text="下载" FontSize="18" FontWeight="SemiBold" />
-                <TextBlock Text="默认保存目录" Classes="muted" />
+                <TextBlock Text="{loc:Text Key='下载'}" FontSize="18" FontWeight="SemiBold" />
+                <TextBlock Text="{loc:Text Key='默认保存目录'}" Classes="muted" />
                 <Grid ColumnDefinitions="*,Auto">
                   <TextBox Text="{Binding Settings.DefaultDownloadDirectory}" />
-                  <Button Grid.Column="1" Content="选择目录" Click="BrowseDownloadDirectory" Margin="8,0,0,0" />
+                  <Button Grid.Column="1" Content="{loc:Text Key='选择目录'}" Click="BrowseDownloadDirectory" Margin="8,0,0,0" />
                 </Grid>
                 <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="12">
                   <StackPanel Spacing="5">
-                    <TextBlock Text="同时下载任务" Classes="muted" />
+                    <TextBlock Text="{loc:Text Key='同时下载任务'}" Classes="muted" />
                     <NumericUpDown Value="{Binding Settings.MaxConcurrentDownloads}" Minimum="1" Maximum="16" />
                   </StackPanel>
                   <StackPanel Grid.Column="1" Spacing="5">
-                    <TextBlock Text="连接数" Classes="muted" />
+                    <TextBlock Text="{loc:Text Key='连接数'}" Classes="muted" />
                     <NumericUpDown Value="{Binding Settings.ChunkCount}" Minimum="1" Maximum="64" />
                   </StackPanel>
                   <StackPanel Grid.Column="2" Spacing="5">
-                    <TextBlock Text="分段大小 (MB)" Classes="muted" />
+                    <TextBlock Text="{loc:Text Key='分段大小 (MB)'}" Classes="muted" />
                     <NumericUpDown Value="{Binding Settings.SegmentSizeMb}" Minimum="1" Maximum="256" />
                   </StackPanel>
                   <StackPanel Grid.Column="3" Spacing="5">
-                    <TextBlock Text="全局限速 (KiB/s，0 为不限速)" Classes="muted" />
+                    <TextBlock Text="{loc:Text Key='全局限速 (KiB/s，0 为不限速)'}" Classes="muted" />
                     <NumericUpDown Value="{Binding Settings.SpeedLimitKib}" Minimum="0" Maximum="1048576" />
                   </StackPanel>
                 </Grid>
-                <CheckBox Content="启用动态连接数" IsChecked="{Binding Settings.EnableDynamicConcurrency}" />
+                <CheckBox Content="{loc:Text Key='启用动态连接数'}" IsChecked="{Binding Settings.EnableDynamicConcurrency}" />
                 <Grid ColumnDefinitions="*,*" ColumnSpacing="12" IsVisible="{Binding Settings.EnableDynamicConcurrency}">
                   <StackPanel Spacing="5">
-                    <TextBlock Text="最小连接数" Classes="muted" />
+                    <TextBlock Text="{loc:Text Key='最小连接数'}" Classes="muted" />
                     <NumericUpDown Value="{Binding Settings.MinChunkCount}" Minimum="1" Maximum="64" />
                   </StackPanel>
                   <StackPanel Grid.Column="1" Spacing="5">
-                    <TextBlock Text="最大连接数" Classes="muted" />
+                    <TextBlock Text="{loc:Text Key='最大连接数'}" Classes="muted" />
                     <NumericUpDown Value="{Binding Settings.MaxChunkCount}" Minimum="1" Maximum="64" />
                   </StackPanel>
                 </Grid>
                 <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
                   <StackPanel Spacing="5">
-                    <TextBlock Text="已有文件处理" Classes="muted" />
+                    <TextBlock Text="{loc:Text Key='已有文件处理'}" Classes="muted" />
                     <ComboBox SelectedIndex="{Binding Settings.FileConflictPolicy}">
-                      <ComboBoxItem Content="覆盖" />
-                      <ComboBoxItem Content="报错" />
-                      <ComboBoxItem Content="跳过" />
-                      <ComboBoxItem Content="自动重命名" />
+                      <ComboBoxItem><TextBlock Text="{loc:Text Key='覆盖'}" /></ComboBoxItem>
+                      <ComboBoxItem><TextBlock Text="{loc:Text Key='报错'}" /></ComboBoxItem>
+                      <ComboBoxItem><TextBlock Text="{loc:Text Key='跳过'}" /></ComboBoxItem>
+                      <ComboBoxItem><TextBlock Text="{loc:Text Key='自动重命名'}" /></ComboBoxItem>
                     </ComboBox>
                   </StackPanel>
                   <StackPanel Grid.Column="1" Spacing="15">
-                    <TextBlock Text="已有文件处理" Classes="muted" Opacity="0" />
+                    <TextBlock Text="{loc:Text Key='已有文件处理'}" Classes="muted" Opacity="0" />
                     <CheckBox VerticalAlignment="Center" Margin="10 0 0 0"
-                      Content="启用断点续传" IsChecked="{Binding Settings.EnableResume}" />
+                      Content="{loc:Text Key='启用断点续传'}" IsChecked="{Binding Settings.EnableResume}" />
                   </StackPanel>
                 </Grid>
               </StackPanel>
@@ -280,97 +288,104 @@
 
             <Border Classes="card" Padding="18">
               <StackPanel Spacing="12">
-                <TextBlock Text="网络" FontSize="18" FontWeight="SemiBold" />
+                <TextBlock Text="{loc:Text Key='网络'}" FontSize="18" FontWeight="SemiBold" />
                 <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
                   <StackPanel Spacing="5">
-                    <TextBlock Text="请求超时 (秒)" Classes="muted" />
+                    <TextBlock Text="{loc:Text Key='请求超时 (秒)'}" Classes="muted" />
                     <NumericUpDown Value="{Binding Settings.TimeoutSeconds}" Minimum="5" Maximum="600" />
                   </StackPanel>
                   <StackPanel Grid.Column="1" Spacing="5">
-                    <TextBlock Text="重试次数" Classes="muted" />
+                    <TextBlock Text="{loc:Text Key='重试次数'}" Classes="muted" />
                     <NumericUpDown Value="{Binding Settings.MaxRetry}" Minimum="0" Maximum="100" />
                   </StackPanel>
                 </Grid>
-                <TextBlock Text="协议" Classes="muted" />
+                <TextBlock Text="{loc:Text Key='协议'}" Classes="muted" />
                 <ComboBox Name="Http3ModeSelector" SelectedIndex="{Binding Settings.Http3Mode, Mode=TwoWay}"
-                          AutomationProperties.Name="协议">
-                  <ComboBoxItem Content="自动选择H3" />
-                  <ComboBoxItem Content="强制 HTTP/3（不回退）" />
-                  <ComboBoxItem Content="禁用 HTTP/3（H2 / H1.1）" />
+                          AutomationProperties.Name="{loc:Text Key='协议'}">
+                  <ComboBoxItem><TextBlock Text="{loc:Text Key='自动选择H3'}" /></ComboBoxItem>
+                  <ComboBoxItem><TextBlock Text="{loc:Text Key='强制 HTTP/3（不回退）'}" /></ComboBoxItem>
+                  <ComboBoxItem><TextBlock Text="{loc:Text Key='禁用 HTTP/3（H2 / H1.1）'}" /></ComboBoxItem>
                 </ComboBox>
-                <TextBlock Text="代理" Classes="muted" />
+                <TextBlock Text="{loc:Text Key='代理'}" Classes="muted" />
                 <ComboBox SelectedIndex="{Binding Settings.ProxyMode}">
-                  <ComboBoxItem Content="使用系统代理" />
-                  <ComboBoxItem Content="不使用代理" />
-                  <ComboBoxItem Content="自定义代理" />
+                  <ComboBoxItem><TextBlock Text="{loc:Text Key='使用系统代理'}" /></ComboBoxItem>
+                  <ComboBoxItem><TextBlock Text="{loc:Text Key='不使用代理'}" /></ComboBoxItem>
+                  <ComboBoxItem><TextBlock Text="{loc:Text Key='自定义代理'}" /></ComboBoxItem>
                 </ComboBox>
                 <TextBox Text="{Binding Settings.ProxyUrl}"
                           PlaceholderText="http://127.0.0.1:7890"
                          IsVisible="{Binding Settings.UsesCustomProxy}" />
                 <TextBlock Text="User-Agent" Classes="muted" />
-                <TextBox Text="{Binding Settings.UserAgent}" PlaceholderText="留空使用 LightDl 默认值" />
-                <CheckBox Content="忽略 SSL 证书错误（不安全）" IsChecked="{Binding Settings.IgnoreSslErrors}" />
+                <TextBox Text="{Binding Settings.UserAgent}" PlaceholderText="{loc:Text Key='留空使用 LightDl 默认值'}" />
+                <CheckBox Content="{loc:Text Key='忽略 SSL 证书错误（不安全）'}" IsChecked="{Binding Settings.IgnoreSslErrors}" />
               </StackPanel>
             </Border>
 
             <Border Classes="card" Padding="18">
               <StackPanel Spacing="12">
-                <TextBlock Text="应用" FontSize="18" FontWeight="SemiBold" />
-                <TextBlock Text="主题" Classes="muted" />
+                <TextBlock Text="{loc:Text Key='应用'}" FontSize="18" FontWeight="SemiBold" />
+                <TextBlock Text="{loc:Text Key='语言 / Language'}" Classes="muted" />
+                <ComboBox Name="LanguageSelector" SelectedIndex="{Binding Settings.LanguageMode}">
+                  <ComboBoxItem><TextBlock Text="{loc:Text Key='跟随系统'}" /></ComboBoxItem>
+                  <ComboBoxItem><TextBlock Text="简体中文" /></ComboBoxItem>
+                  <ComboBoxItem><TextBlock Text="English" /></ComboBoxItem>
+                </ComboBox>
+                <TextBlock Text="{loc:Text Key='保存设置后立即切换语言。'}" Classes="muted" TextWrapping="Wrap" />
+                <TextBlock Text="{loc:Text Key='主题'}" Classes="muted" />
                 <ComboBox SelectedIndex="{Binding Settings.ThemeMode}">
-                  <ComboBoxItem Content="跟随系统" />
-                  <ComboBoxItem Content="浅色" />
-                  <ComboBoxItem Content="深色" />
+                  <ComboBoxItem><TextBlock Text="{loc:Text Key='跟随系统'}" /></ComboBoxItem>
+                  <ComboBoxItem><TextBlock Text="{loc:Text Key='浅色'}" /></ComboBoxItem>
+                  <ComboBoxItem><TextBlock Text="{loc:Text Key='深色'}" /></ComboBoxItem>
                 </ComboBox>
-                <CheckBox Content="开机自动启动（静默到托盘）" IsChecked="{Binding Settings.StartWithSystem}" />
-                <TextBlock Text="关闭主窗口时" Classes="muted" />
+                <CheckBox Content="{loc:Text Key='开机自动启动（静默到托盘）'}" IsChecked="{Binding Settings.StartWithSystem}" />
+                <TextBlock Text="{loc:Text Key='关闭主窗口时'}" Classes="muted" />
                 <ComboBox SelectedIndex="{Binding Settings.WindowCloseBehavior}">
-                  <ComboBoxItem Content="每次询问" />
-                  <ComboBoxItem Content="退出应用" />
-                  <ComboBoxItem Content="最小化到后台" />
+                  <ComboBoxItem><TextBlock Text="{loc:Text Key='每次询问'}" /></ComboBoxItem>
+                  <ComboBoxItem><TextBlock Text="{loc:Text Key='退出应用'}" /></ComboBoxItem>
+                  <ComboBoxItem><TextBlock Text="{loc:Text Key='最小化到后台'}" /></ComboBoxItem>
                 </ComboBox>
-                <CheckBox Content="下载完成后显示系统通知" IsChecked="{Binding Settings.ShowCompletionNotification}" />
-                <CheckBox Content="启用浏览器自动接管" IsChecked="{Binding Settings.EnableBrowserIntegration}" />
+                <CheckBox Content="{loc:Text Key='下载完成后显示系统通知'}" IsChecked="{Binding Settings.ShowCompletionNotification}" />
+                <CheckBox Content="{loc:Text Key='启用浏览器自动接管'}" IsChecked="{Binding Settings.EnableBrowserIntegration}" />
                 <StackPanel Spacing="6" IsVisible="{Binding CanInstallToSystem}">
-                  <TextBlock Text="可随时选择安装目录，创建或修复应用菜单入口和图标。" Classes="muted" TextWrapping="Wrap" />
-                  <Button Content="安装到系统…" Command="{Binding InstallToSystemCommand}" HorizontalAlignment="Left" />
+                  <TextBlock Text="{loc:Text Key='可随时选择安装目录，创建或修复应用菜单入口和图标。'}" Classes="muted" TextWrapping="Wrap" />
+                  <Button Content="{loc:Text Key='安装到系统…'}" Command="{Binding InstallToSystemCommand}" HorizontalAlignment="Left" />
                 </StackPanel>
               </StackPanel>
             </Border>
             <Border Name="SettingsUpdateCard" Classes="card" Padding="18" IsVisible="{Binding Updates.IsSupported}">
               <StackPanel Spacing="12">
-                <TextBlock Text="软件更新" FontSize="18" FontWeight="SemiBold" />
+                <TextBlock Text="{loc:Text Key='软件更新'}" FontSize="18" FontWeight="SemiBold" />
                 <Border Height="1" Background="#24808080" Margin="0,0,0,8" />
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="20">
                   <StackPanel Spacing="6">
-                    <TextBlock Text="自动检查更新" FontWeight="SemiBold" />
-                    <TextBlock Text="启动后及每 6 小时检查，发现新版时提示。关闭后仍可手动检查。"
+                    <TextBlock Text="{loc:Text Key='自动检查更新'}" FontWeight="SemiBold" />
+                    <TextBlock Text="{loc:Text Key='启动后及每 6 小时检查，发现新版时提示。关闭后仍可手动检查。'}"
                                Classes="muted" TextWrapping="Wrap" />
                   </StackPanel>
                   <ToggleSwitch Grid.Column="1" Name="AutomaticUpdateCheckToggle"
                                 IsChecked="{Binding Settings.CheckForUpdatesAutomatically, Mode=TwoWay}"
                                 VerticalAlignment="Center"
-                                ToolTip.Tip="自动检查更新"
-                                AutomationProperties.Name="自动检查更新" />
+                                ToolTip.Tip="{loc:Text Key='自动检查更新'}"
+                                AutomationProperties.Name="{loc:Text Key='自动检查更新'}" />
                 </Grid>
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="20" Margin="0,8,0,0">
                   <StackPanel Spacing="6">
-                    <TextBlock Text="{Binding Updates.CurrentVersion, StringFormat='当前版本 v{0}'}" FontWeight="SemiBold" />
-                    <TextBlock Text="发现新版后，可选择是否下载并安装。" Classes="muted" TextWrapping="Wrap" />
+                    <TextBlock Text="{Binding Updates.CurrentVersionText}" FontWeight="SemiBold" />
+                    <TextBlock Text="{loc:Text Key='发现新版后，可选择是否下载并安装。'}" Classes="muted" TextWrapping="Wrap" />
                   </StackPanel>
-                  <Button Grid.Column="1" Content="检查更新" Command="{Binding Updates.CheckForUpdatesCommand}" VerticalAlignment="Center" />
+                  <Button Grid.Column="1" Content="{loc:Text Key='检查更新'}" Command="{Binding Updates.CheckForUpdatesCommand}" VerticalAlignment="Center" />
                 </Grid>
                 <TextBlock Text="{Binding Updates.Status}" TextWrapping="Wrap" />
                 <ProgressBar Minimum="0" Maximum="100" Value="{Binding Updates.Progress}" IsVisible="{Binding Updates.IsBusy}" />
                 <WrapPanel Orientation="Horizontal">
-                  <Button Content="下载更新" Command="{Binding Updates.DownloadUpdateCommand}" IsVisible="{Binding Updates.HasUpdate}" Margin="0,0,8,8" />
-                  <Button Content="取消下载" Command="{Binding Updates.DownloadUpdateCancelCommand}" IsVisible="{Binding Updates.IsBusy}" Margin="0,0,8,8" />
-                  <Button Content="重启安装" Command="{Binding Updates.InstallUpdateCommand}" IsVisible="{Binding Updates.IsReadyToInstall}" Margin="0,0,8,8" />
+                  <Button Content="{loc:Text Key='下载更新'}" Command="{Binding Updates.DownloadUpdateCommand}" IsVisible="{Binding Updates.HasUpdate}" Margin="0,0,8,8" />
+                  <Button Content="{loc:Text Key='取消下载'}" Command="{Binding Updates.DownloadUpdateCancelCommand}" IsVisible="{Binding Updates.IsBusy}" Margin="0,0,8,8" />
+                  <Button Content="{loc:Text Key='重启安装'}" Command="{Binding Updates.InstallUpdateCommand}" IsVisible="{Binding Updates.IsReadyToInstall}" Margin="0,0,8,8" />
                 </WrapPanel>
-                <Expander Header="版本说明" IsVisible="{Binding Updates.HasUpdate}">
+                <Expander Header="{loc:Text Key='版本说明'}" IsVisible="{Binding Updates.HasUpdate}">
                   <StackPanel Spacing="10">
                     <TextBlock Text="{Binding Updates.ReleaseNotes}" TextWrapping="Wrap" />
-                    <Button Content="查看完整 Release" Command="{Binding Updates.OpenReleasePageCommand}" HorizontalAlignment="Left" />
+                    <Button Content="{loc:Text Key='查看完整 Release'}" Command="{Binding Updates.OpenReleasePageCommand}" HorizontalAlignment="Left" />
                   </StackPanel>
                 </Expander>
               </StackPanel>
@@ -380,26 +395,35 @@
 
         <Border Grid.Row="1" Classes="card" Padding="24" IsVisible="{Binding IsBrowserIntegrationPage}">
           <StackPanel Spacing="14" MaxWidth="620" HorizontalAlignment="Left" VerticalAlignment="Top">
-            <TextBlock Text="自动接管" FontSize="20" FontWeight="SemiBold" />
-            <TextBlock Text="LightDl 将使用 Native Messaging 接收 Chrome、Edge 和 Firefox 创建的下载。捕获下载后会弹出独立下载信息窗口，不会在当前页面内嵌确认表单。" TextWrapping="Wrap" />
+            <TextBlock Text="{loc:Text Key='自动接管'}" FontSize="20" FontWeight="SemiBold" />
+            <TextBlock Text="{loc:Text Key='LightDl 将使用 Native Messaging 接收 Chrome、Edge 和 Firefox 创建的下载。捕获下载后会弹出独立下载信息窗口，不会在当前页面内嵌确认表单。'}" TextWrapping="Wrap" />
             <Border Background="#183A7AFE" CornerRadius="10" Padding="12">
               <TextBlock Text="{Binding BrowserHostStatus}" TextWrapping="Wrap" />
             </Border>
-            <CheckBox Content="启用浏览器自动接管" IsChecked="{Binding Settings.EnableBrowserIntegration}" />
+            <CheckBox Content="{loc:Text Key='启用浏览器自动接管'}" IsChecked="{Binding Settings.EnableBrowserIntegration}" />
             <StackPanel Orientation="Horizontal" Spacing="8">
-              <Button Content="注册 / 修复宿主" Command="{Binding RegisterBrowserHostCommand}" />
-              <Button Content="移除宿主" Command="{Binding UnregisterBrowserHostCommand}" />
+              <Button Content="{loc:Text Key='注册 / 修复宿主'}" Command="{Binding RegisterBrowserHostCommand}" />
+              <Button Content="{loc:Text Key='移除宿主'}" Command="{Binding UnregisterBrowserHostCommand}" />
             </StackPanel>
-            <TextBlock Text="扩展源码位于 browser-extensions/automatic。Chromium 扩展 ID 已固定，可用于 Chrome 和 Edge；Firefox 使用固定扩展 ID。" Classes="muted" TextWrapping="Wrap" />
+            <TextBlock Text="{loc:Text Key='选择浏览器，将内置扩展保存到系统下载目录，并查看安装步骤。'}" Classes="muted" TextWrapping="Wrap" />
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <Button Content="Chrome" Click="ExportBrowserExtension" Tag="chrome" />
+              <Button Content="Edge" Click="ExportBrowserExtension" Tag="edge" />
+              <Button Content="Firefox" Click="ExportBrowserExtension" Tag="firefox" />
+            </StackPanel>
           </StackPanel>
         </Border>
 
         <Grid Grid.Row="2" ColumnDefinitions="*,Auto,Auto" Margin="4,10,4,2">
           <TextBlock Text="{Binding StatusMessage}" Classes="muted" />
-          <TextBlock Grid.Column="1" Text="正在下载: " Classes="muted" />
-          <TextBlock Grid.Column="1" Text="{Binding ActiveCount}" Margin="58,0,18,0" />
-          <TextBlock Grid.Column="2" Text="已完成: " Classes="muted" />
-          <TextBlock Grid.Column="2" Text="{Binding CompletedCount}" Margin="50,0,0,0" />
+          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" Margin="8,0,18,0">
+            <TextBlock Text="{loc:Text Key='正在下载: '}" Classes="muted" />
+            <TextBlock Text="{Binding ActiveCount}" />
+          </StackPanel>
+          <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6">
+            <TextBlock Text="{loc:Text Key='已完成: '}" Classes="muted" />
+            <TextBlock Text="{Binding CompletedCount}" />
+          </StackPanel>
         </Grid>
       </Grid>
     </Grid>
@@ -420,17 +444,17 @@
                          FontWeight="Bold"
                          LetterSpacing="1.4" />
             </Border>
-            <TextBlock Text="下载中心" FontSize="27" FontWeight="Bold" />
+            <TextBlock Text="{loc:Text Key='下载中心'}" FontSize="27" FontWeight="Bold" />
             <StackPanel Orientation="Horizontal" Spacing="8">
               <Border Classes="mobile-chip">
                 <StackPanel Orientation="Horizontal" Spacing="5">
-                  <TextBlock Text="进行中" Classes="mobile-muted" FontSize="12" />
+                  <TextBlock Text="{loc:Text Key='进行中'}" Classes="mobile-muted" FontSize="12" />
                   <TextBlock Text="{Binding ActiveCount}" Foreground="#8FB1FF" FontWeight="Bold" />
                 </StackPanel>
               </Border>
               <Border Classes="mobile-chip">
                 <StackPanel Orientation="Horizontal" Spacing="5">
-                  <TextBlock Text="已完成" Classes="mobile-muted" FontSize="12" />
+                  <TextBlock Text="{loc:Text Key='已完成'}" Classes="mobile-muted" FontSize="12" />
                   <TextBlock Text="{Binding CompletedCount}" Foreground="#67D7A5" FontWeight="Bold" />
                 </StackPanel>
               </Border>
@@ -438,7 +462,7 @@
           </StackPanel>
 
           <Button Grid.Column="1"
-                  Content="暂停全部"
+                  Content="{loc:Text Key='暂停全部'}"
                   Command="{Binding PauseAllCommand}"
                   Classes="mobile-quiet"
                   VerticalAlignment="Top" />
@@ -448,8 +472,8 @@
           <StackPanel Spacing="12">
             <Grid ColumnDefinitions="*,Auto">
               <StackPanel Spacing="2">
-                <TextBlock Text="新建下载" FontSize="17" FontWeight="SemiBold" />
-                <TextBlock Text="粘贴文件链接即可开始" Classes="mobile-muted" FontSize="12" />
+                <TextBlock Text="{loc:Text Key='新建下载'}" FontSize="17" FontWeight="SemiBold" />
+                <TextBlock Text="{loc:Text Key='粘贴文件链接即可开始'}" Classes="mobile-muted" FontSize="12" />
               </StackPanel>
               <Border Grid.Column="1" Classes="mobile-chip" VerticalAlignment="Center">
                 <TextBlock Text="HTTP / HTTPS" Foreground="#8FB1FF" FontSize="11" />
@@ -463,11 +487,11 @@
 
             <Grid ColumnDefinitions="*,Auto">
               <StackPanel VerticalAlignment="Center" Spacing="2">
-                <TextBlock Text="保存位置" Classes="mobile-muted" FontSize="11" />
-                <TextBlock Text="应用下载目录" FontSize="13" />
+                <TextBlock Text="{loc:Text Key='保存位置'}" Classes="mobile-muted" FontSize="11" />
+                <TextBlock Text="{loc:Text Key='应用下载目录'}" FontSize="13" />
               </StackPanel>
               <Button Grid.Column="1"
-                      Content="开始下载"
+                      Content="{loc:Text Key='开始下载'}"
                       Command="{Binding AddDownloadCommand}"
                       Classes="mobile-primary" />
             </Grid>
@@ -493,11 +517,11 @@
                          HorizontalAlignment="Center"
                          VerticalAlignment="Center" />
             </Border>
-            <TextBlock Text="还没有下载任务"
+            <TextBlock Text="{loc:Text Key='还没有下载任务'}"
                        FontSize="17"
                        FontWeight="SemiBold"
                        HorizontalAlignment="Center" />
-            <TextBlock Text="在上方粘贴链接，任务会显示在这里"
+            <TextBlock Text="{loc:Text Key='在上方粘贴链接，任务会显示在这里'}"
                        Classes="mobile-muted"
                        TextAlignment="Center"
                        TextWrapping="Wrap" />
@@ -549,9 +573,9 @@
                                   HorizontalAlignment="Right"
                                   Spacing="7"
                                   Margin="0,12,0,0">
-                        <Button Content="暂停" Command="{Binding PauseCommand}" Classes="mobile-quiet" IsVisible="{Binding IsActive}" />
-                        <Button Content="继续" Command="{Binding ResumeCommand}" Classes="mobile-primary" IsVisible="{Binding CanResume}" />
-                        <Button Content="移除" Command="{Binding RemoveCommand}" Classes="mobile-quiet" />
+                        <Button Content="{loc:Text Key='暂停'}" Command="{Binding PauseCommand}" Classes="mobile-quiet" IsVisible="{Binding IsActive}" />
+                        <Button Content="{loc:Text Key='继续'}" Command="{Binding ResumeCommand}" Classes="mobile-primary" IsVisible="{Binding CanResume}" />
+                        <Button Content="{loc:Text Key='移除'}" Command="{Binding RemoveCommand}" Classes="mobile-quiet" />
                       </StackPanel>
                     </Grid>
                   </Border>
@@ -568,7 +592,7 @@
             IsEnabled="{Binding ShowSettingsSave}"
             HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,44,50"
             ZIndex="10" CornerRadius="12" BoxShadow="0 4 18 0 #38000000">
-      <Button Content="保存设置" Command="{Binding SaveSettingsCommand}"
+      <Button Content="{loc:Text Key='保存设置'}" Command="{Binding SaveSettingsCommand}"
               Opacity="1"
               Background="#2874E8" Foreground="White" BorderThickness="0"
               CornerRadius="12" Padding="26,13" FontWeight="SemiBold" />

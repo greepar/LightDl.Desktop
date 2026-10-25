@@ -6,10 +6,13 @@
         <LangVersion>latest</LangVersion>
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
         <IsAotCompatible>true</IsAotCompatible>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
     <ItemGroup>
         <AvaloniaResource Include="Assets\**" />
+        <EmbeddedResource Include="../browser-extensions/automatic/chromium/**/*" LogicalName="LightDl.Extensions.chromium/%(RecursiveDir)%(Filename)%(Extension)" />
+        <EmbeddedResource Include="../browser-extensions/automatic/firefox/**/*" LogicalName="LightDl.Extensions.firefox/%(RecursiveDir)%(Filename)%(Extension)" />
     </ItemGroup>
 
     <ItemGroup>

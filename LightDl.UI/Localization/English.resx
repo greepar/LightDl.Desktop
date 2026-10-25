@@ -1,0 +1,949 @@
+<?xml version='1.0' encoding='utf-8'?>
+<root>
+  <data name="&#10;…更多内容请查看完整 Release。" xml:space="preserve">
+    <value>
+…See the full release for more.</value>
+  </data>
+  <data name="&#10;你仍可以选择直接运行。" xml:space="preserve">
+    <value>
+You can still run directly.</value>
+  </data>
+  <data name="+ 新建任务" xml:space="preserve">
+    <value>+ New task</value>
+  </data>
+  <data name="1. 在 Firefox 地址栏打开 about:debugging#/runtime/this-firefox。&#10;2. 点击“临时载入附加组件”，选择上方文件夹中的 manifest.json。&#10;3. 返回 LightDl 点击“注册 / 修复宿主”，确认 LightDl 中“启用浏览器自动接管”已开启。&#10;&#10;内置 Firefox 扩展尚未签名，只能临时加载，重启 Firefox 后需重新加载。长期安装需要 Mozilla 签名的 XPI。" xml:space="preserve">
+    <value>1. Open about:debugging#/runtime/this-firefox in Firefox.
+2. Click “Load Temporary Add-on” and select manifest.json in the folder above.
+3. Return to LightDl and click “Register / repair host”, make sure “Capture browser downloads automatically” is enabled in LightDl.
+
+The bundled Firefox extension is unsigned and can only be loaded temporarily. Reload it after restarting Firefox. Permanent installation requires a Mozilla-signed XPI.</value>
+  </data>
+  <data name="1. 在浏览器地址栏打开 {0}。&#10;2. 开启“开发者模式”，点击“加载已解压的扩展程序”，选择上方 extension 文件夹。&#10;3. 返回 LightDl 点击“注册 / 修复宿主”，确认 LightDl 中“启用浏览器自动接管”已开启。&#10;&#10;请保留该文件夹，浏览器会从这里加载扩展。" xml:space="preserve">
+    <value>1. Open {0} in your browser.
+2. Enable “Developer mode”, click “Load unpacked” and select the extension folder above.
+3. Return to LightDl and click “Register / repair host”, make sure “Capture browser downloads automatically” is enabled in LightDl.
+
+Keep this folder: your browser loads the extension from here.</value>
+  </data>
+  <data name="AppImage 文件头或架构无效。" xml:space="preserve">
+    <value>Invalid AppImage header or architecture.</value>
+  </data>
+  <data name="Cookie 格式无效" xml:space="preserve">
+    <value>Invalid Cookie format</value>
+  </data>
+  <data name="EXE 文件头无效。" xml:space="preserve">
+    <value>Invalid EXE header.</value>
+  </data>
+  <data name="EXE 架构与当前进程不匹配。" xml:space="preserve">
+    <value>The EXE architecture does not match the running process.</value>
+  </data>
+  <data name="H3 连接失败，等待选择是否回退" xml:space="preserve">
+    <value>H3 failed; waiting for your fallback choice</value>
+  </data>
+  <data name="HTTP/3 连接失败" xml:space="preserve">
+    <value>HTTP/3 connection failed</value>
+  </data>
+  <data name="HTTP/3 连接失败，已保持强制 H3，未回退。" xml:space="preserve">
+    <value>HTTP/3 failed. Forced H3 is still enabled; no fallback was used.</value>
+  </data>
+  <data name="HTTP/3（连接失败）" xml:space="preserve">
+    <value>HTTP/3 (connection failed)</value>
+  </data>
+  <data name="LightDl 将使用 Native Messaging 接收 Chrome、Edge 和 Firefox 创建的下载。捕获下载后会弹出独立下载信息窗口，不会在当前页面内嵌确认表单。" xml:space="preserve">
+    <value>LightDl uses Native Messaging to receive downloads from Chrome, Edge and Firefox. Captured downloads open in a separate confirmation window.</value>
+  </data>
+  <data name="LightDl 接管下载" xml:space="preserve">
+    <value>Download with LightDl</value>
+  </data>
+  <data name="Linux 自动更新需要从 AppImage 启动。" xml:space="preserve">
+    <value>Automatic updates on Linux require running the AppImage.</value>
+  </data>
+  <data name="Native Messaging 宿主尚未注册" xml:space="preserve">
+    <value>Native Messaging host not registered</value>
+  </data>
+  <data name="Native Messaging 宿主已注册" xml:space="preserve">
+    <value>Native Messaging host registered</value>
+  </data>
+  <data name="Native Messaging 宿主已注册，请重新启动浏览器" xml:space="preserve">
+    <value>Native Messaging host registered. Restart your browser.</value>
+  </data>
+  <data name="Release 尚未提供 {0}，请稍后重试。" xml:space="preserve">
+    <value>The release does not yet provide {0}. Try again later.</value>
+  </data>
+  <data name="User-Agent 格式无效" xml:space="preserve">
+    <value>Invalid User-Agent format</value>
+  </data>
+  <data name="Windows 更新包中没有唯一有效的 LightDl.Desktop.exe。" xml:space="preserve">
+    <value>The Windows update must contain exactly one valid LightDl.Desktop.exe.</value>
+  </data>
+  <data name="{0} 失败：{1}" xml:space="preserve">
+    <value>{0} failed: {1}</value>
+  </data>
+  <data name="{0} 已准备就绪。重启安装将暂停下载并保存任务；有未保存设置时请先保存。" xml:space="preserve">
+    <value>Version {0} is ready. Restarting to install will pause downloads and save tasks. Save any pending settings first.</value>
+  </data>
+  <data name="{0} 活动线程（服务器未支持分段）" xml:space="preserve">
+    <value>{0} active connections (server has no range support)</value>
+  </data>
+  <data name="{0} 线程" xml:space="preserve">
+    <value>{0} connections</value>
+  </data>
+  <data name="{0}/{1} 线程（活动/上限）" xml:space="preserve">
+    <value>{0}/{1} connections (active/limit)</value>
+  </data>
+  <data name="“{0}”无法通过 HTTP/3 建立或维持连接。&#10;&#10;是否仅将当前下载回退到 HTTP/2 / HTTP/1.1？已有可续传分片会继续使用，全局强制 H3 设置保持不变。" xml:space="preserve">
+    <value>Unable to establish or maintain an HTTP/3 connection for “{0}”.
+
+Use HTTP/2 / HTTP/1.1 for this download? Existing resumable chunks will be reused. The global forced H3 setting will remain unchanged.</value>
+  </data>
+  <data name="下载" xml:space="preserve">
+    <value>Downloads</value>
+  </data>
+  <data name="下载中心" xml:space="preserve">
+    <value>Downloads</value>
+  </data>
+  <data name="下载地址" xml:space="preserve">
+    <value>Download URL</value>
+  </data>
+  <data name="下载地址：" xml:space="preserve">
+    <value>Download URL:</value>
+  </data>
+  <data name="下载失败" xml:space="preserve">
+    <value>Failed</value>
+  </data>
+  <data name="下载完成后显示系统通知" xml:space="preserve">
+    <value>Notify when downloads complete</value>
+  </data>
+  <data name="下载更新" xml:space="preserve">
+    <value>Download update</value>
+  </data>
+  <data name="不使用代理" xml:space="preserve">
+    <value>No proxy</value>
+  </data>
+  <data name="不探测 HTTP/3，使用 HTTP/2，并可回退到 HTTP/1.1。" xml:space="preserve">
+    <value>Use HTTP/2 with HTTP/1.1 fallback, without probing HTTP/3.</value>
+  </data>
+  <data name="不支持此架构的自动更新。" xml:space="preserve">
+    <value>Automatic updates are not supported on this architecture.</value>
+  </data>
+  <data name="主题" xml:space="preserve">
+    <value>Theme</value>
+  </data>
+  <data name="仅删除任务" xml:space="preserve">
+    <value>Remove task</value>
+  </data>
+  <data name="代理" xml:space="preserve">
+    <value>Proxy</value>
+  </data>
+  <data name="传输协议：" xml:space="preserve">
+    <value>Protocol:</value>
+  </data>
+  <data name="使用系统代理" xml:space="preserve">
+    <value>Use system proxy</value>
+  </data>
+  <data name="例如：https://example.com/" xml:space="preserve">
+    <value>Example: https://example.com/</value>
+  </data>
+  <data name="例如：session=value; token=value" xml:space="preserve">
+    <value>Example: session=value; token=value</value>
+  </data>
+  <data name="保存位置" xml:space="preserve">
+    <value>Save location</value>
+  </data>
+  <data name="保存位置：" xml:space="preserve">
+    <value>Save location:</value>
+  </data>
+  <data name="保存到" xml:space="preserve">
+    <value>Save to</value>
+  </data>
+  <data name="保存后离开" xml:space="preserve">
+    <value>Save and leave</value>
+  </data>
+  <data name="保存设置" xml:space="preserve">
+    <value>Save settings</value>
+  </data>
+  <data name="保持 H3，停止本次下载" xml:space="preserve">
+    <value>Keep H3 and stop this download</value>
+  </data>
+  <data name="全局限速 (KiB/s，0 为不限速)" xml:space="preserve">
+    <value>Global speed limit (KiB/s, 0 = unlimited)</value>
+  </data>
+  <data name="全部任务" xml:space="preserve">
+    <value>All tasks</value>
+  </data>
+  <data name="全部暂停" xml:space="preserve">
+    <value>Pause all</value>
+  </data>
+  <data name="关闭" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="关闭 LightDl" xml:space="preserve">
+    <value>Close LightDl</value>
+  </data>
+  <data name="关闭主窗口时" xml:space="preserve">
+    <value>When closing the main window</value>
+  </data>
+  <data name="内置扩展文件不完整。" xml:space="preserve">
+    <value>The bundled extension is incomplete.</value>
+  </data>
+  <data name="内置扩展路径无效。" xml:space="preserve">
+    <value>The bundled extension path is invalid.</value>
+  </data>
+  <data name="准备就绪" xml:space="preserve">
+    <value>Ready</value>
+  </data>
+  <data name="分段大小 (MB)" xml:space="preserve">
+    <value>Chunk size (MB)</value>
+  </data>
+  <data name="创建开始菜单快捷方式失败，可选择直接运行。" xml:space="preserve">
+    <value>Unable to create application shortcuts. You can run directly instead.</value>
+  </data>
+  <data name="删除任务及本地文件" xml:space="preserve">
+    <value>Delete task and files</value>
+  </data>
+  <data name="协议" xml:space="preserve">
+    <value>Protocol</value>
+  </data>
+  <data name="发现新版后，可选择是否下载并安装。" xml:space="preserve">
+    <value>Choose whether to download and install an available update.</value>
+  </data>
+  <data name="发现新版本 v{0}" xml:space="preserve">
+    <value>Update available: v{0}</value>
+  </data>
+  <data name="发现新版本 {0}，可以下载更新。" xml:space="preserve">
+    <value>Version {0} is available to download.</value>
+  </data>
+  <data name="取消" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="取消下载" xml:space="preserve">
+    <value>Cancel download</value>
+  </data>
+  <data name="可以重新选择安装目录。取消不会修改现有设置或使用方式。" xml:space="preserve">
+    <value>Choose a new installation folder. Canceling keeps your current setup.</value>
+  </data>
+  <data name="可随时选择安装目录，创建或修复应用菜单入口和图标。" xml:space="preserve">
+    <value>Choose an install folder and create or repair application shortcuts and icons.</value>
+  </data>
+  <data name="同时下载任务" xml:space="preserve">
+    <value>Concurrent downloads</value>
+  </data>
+  <data name="后台运行会继续下载；退出应用会暂停下载并保存进度。" xml:space="preserve">
+    <value>Downloads continue in the background. Exiting pauses downloads and saves progress.</value>
+  </data>
+  <data name="启动后及每 6 小时检查，发现新版时提示。关闭后仍可手动检查。" xml:space="preserve">
+    <value>Check at startup and every 6 hours. You can still check manually when disabled.</value>
+  </data>
+  <data name="启用动态连接数" xml:space="preserve">
+    <value>Adjust connections dynamically</value>
+  </data>
+  <data name="启用断点续传" xml:space="preserve">
+    <value>Enable resumable downloads</value>
+  </data>
+  <data name="启用浏览器自动接管" xml:space="preserve">
+    <value>Capture browser downloads automatically</value>
+  </data>
+  <data name="回退 H2 / H1.1 继续" xml:space="preserve">
+    <value>Continue with H2 / H1.1</value>
+  </data>
+  <data name="在上方粘贴链接，任务会显示在这里" xml:space="preserve">
+    <value>Paste a link above to add your first download</value>
+  </data>
+  <data name="填写下载地址和保存位置后创建任务。" xml:space="preserve">
+    <value>Enter a download URL and choose where to save it.</value>
+  </data>
+  <data name="备份已存在，已取消替换。" xml:space="preserve">
+    <value>A backup already exists. Replacement canceled.</value>
+  </data>
+  <data name="复制下载链接" xml:space="preserve">
+    <value>Copy download link</value>
+  </data>
+  <data name="复制扩展页面地址" xml:space="preserve">
+    <value>Copy extensions page address</value>
+  </data>
+  <data name="复制文件名" xml:space="preserve">
+    <value>Copy file name</value>
+  </data>
+  <data name="复制文件路径" xml:space="preserve">
+    <value>Copy file path</value>
+  </data>
+  <data name="安装位置已有 LightDl。请先运行已安装版本进行更新，或移走旧文件后重试。" xml:space="preserve">
+    <value>LightDl already exists at this location. Update from the installed copy, or move the old file before retrying.</value>
+  </data>
+  <data name="安装到系统" xml:space="preserve">
+    <value>Install to system</value>
+  </data>
+  <data name="安装到系统…" xml:space="preserve">
+    <value>Install to system…</value>
+  </data>
+  <data name="安装到系统后，会创建应用菜单入口并配置图标，后续可以直接从菜单启动。无需管理员权限。" xml:space="preserve">
+    <value>Install LightDl to create application shortcuts and icons. You can then launch it from your app menu. No administrator privileges are needed.</value>
+  </data>
+  <data name="安装后启动路径更新失败：" xml:space="preserve">
+    <value>Unable to update launch paths after installation: </value>
+  </data>
+  <data name="安装失败：" xml:space="preserve">
+    <value>Installation failed: </value>
+  </data>
+  <data name="安装尚未开始：" xml:space="preserve">
+    <value>Installation has not started: </value>
+  </data>
+  <data name="安装浏览器扩展" xml:space="preserve">
+    <value>Install browser extension</value>
+  </data>
+  <data name="安装目录" xml:space="preserve">
+    <value>Install folder</value>
+  </data>
+  <data name="完成" xml:space="preserve">
+    <value>Done</value>
+  </data>
+  <data name="官方安装说明" xml:space="preserve">
+    <value>Official installation guide</value>
+  </data>
+  <data name="已删除 {0}" xml:space="preserve">
+    <value>Removed {0}</value>
+  </data>
+  <data name="已取消本次浏览器下载" xml:space="preserve">
+    <value>Browser download canceled</value>
+  </data>
+  <data name="已启动 {0}，旧版备份保留在 {1}：{2}" xml:space="preserve">
+    <value>Started {0}. The previous version backup is at {1}: {2}</value>
+  </data>
+  <data name="已存在" xml:space="preserve">
+    <value>Already exists</value>
+  </data>
+  <data name="已完成" xml:space="preserve">
+    <value>Completed</value>
+  </data>
+  <data name="已完成: " xml:space="preserve">
+    <value>Completed: </value>
+  </data>
+  <data name="已暂停" xml:space="preserve">
+    <value>Paused</value>
+  </data>
+  <data name="已更新到 {0}。" xml:space="preserve">
+    <value>Updated to {0}.</value>
+  </data>
+  <data name="已有文件处理" xml:space="preserve">
+    <value>When the file already exists</value>
+  </data>
+  <data name="已添加 {0}" xml:space="preserve">
+    <value>Added {0}</value>
+  </data>
+  <data name="已移除浏览器宿主注册" xml:space="preserve">
+    <value>Browser host registration removed</value>
+  </data>
+  <data name="已让浏览器继续原下载" xml:space="preserve">
+    <value>Original download resumed in browser</value>
+  </data>
+  <data name="应用" xml:space="preserve">
+    <value>Application</value>
+  </data>
+  <data name="应用下载目录" xml:space="preserve">
+    <value>Application download folder</value>
+  </data>
+  <data name="应用正在退出，请稍后重试。" xml:space="preserve">
+    <value>The application is exiting. Try again shortly.</value>
+  </data>
+  <data name="开始下载" xml:space="preserve">
+    <value>Start download</value>
+  </data>
+  <data name="开机自动启动（静默到托盘）" xml:space="preserve">
+    <value>Start at login (minimized to tray)</value>
+  </data>
+  <data name="开机自启设置失败：{0}" xml:space="preserve">
+    <value>Unable to configure startup: {0}</value>
+  </data>
+  <data name="强制 HTTP/3（不回退）" xml:space="preserve">
+    <value>Force HTTP/3 (no fallback)</value>
+  </data>
+  <data name="当前已是最新版本（{0}）" xml:space="preserve">
+    <value>You are up to date ({0})</value>
+  </data>
+  <data name="当前版本 {0}" xml:space="preserve">
+    <value>Current version {0}</value>
+  </data>
+  <data name="待安装程序的校验值发生变化。" xml:space="preserve">
+    <value>The staged application checksum has changed.</value>
+  </data>
+  <data name="忽略 SSL 证书错误（不安全）" xml:space="preserve">
+    <value>Ignore SSL certificate errors (unsafe)</value>
+  </data>
+  <data name="所有请求仅使用 HTTP/3；服务器、网络或设备不支持时下载失败，不回退。仅支持 HTTPS。" xml:space="preserve">
+    <value>Use HTTP/3 for every request with HTTPS only. Downloads fail if unsupported; there is no automatic fallback.</value>
+  </data>
+  <data name="打开" xml:space="preserve">
+    <value>Open</value>
+  </data>
+  <data name="打开文件" xml:space="preserve">
+    <value>Open file</value>
+  </data>
+  <data name="打开文件夹" xml:space="preserve">
+    <value>Open folder</value>
+  </data>
+  <data name="扩展已保存到下载目录，无需联网下载。" xml:space="preserve">
+    <value>The bundled extension has been saved to Downloads.</value>
+  </data>
+  <data name="扩展页面地址已复制，请粘贴到对应浏览器地址栏。" xml:space="preserve">
+    <value>Address copied. Paste it into the selected browser's address bar.</value>
+  </data>
+  <data name="找不到 LightDl.Desktop 可执行文件，请先发布应用。" xml:space="preserve">
+    <value>LightDl.Desktop executable not found. Publish the application first.</value>
+  </data>
+  <data name="报错" xml:space="preserve">
+    <value>Report an error</value>
+  </data>
+  <data name="收到来自 {0} 的下载请求" xml:space="preserve">
+    <value>Download request received from {0}</value>
+  </data>
+  <data name="放弃修改" xml:space="preserve">
+    <value>Discard changes</value>
+  </data>
+  <data name="文件名" xml:space="preserve">
+    <value>File name</value>
+  </data>
+  <data name="文件大小" xml:space="preserve">
+    <value>File size</value>
+  </data>
+  <data name="新建下载" xml:space="preserve">
+    <value>New download</value>
+  </data>
+  <data name="新建下载任务" xml:space="preserve">
+    <value>New download</value>
+  </data>
+  <data name="新版启动确认失败：" xml:space="preserve">
+    <value>Unable to acknowledge updated startup: </value>
+  </data>
+  <data name="新版应用的标识、版本或可执行文件不匹配。" xml:space="preserve">
+    <value>The updated app identifier, version or executable does not match.</value>
+  </data>
+  <data name="新版程序在启动完成前退出。" xml:space="preserve">
+    <value>The updated application exited before startup completed.</value>
+  </data>
+  <data name="新版程序未能完成启动。" xml:space="preserve">
+    <value>The updated application did not finish starting.</value>
+  </data>
+  <data name="无法创建开始菜单快捷方式。" xml:space="preserve">
+    <value>Unable to create application shortcuts.</value>
+  </data>
+  <data name="无法启动更新后的程序。" xml:space="preserve">
+    <value>Unable to launch the updated application.</value>
+  </data>
+  <data name="无法启动更新安装程序。" xml:space="preserve">
+    <value>Unable to start the update installer.</value>
+  </data>
+  <data name="无法恢复已保存的设置。" xml:space="preserve">
+    <value>Unable to restore saved settings.</value>
+  </data>
+  <data name="无法打开 Release 页面：" xml:space="preserve">
+    <value>Unable to open the release page: </value>
+  </data>
+  <data name="无法打开目录选择器，请直接填写目录：" xml:space="preserve">
+    <value>Unable to open the folder picker. Enter the folder manually: </value>
+  </data>
+  <data name="无法确定 LightDl 可执行文件路径" xml:space="preserve">
+    <value>Unable to locate the LightDl executable</value>
+  </data>
+  <data name="无法确定当前用户。" xml:space="preserve">
+    <value>Unable to determine the current user.</value>
+  </data>
+  <data name="无法确定当前程序位置。" xml:space="preserve">
+    <value>Unable to locate the current application.</value>
+  </data>
+  <data name="无法确定桌面目录。" xml:space="preserve">
+    <value>Unable to locate the Desktop folder.</value>
+  </data>
+  <data name="无法读取已保存设置。" xml:space="preserve">
+    <value>Unable to read saved settings.</value>
+  </data>
+  <data name="无法运行 " xml:space="preserve">
+    <value>Unable to run </value>
+  </data>
+  <data name="无法退出当前应用。" xml:space="preserve">
+    <value>Unable to exit the current application.</value>
+  </data>
+  <data name="无法释放浏览器扩展：" xml:space="preserve">
+    <value>Unable to export the browser extension: </value>
+  </data>
+  <data name="无法验证应用签名。" xml:space="preserve">
+    <value>Unable to verify the application signature.</value>
+  </data>
+  <data name="旧版本已保留或恢复：" xml:space="preserve">
+    <value>The previous version has been preserved or restored: </value>
+  </data>
+  <data name="显示 LightDl" xml:space="preserve">
+    <value>Show LightDl</value>
+  </data>
+  <data name="暂停" xml:space="preserve">
+    <value>Pause</value>
+  </data>
+  <data name="暂停下载" xml:space="preserve">
+    <value>Pause download</value>
+  </data>
+  <data name="暂停全部" xml:space="preserve">
+    <value>Pause all</value>
+  </data>
+  <data name="暂无符合条件的任务" xml:space="preserve">
+    <value>No matching tasks</value>
+  </data>
+  <data name="更新下载已取消，原程序未修改。" xml:space="preserve">
+    <value>Update download canceled. The application was not changed.</value>
+  </data>
+  <data name="更新事务不存在。" xml:space="preserve">
+    <value>Update transaction not found.</value>
+  </data>
+  <data name="更新事务路径无效。" xml:space="preserve">
+    <value>Invalid update transaction path.</value>
+  </data>
+  <data name="更新准备失败：" xml:space="preserve">
+    <value>Unable to prepare update: </value>
+  </data>
+  <data name="更新包 SHA256 或大小校验失败，原程序未修改。" xml:space="preserve">
+    <value>Update SHA256 or size verification failed. The application was not changed.</value>
+  </data>
+  <data name="更新包中没有有效的 LightDl.app。" xml:space="preserve">
+    <value>The update does not contain a valid LightDl.app.</value>
+  </data>
+  <data name="更新包大小、校验值或下载地址无效，已拒绝更新。" xml:space="preserve">
+    <value>Update rejected: invalid package size, checksum or download URL.</value>
+  </data>
+  <data name="更新包大小与 Release 不匹配。" xml:space="preserve">
+    <value>The update package size does not match the release.</value>
+  </data>
+  <data name="更新包超出预期大小。" xml:space="preserve">
+    <value>The update package exceeds the expected size.</value>
+  </data>
+  <data name="更新失败，旧版本已恢复：{0}" xml:space="preserve">
+    <value>Update failed. The previous version was restored: {0}</value>
+  </data>
+  <data name="更新失败；自动恢复未完成，请从 {0} 恢复程序。{1}" xml:space="preserve">
+    <value>Update failed and automatic recovery was incomplete. Restore the application from {0}. {1}</value>
+  </data>
+  <data name="更新应用的签名团队发生变化。" xml:space="preserve">
+    <value>The signing team of the updated application has changed.</value>
+  </data>
+  <data name="更新未完成：{0}&#10;事务目录：{1}" xml:space="preserve">
+    <value>Update incomplete: {0}
+Transaction directory: {1}</value>
+  </data>
+  <data name="更新源不是正式 Release。" xml:space="preserve">
+    <value>The update source is not a stable release.</value>
+  </data>
+  <data name="更新版本必须高于当前版本。" xml:space="preserve">
+    <value>The update version must be newer than the current version.</value>
+  </data>
+  <data name="更新目标不是应用包。" xml:space="preserve">
+    <value>The update target is not an application bundle.</value>
+  </data>
+  <data name="更新程序不是 Windows EXE。" xml:space="preserve">
+    <value>The update is not a Windows EXE.</value>
+  </data>
+  <data name="更新路径不能是符号链接。" xml:space="preserve">
+    <value>Update paths cannot be symbolic links.</value>
+  </data>
+  <data name="更新辅助进程初始化超时。" xml:space="preserve">
+    <value>The update helper initialization timed out.</value>
+  </data>
+  <data name="更新辅助进程未能初始化。" xml:space="preserve">
+    <value>The update helper could not initialize.</value>
+  </data>
+  <data name="最大连接数" xml:space="preserve">
+    <value>Maximum connections</value>
+  </data>
+  <data name="最小化到后台" xml:space="preserve">
+    <value>Run in background</value>
+  </data>
+  <data name="最小连接数" xml:space="preserve">
+    <value>Minimum connections</value>
+  </data>
+  <data name="最小连接数不能大于最大连接数" xml:space="preserve">
+    <value>Minimum connections cannot exceed maximum connections</value>
+  </data>
+  <data name="有新版本可用，是否下载更新？下载完成后可选择重启安装。" xml:space="preserve">
+    <value>An update is available. Download it now? You can restart to install after downloading.</value>
+  </data>
+  <data name="有未保存的设置，退出后这些修改将丢失。" xml:space="preserve">
+    <value>Your unsaved settings will be lost if you exit.</value>
+  </data>
+  <data name="未保存的设置" xml:space="preserve">
+    <value>Unsaved settings</value>
+  </data>
+  <data name="未知" xml:space="preserve">
+    <value>Unknown</value>
+  </data>
+  <data name="未知大小" xml:space="preserve">
+    <value>Unknown size</value>
+  </data>
+  <data name="来源浏览器" xml:space="preserve">
+    <value>Browser</value>
+  </data>
+  <data name="查看完整 Release" xml:space="preserve">
+    <value>View full release</value>
+  </data>
+  <data name="检查更新" xml:space="preserve">
+    <value>Check for updates</value>
+  </data>
+  <data name="检查更新失败：" xml:space="preserve">
+    <value>Unable to check for updates: </value>
+  </data>
+  <data name="欢迎使用 LightDl" xml:space="preserve">
+    <value>Welcome to LightDl</value>
+  </data>
+  <data name="正在下载" xml:space="preserve">
+    <value>Downloading</value>
+  </data>
+  <data name="正在下载: " xml:space="preserve">
+    <value>Downloading: </value>
+  </data>
+  <data name="正在下载并验证更新…" xml:space="preserve">
+    <value>Downloading and verifying update…</value>
+  </data>
+  <data name="正在保存下载任务，随后重启安装…" xml:space="preserve">
+    <value>Saving download tasks before restarting to install…</value>
+  </data>
+  <data name="正在回退到 H2 / H1.1" xml:space="preserve">
+    <value>Switching to H2 / H1.1</value>
+  </data>
+  <data name="正在安装并配置应用菜单…" xml:space="preserve">
+    <value>Installing and creating application shortcuts…</value>
+  </data>
+  <data name="正在检查更新…" xml:space="preserve">
+    <value>Checking for updates…</value>
+  </data>
+  <data name="此平台暂不支持自动更新。" xml:space="preserve">
+    <value>Automatic updates are not supported on this platform.</value>
+  </data>
+  <data name="此版本未提供具体更新说明，可在完整 Release 页面查看。" xml:space="preserve">
+    <value>No detailed release notes are available. See the full release page.</value>
+  </data>
+  <data name="每次询问" xml:space="preserve">
+    <value>Ask every time</value>
+  </data>
+  <data name="注册 / 修复宿主" xml:space="preserve">
+    <value>Register / repair host</value>
+  </data>
+  <data name="浅色" xml:space="preserve">
+    <value>Light</value>
+  </data>
+  <data name="浏览..." xml:space="preserve">
+    <value>Browse…</value>
+  </data>
+  <data name="浏览…" xml:space="preserve">
+    <value>Browse…</value>
+  </data>
+  <data name="浏览器下载接管" xml:space="preserve">
+    <value>Browser download</value>
+  </data>
+  <data name="浏览器任务已临时暂停。选择 LightDl 接管或取消下载后，浏览器任务会被移除；关闭窗口或选择浏览器继续时会恢复原下载。" xml:space="preserve">
+    <value>The browser download is paused temporarily. Using LightDl or canceling removes the browser task. Closing this window or continuing in the browser resumes the original download.</value>
+  </data>
+  <data name="浏览器宿主注册失败" xml:space="preserve">
+    <value>Unable to register browser host</value>
+  </data>
+  <data name="浏览器宿主注册完成" xml:space="preserve">
+    <value>Browser host registered</value>
+  </data>
+  <data name="浏览器继续下载" xml:space="preserve">
+    <value>Continue in browser</value>
+  </data>
+  <data name="浏览器集成" xml:space="preserve">
+    <value>Browser integration</value>
+  </data>
+  <data name="深色" xml:space="preserve">
+    <value>Dark</value>
+  </data>
+  <data name="添加下载链接，或从左侧切换其他分类" xml:space="preserve">
+    <value>Add a download link or choose another category</value>
+  </data>
+  <data name="版本 " xml:space="preserve">
+    <value>Version </value>
+  </data>
+  <data name="版本号不是有效的正式版本。" xml:space="preserve">
+    <value>The version is not a valid stable version.</value>
+  </data>
+  <data name="版本说明" xml:space="preserve">
+    <value>Release notes</value>
+  </data>
+  <data name="用等长分片实测 H2/H3 速度，后续持续使用更快的协议；H3 不可用时自动回退。小文件和不支持分片的文件不测速。" xml:space="preserve">
+    <value>Compare H2/H3 using equal-sized chunks and keep the faster protocol. Fall back if H3 is unavailable. Skip comparisons for small files and servers without range support.</value>
+  </data>
+  <data name="留空使用 LightDl 默认值" xml:space="preserve">
+    <value>Leave blank to use the LightDl default</value>
+  </data>
+  <data name="留空时使用服务器提供的文件名" xml:space="preserve">
+    <value>Leave blank to use the server file name</value>
+  </data>
+  <data name="留空时使用设置中的全局 User-Agent" xml:space="preserve">
+    <value>Leave blank to use the User-Agent in Settings</value>
+  </data>
+  <data name="直接运行" xml:space="preserve">
+    <value>Run directly</value>
+  </data>
+  <data name="直接运行会保留当前位置，不创建系统快捷方式。以后仍可在设置中选择安装。" xml:space="preserve">
+    <value>Run from the current location without creating shortcuts. You can install later from Settings.</value>
+  </data>
+  <data name="确认下载信息，并选择由浏览器继续、取消下载或交给 LightDl。" xml:space="preserve">
+    <value>Review the download, then continue in the browser, cancel, or use LightDl.</value>
+  </data>
+  <data name="禁用 HTTP/3（H2 / H1.1）" xml:space="preserve">
+    <value>Disable HTTP/3 (H2 / H1.1)</value>
+  </data>
+  <data name="移除" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="移除宿主" xml:space="preserve">
+    <value>Remove host</value>
+  </data>
+  <data name="移除浏览器宿主失败" xml:space="preserve">
+    <value>Unable to remove browser host</value>
+  </data>
+  <data name="程序位置：" xml:space="preserve">
+    <value>Application path: </value>
+  </data>
+  <data name="程序所在目录不可写。请将程序移到当前用户可写的位置后重试。" xml:space="preserve">
+    <value>The application folder is not writable. Move it to a folder you can write to and retry.</value>
+  </data>
+  <data name="程序路径不能包含换行或制表符。" xml:space="preserve">
+    <value>Application paths cannot contain line breaks or tabs.</value>
+  </data>
+  <data name="程序路径是符号链接或只读，请移到当前用户可写的位置后重试。" xml:space="preserve">
+    <value>The application is a symbolic link or read-only. Move it to a writable location and retry.</value>
+  </data>
+  <data name="稍后" xml:space="preserve">
+    <value>Later</value>
+  </data>
+  <data name="等待中" xml:space="preserve">
+    <value>Waiting</value>
+  </data>
+  <data name="等待连接" xml:space="preserve">
+    <value>Waiting for connection</value>
+  </data>
+  <data name="等待重新下载" xml:space="preserve">
+    <value>Waiting to restart</value>
+  </data>
+  <data name="管理桌面和移动设备上的下载队列" xml:space="preserve">
+    <value>Manage your download queue on desktop and mobile</value>
+  </data>
+  <data name="管理浏览器自动接管和 Native Messaging 宿主" xml:space="preserve">
+    <value>Manage browser downloads and the Native Messaging host</value>
+  </data>
+  <data name="粘贴文件链接即可开始" xml:space="preserve">
+    <value>Paste a file link to get started</value>
+  </data>
+  <data name="继续" xml:space="preserve">
+    <value>Resume</value>
+  </data>
+  <data name="继续下载" xml:space="preserve">
+    <value>Resume download</value>
+  </data>
+  <data name="网络" xml:space="preserve">
+    <value>Network</value>
+  </data>
+  <data name="自动接管" xml:space="preserve">
+    <value>Browser downloads</value>
+  </data>
+  <data name="自动检查更新" xml:space="preserve">
+    <value>Check for updates automatically</value>
+  </data>
+  <data name="自动选择H3" xml:space="preserve">
+    <value>Compare H2 / H3 automatically</value>
+  </data>
+  <data name="自动重命名" xml:space="preserve">
+    <value>Rename automatically</value>
+  </data>
+  <data name="自定义代理" xml:space="preserve">
+    <value>Custom proxy</value>
+  </data>
+  <data name="覆盖" xml:space="preserve">
+    <value>Overwrite</value>
+  </data>
+  <data name="解压后的程序大小无效。" xml:space="preserve">
+    <value>Invalid extracted application size.</value>
+  </data>
+  <data name="解压数据超出预期大小。" xml:space="preserve">
+    <value>Extracted data exceeds the expected size.</value>
+  </data>
+  <data name="记住关闭选择失败：" xml:space="preserve">
+    <value>Unable to remember the close action: </value>
+  </data>
+  <data name="记住我的选择" xml:space="preserve">
+    <value>Remember my choice</value>
+  </data>
+  <data name="记住我的选择（此路径下次不再询问）" xml:space="preserve">
+    <value>Remember my choice (do not ask again at this location)</value>
+  </data>
+  <data name="设置" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="设置保存失败：{0}" xml:space="preserve">
+    <value>Unable to save settings: {0}</value>
+  </data>
+  <data name="设置尚未保存，要保存修改后离开吗？" xml:space="preserve">
+    <value>Save your changes before leaving Settings?</value>
+  </data>
+  <data name="设置已保存，新配置将在后续下载中生效" xml:space="preserve">
+    <value>Settings saved. New downloads will use the updated settings.</value>
+  </data>
+  <data name="详情" xml:space="preserve">
+    <value>Details</value>
+  </data>
+  <data name="请使用 Release 单文件版本进行自动安装；开发运行可检查更新。" xml:space="preserve">
+    <value>Use a published single-file release to install updates. Development builds can only check for updates.</value>
+  </data>
+  <data name="请先保存设置，再安装到系统。" xml:space="preserve">
+    <value>Save your settings before installing to system.</value>
+  </data>
+  <data name="请先保存设置，再重启安装。" xml:space="preserve">
+    <value>Save your settings before restarting to install.</value>
+  </data>
+  <data name="请先把 LightDl 拖入“应用程序”或 ~/Applications，再运行更新。" xml:space="preserve">
+    <value>Move LightDl to Applications or ~/Applications before updating.</value>
+  </data>
+  <data name="请授予下载目录访问权限，然后再次开始下载" xml:space="preserve">
+    <value>Allow access to the download folder, then try again</value>
+  </data>
+  <data name="请求超时 (秒)" xml:space="preserve">
+    <value>Request timeout (seconds)</value>
+  </data>
+  <data name="请输入有效的 HTTP 或 HTTPS Referer" xml:space="preserve">
+    <value>Enter a valid HTTP or HTTPS Referer</value>
+  </data>
+  <data name="请输入有效的 HTTP 或 HTTPS 下载地址" xml:space="preserve">
+    <value>Enter a valid HTTP or HTTPS download URL</value>
+  </data>
+  <data name="请输入有效的 HTTP、HTTPS 或 SOCKS5 代理地址" xml:space="preserve">
+    <value>Enter a valid HTTP, HTTPS or SOCKS5 proxy URL</value>
+  </data>
+  <data name="请输入有效的文件名" xml:space="preserve">
+    <value>Enter a valid file name</value>
+  </data>
+  <data name="请选择下载目录" xml:space="preserve">
+    <value>Choose a download folder</value>
+  </data>
+  <data name="请选择有效的下载目录。" xml:space="preserve">
+    <value>Choose a valid download folder.</value>
+  </data>
+  <data name="请选择有效的安装目录。" xml:space="preserve">
+    <value>Choose a valid installation folder.</value>
+  </data>
+  <data name="请选择有效的绝对安装目录。" xml:space="preserve">
+    <value>Choose a valid absolute installation path.</value>
+  </data>
+  <data name="请选择退出应用或最小化到后台。" xml:space="preserve">
+    <value>Choose whether to exit or run in the background.</value>
+  </data>
+  <data name="请选择默认下载目录" xml:space="preserve">
+    <value>Choose a default download folder</value>
+  </data>
+  <data name="调整下载、网络和应用行为" xml:space="preserve">
+    <value>Manage downloads, network and application preferences</value>
+  </data>
+  <data name="跟随系统" xml:space="preserve">
+    <value>System default</value>
+  </data>
+  <data name="跳过" xml:space="preserve">
+    <value>Skip</value>
+  </data>
+  <data name="软件更新" xml:space="preserve">
+    <value>Software updates</value>
+  </data>
+  <data name="还没有下载任务" xml:space="preserve">
+    <value>No downloads yet</value>
+  </data>
+  <data name="进行中" xml:space="preserve">
+    <value>Active</value>
+  </data>
+  <data name="连接中（H2 / H1.1）" xml:space="preserve">
+    <value>Connecting (H2 / H1.1)</value>
+  </data>
+  <data name="连接中（已允许 H2 / H1.1）" xml:space="preserve">
+    <value>Connecting (H2 / H1.1 allowed)</value>
+  </data>
+  <data name="连接中（强制 HTTP/3）" xml:space="preserve">
+    <value>Connecting (forced HTTP/3)</value>
+  </data>
+  <data name="连接中（自动 H2/H3）" xml:space="preserve">
+    <value>Connecting (automatic H2/H3)</value>
+  </data>
+  <data name="连接数" xml:space="preserve">
+    <value>Connections</value>
+  </data>
+  <data name="退出" xml:space="preserve">
+    <value>Exit</value>
+  </data>
+  <data name="退出应用" xml:space="preserve">
+    <value>Exit application</value>
+  </data>
+  <data name="选择 LightDl 安装目录" xml:space="preserve">
+    <value>Choose the LightDl install folder</value>
+  </data>
+  <data name="选择下载目录" xml:space="preserve">
+    <value>Choose a download folder</value>
+  </data>
+  <data name="选择使用方式" xml:space="preserve">
+    <value>Choose how to use LightDl</value>
+  </data>
+  <data name="选择安装目录" xml:space="preserve">
+    <value>Choose install folder</value>
+  </data>
+  <data name="选择浏览器，将内置扩展保存到系统下载目录，并查看安装步骤。" xml:space="preserve">
+    <value>Choose a browser to save the bundled extension to Downloads and view installation instructions.</value>
+  </data>
+  <data name="选择目录" xml:space="preserve">
+    <value>Choose folder</value>
+  </data>
+  <data name="选择默认下载目录" xml:space="preserve">
+    <value>Choose the default download folder</value>
+  </data>
+  <data name="重启安装" xml:space="preserve">
+    <value>Restart and install</value>
+  </data>
+  <data name="重新下载" xml:space="preserve">
+    <value>Restart download</value>
+  </data>
+  <data name="重试次数" xml:space="preserve">
+    <value>Retry attempts</value>
+  </data>
+  <data name="高性能并发下载管理器" xml:space="preserve">
+    <value>High-performance concurrent download manager</value>
+  </data>
+  <data name="高级选项" xml:space="preserve">
+    <value>Advanced options</value>
+  </data>
+  <data name="默认保存目录" xml:space="preserve">
+    <value>Default download folder</value>
+  </data>
+  <data name="（H3 中断，已回退）" xml:space="preserve">
+    <value> (H3 interrupted; using fallback)</value>
+  </data>
+  <data name="（本任务已回退）" xml:space="preserve">
+    <value> (fallback for this task)</value>
+  </data>
+  <data name="（测速选中）" xml:space="preserve">
+    <value> (selected by speed test)</value>
+  </data>
+  <data name="关于 {0}" xml:space="preserve">
+    <value>About {0}</value>
+  </data>
+  <data name="LightDl 下载管理器" xml:space="preserve">
+    <value>LightDl Download Manager</value>
+  </data>
+  <data name="关于 Light Downloader Manager" xml:space="preserve">
+    <value>About Light Downloader Manager</value>
+  </data>
+  <data name="下载管理器" xml:space="preserve">
+    <value>Download Manager</value>
+  </data>
+  <data name="语言 / Language" xml:space="preserve">
+    <value>Language</value>
+  </data>
+  <data name="保存设置后立即切换语言。" xml:space="preserve">
+    <value>The language changes immediately after saving settings.</value>
+  </data>
+  <data name="创建桌面快捷方式" xml:space="preserve">
+    <value>Create a desktop shortcut</value>
+  </data>
+  <data name="创建开始菜单快捷方式" xml:space="preserve">
+    <value>Create a Start menu shortcut</value>
+  </data>
+</root>

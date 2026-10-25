@@ -36,7 +36,7 @@ public static class ReleaseNotesFormatter
         }
         var result = Regex.Replace(string.Join('\n', lines), @"\n{3,}", "\n\n").Trim();
         return string.IsNullOrWhiteSpace(result)
-            ? "此版本未提供具体更新说明，可在完整 Release 页面查看。"
-            : result.Length > 16000 ? result[..16000] + "\n…更多内容请查看完整 Release。" : result;
+            ? L.T("此版本未提供具体更新说明，可在完整 Release 页面查看。")
+            : result.Length > 16000 ? result[..16000] + L.T("\n…更多内容请查看完整 Release。") : result;
     }
 }

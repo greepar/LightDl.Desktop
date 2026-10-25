@@ -43,7 +43,7 @@ public sealed class DesktopInstallationService
     public static string ResolveInstallPath(string directory)
     {
         if (string.IsNullOrWhiteSpace(directory) || !Path.IsPathFullyQualified(directory) || directory.IndexOfAny(['\r', '\n', '\t']) >= 0)
-            throw new IOException("请选择有效的绝对安装目录。");
+            throw new IOException(L.T("请选择有效的绝对安装目录。"));
         return Path.Combine(Path.GetFullPath(directory), OperatingSystem.IsWindows() ? "LightDl.Desktop.exe" : "LightDl.AppImage");
     }
 
@@ -55,7 +55,8 @@ public sealed class DesktopInstallationService
         File.WriteAllText(_choicePath, choice);
     }
 
-    public async Task InstallAsync(string? installationDirectory = null, bool rememberChoice = true)
+    public async Task InstallAsync(string? installationDirectory = null, bool rememberChoice = true,
+        bool createDesktopShortcut = true, bool createStartMenuShortcut = true)
     {
         if (installationDirectory is not null) InstallPath = ResolveInstallPath(installationDirectory);
         RestartPath = null;
@@ -69,7 +70,7 @@ public sealed class DesktopInstallationService
             if (!samePath)
             {
                 if (File.Exists(InstallPath))
-                    throw new IOException("安装位置已有 LightDl。请先运行已安装版本进行更新，或移走旧文件后重试。");
+                    throw new IOException(L.T("安装位置已有 LightDl。请先运行已安装版本进行更新，或移走旧文件后重试。"));
                 var temporary = InstallPath + "." + Guid.NewGuid().ToString("N") + ".install";
                 try
                 {
@@ -90,7 +91,8 @@ public sealed class DesktopInstallationService
                 using var icon = AssetLoader.Open(new Uri("avares://LightDl.UI/Assets/lightdl-light.png"));
                 await IntegrateLinuxAsync(InstallPath, _dataDirectory, icon);
             }
-            else if (OperatingSystem.IsWindows()) await IntegrateWindowsAsync(InstallPath);
+            else if (OperatingSystem.IsWindows()) await IntegrateWindowsAsync(InstallPath,
+                createDesktopShortcut: createDesktopShortcut, createStartMenuShortcut: createStartMenuShortcut);
             else throw new PlatformNotSupportedException();
 
             // Mark both paths: neither the old download nor the installed app should prompt repeatedly.
@@ -140,7 +142,7 @@ public sealed class DesktopInstallationService
         static string Value(string text) => text.Replace("\\", "\\\\").Replace("\n", "\\n").Replace("\r", "\\r").Replace("\t", "\\t");
         static string Exec(string text)
         {
-            if (text.IndexOfAny(['\n', '\r', '\t']) >= 0) throw new IOException("程序路径不能包含换行或制表符。");
+            if (text.IndexOfAny(['\n', '\r', '\t']) >= 0) throw new IOException(L.T("程序路径不能包含换行或制表符。"));
             // Desktop Entry string escaping is applied after Exec argument quoting.
             var quoted = text.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("`", "\\`").Replace("$", "\\$").Replace("%", "%%");
             return "\"" + quoted.Replace("\\", "\\\\") + "\"";
@@ -160,31 +162,22 @@ Categories=Network;FileTransfer;
 """;
     }
 
-    private static async Task IntegrateWindowsAsync(string executable)
+    public static Task IntegrateWindowsAsync(string executable, string? programsDirectory = null, string? desktopDirectory = null,
+        bool createDesktopShortcut = true, bool createStartMenuShortcut = true)
     {
-        var programs = Environment.GetFolderPath(Environment.SpecialFolder.Programs);
-        var directory = Path.Combine(programs, "LightDl");
-        Directory.CreateDirectory(directory);
-        // Windows PowerShell ships with Windows. No PowerShell installation is required from the user.
-        const string script = """
-$ErrorActionPreference = 'Stop'
-$shortcut = (New-Object -ComObject WScript.Shell).CreateShortcut($env:LIGHTDL_SHORTCUT)
-$shortcut.TargetPath = $env:LIGHTDL_EXECUTABLE
-$shortcut.WorkingDirectory = [IO.Path]::GetDirectoryName($env:LIGHTDL_EXECUTABLE)
-$shortcut.IconLocation = $env:LIGHTDL_EXECUTABLE + ',0'
-$shortcut.Description = 'LightDl Download Manager'
-$shortcut.Save()
-""";
-        var powershell = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "WindowsPowerShell", "v1.0", "powershell.exe");
-        var info = new ProcessStartInfo(powershell) { UseShellExecute = false, CreateNoWindow = true };
-        foreach (var argument in new[] { "-NoProfile", "-NonInteractive", "-EncodedCommand", Convert.ToBase64String(Encoding.Unicode.GetBytes(script)) }) info.ArgumentList.Add(argument);
-        info.Environment["LIGHTDL_SHORTCUT"] = Path.Combine(directory, "LightDl.lnk");
-        info.Environment["LIGHTDL_EXECUTABLE"] = executable;
-        using var process = Process.Start(info) ?? throw new IOException("无法创建开始菜单快捷方式。");
-        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-        try { await process.WaitForExitAsync(timeout.Token); }
-        catch { if (!process.HasExited) process.Kill(); throw; }
-        if (process.ExitCode != 0) throw new IOException("创建开始菜单快捷方式失败，可选择直接运行。");
+        if (!OperatingSystem.IsWindows()) throw new PlatformNotSupportedException();
+        if (createStartMenuShortcut)
+        {
+            var programs = programsDirectory ?? Environment.GetFolderPath(Environment.SpecialFolder.Programs);
+            WindowsShortcut.Create(Path.Combine(programs, "LightDl", "LightDl.lnk"), executable);
+        }
+        if (createDesktopShortcut)
+        {
+            var desktop = desktopDirectory ?? Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+            if (string.IsNullOrWhiteSpace(desktop)) throw new IOException(L.T("无法确定桌面目录。"));
+            WindowsShortcut.Create(Path.Combine(desktop, "LightDl.lnk"), executable);
+        }
+        return Task.CompletedTask;
     }
 
     private static async Task TryRefreshAsync(string executable, params string[] arguments)

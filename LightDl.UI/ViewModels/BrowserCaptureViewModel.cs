@@ -25,7 +25,7 @@ public partial class BrowserCaptureViewModel : ViewModelBase
         _ => "Google Chrome"
     };
 
-    public string SizeText => Request.TotalBytes is > 0 ? FormatBytes(Request.TotalBytes.Value) : "未知大小";
+    public string SizeText => Request.TotalBytes is > 0 ? FormatBytes(Request.TotalBytes.Value) : L.T("未知大小");
 
     [ObservableProperty] private string _fileName;
 

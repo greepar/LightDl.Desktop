@@ -205,6 +205,8 @@ jobs:
           $PSNativeCommandUseErrorActionPreference = $true
           node --check browser-extensions/automatic/chromium/background.js
           node --check browser-extensions/automatic/firefox/background.js
+          node --check browser-extensions/automatic/chromium/popup.js
+          node --check browser-extensions/automatic/firefox/popup.js
           node -e "JSON.parse(require('fs').readFileSync('browser-extensions/automatic/chromium/manifest.json', 'utf8'))"
           node -e "JSON.parse(require('fs').readFileSync('browser-extensions/automatic/firefox/manifest.json', 'utf8'))"
 

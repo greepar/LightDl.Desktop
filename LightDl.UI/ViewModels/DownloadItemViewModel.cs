@@ -65,23 +65,47 @@ public partial class DownloadItemViewModel : ViewModelBase
         FileName = string.IsNullOrWhiteSpace(record.FileName) ? GetInitialFileName(record.SourceUrl) : record.FileName;
         FilePath = record.FilePath;
         _useHttp3Fallback = record.UseHttp3Fallback;
-        ProtocolText = string.IsNullOrWhiteSpace(record.ProtocolText) ? "等待连接" : record.ProtocolText;
-        SizeText = record.SizeText;
+        ProtocolText = RestoreProtocolText(record);
+        // Earlier versions persisted display labels. Restore them in the current UI language.
+        SizeText = record.SizeText is "未知大小" or "Unknown size" or "" ? L.T("未知大小") : record.SizeText;
         ProgressPercentage = record.ProgressPercentage;
         State = record.State is DownloadState.Downloading or DownloadState.Queued
             ? DownloadState.Paused
             : record.State;
         StatusText = State switch
         {
-            DownloadState.Completed => "已完成",
-            DownloadState.Failed => "下载失败",
-            DownloadState.Paused => "已暂停",
-            _ => "等待中"
+            DownloadState.Completed => L.T("已完成"),
+            DownloadState.Failed => L.T("下载失败"),
+            DownloadState.Paused => L.T("已暂停"),
+            _ => L.T("等待中")
         };
-        RemainingText = State == DownloadState.Completed ? "已完成" : "--";
+        RemainingText = State == DownloadState.Completed ? L.T("已完成") : "--";
+    }
+
+    private static string RestoreProtocolText(DownloadTaskRecord record)
+    {
+        var text = record.ProtocolText ?? "";
+        if (!text.StartsWith("HTTP/", StringComparison.Ordinal)) return L.T("等待连接");
+        if (text is "HTTP/3（连接失败）" or "HTTP/3 (connection failed)") return L.T("HTTP/3（连接失败）");
+        var suffix = text.IndexOfAny(['（', ' ', '(']);
+        var protocol = suffix < 0 ? text : text[..suffix];
+        if (record.UseHttp3Fallback) return protocol + L.T("（本任务已回退）");
+        if (text.Contains("H3 中断", StringComparison.Ordinal) || text.Contains("H3 interrupted", StringComparison.Ordinal))
+            return protocol + L.T("（H3 中断，已回退）");
+        if (text.Contains("测速选中", StringComparison.Ordinal) || text.Contains("selected by speed test", StringComparison.Ordinal))
+            return protocol + L.T("（测速选中）");
+        return protocol;
     }
 
     public event EventHandler? RemoveRequested;
+    public override void RefreshLanguage()
+    {
+        StatusText = L.Relocalize(StatusText);
+        ProtocolText = L.Relocalize(ProtocolText);
+        SizeText = L.Relocalize(SizeText);
+        RemainingText = L.Relocalize(RemainingText);
+        base.RefreshLanguage();
+    }
 
     public event EventHandler? StartRequested;
 
@@ -97,10 +121,10 @@ public partial class DownloadItemViewModel : ViewModelBase
     private string _fileName;
 
     [ObservableProperty]
-    private string _statusText = "等待中";
+    private string _statusText = L.T("等待中");
 
     [ObservableProperty]
-    private string _protocolText = "等待连接";
+    private string _protocolText = L.T("等待连接");
 
     [ObservableProperty]
     private int _activeWorkers;
@@ -116,8 +140,8 @@ public partial class DownloadItemViewModel : ViewModelBase
     private bool? _supportsRange;
 
     public string WorkerText => SupportsRange == false
-        ? $"{ActiveWorkers} 活动线程（服务器未支持分段）"
-        : ConcurrencyLimit > 0 ? $"{ActiveWorkers}/{ConcurrencyLimit} 线程（活动/上限）" : $"{ActiveWorkers} 线程";
+        ? L.F($"{ActiveWorkers} 活动线程（服务器未支持分段）")
+        : ConcurrencyLimit > 0 ? L.F($"{ActiveWorkers}/{ConcurrencyLimit} 线程（活动/上限）") : L.F($"{ActiveWorkers} 线程");
 
     public string ProtocolSummaryText => IsActive ? $"{ProtocolText} · {WorkerText}" : ProtocolText;
 
@@ -130,7 +154,7 @@ public partial class DownloadItemViewModel : ViewModelBase
     }
 
     [ObservableProperty]
-    private string _sizeText = "未知大小";
+    private string _sizeText = L.T("未知大小");
 
     [ObservableProperty]
     private string _speedText = "--";
@@ -182,7 +206,7 @@ public partial class DownloadItemViewModel : ViewModelBase
         SupportsRange = null;
         ConcurrencyLimit = 0;
         State = DownloadState.Downloading;
-        StatusText = "正在下载";
+        StatusText = L.T("正在下载");
         SetConnectingProtocol();
         var cancellationToken = _cancellation.Token;
         var resumePath = _usesIsolatedStorage ? _workingFilePath : FilePath;
@@ -205,7 +229,7 @@ public partial class DownloadItemViewModel : ViewModelBase
                 {
                     if (IsCurrentAttempt())
                         ProtocolText = FormatProtocol(selection.SelectedVersion) +
-                            (selection.IsFallback ? "（H3 中断，已回退）" : "（测速选中）");
+                            (selection.IsFallback ? L.T("（H3 中断，已回退）") : L.T("（测速选中）"));
                 });
                 var config = DownloadConfigFactory.Create(_settings, selection =>
                     ((IProgress<LightDownloadProtocolSelection>)selectionProgress).Report(selection));
@@ -269,8 +293,8 @@ public partial class DownloadItemViewModel : ViewModelBase
                     FileName = Path.GetFileName(FilePath);
                     ProgressPercentage = 100;
                     SpeedText = "--";
-                    RemainingText = "已完成";
-                    StatusText = saved.Item2 ? "已存在" : "已完成";
+                    RemainingText = L.T("已完成");
+                    StatusText = saved.Item2 ? L.T("已存在") : L.T("已完成");
                     State = DownloadState.Completed;
                     break;
                 }
@@ -281,19 +305,19 @@ public partial class DownloadItemViewModel : ViewModelBase
                     var failure = connectionFailure ?? error;
                     Console.Error.WriteLine(failure);
                     FilePath = resolvedDestination is { } resolved ? DisplayDestination(resolved) : FilePath;
-                    ProtocolText = "HTTP/3（连接失败）";
-                    StatusText = "H3 连接失败，等待选择是否回退";
+                    ProtocolText = L.T("HTTP/3（连接失败）");
+                    StatusText = L.T("H3 连接失败，等待选择是否回退");
                     SpeedText = "--";
                     RemainingText = "--";
                     var confirmed = ConfirmHttp3FallbackAsync is { } confirm &&
                         await confirm(this, failure, cancellationToken).WaitAsync(cancellationToken);
                     cancellationToken.ThrowIfCancellationRequested();
                     if (!confirmed)
-                        throw new LightDownloadException("HTTP/3 连接失败，已保持强制 H3，未回退。", failure);
+                        throw new LightDownloadException(L.T("HTTP/3 连接失败，已保持强制 H3，未回退。"), failure);
                     _useHttp3Fallback = true;
                     retryDestination = resolvedDestination;
                     ResetDisplayedSpeed();
-                    StatusText = "正在回退到 H2 / H1.1";
+                    StatusText = L.T("正在回退到 H2 / H1.1");
                     SetConnectingProtocol();
                 }
             }
@@ -302,7 +326,7 @@ public partial class DownloadItemViewModel : ViewModelBase
         {
             SpeedText = "--";
             RemainingText = "--";
-            StatusText = "已暂停";
+            StatusText = L.T("已暂停");
             State = DownloadState.Paused;
         }
         catch (Exception ex)
@@ -428,7 +452,7 @@ public partial class DownloadItemViewModel : ViewModelBase
         ProgressPercentage = 0;
         SpeedText = "--";
         RemainingText = "--";
-        StatusText = "等待重新下载";
+        StatusText = L.T("等待重新下载");
         // Publishing Queued synchronously invokes the scheduler; initialize all
         // queue text first so it cannot overwrite the new transfer's status.
         State = DownloadState.Queued;
@@ -440,7 +464,7 @@ public partial class DownloadItemViewModel : ViewModelBase
         if (State == DownloadState.Downloading)
             return;
 
-        StatusText = "等待中";
+        StatusText = L.T("等待中");
         SpeedText = "--";
         RemainingText = "--";
         State = DownloadState.Queued;
@@ -661,18 +685,18 @@ public partial class DownloadItemViewModel : ViewModelBase
     }
 
     private void SetConnectingProtocol() => ProtocolText = _useHttp3Fallback
-        ? "连接中（已允许 H2 / H1.1）"
+        ? L.T("连接中（已允许 H2 / H1.1）")
         : _settings.Http3Mode switch
         {
-            1 => "连接中（强制 HTTP/3）",
-            2 => "连接中（H2 / H1.1）",
-            _ => "连接中（自动 H2/H3）"
+            1 => L.T("连接中（强制 HTTP/3）"),
+            2 => L.T("连接中（H2 / H1.1）"),
+            _ => L.T("连接中（自动 H2/H3）")
         };
 
     private void UpdateProtocol(Version? version)
     {
         if (version is not null)
-            ProtocolText = FormatProtocol(version) + (_useHttp3Fallback ? "（本任务已回退）" : "");
+            ProtocolText = FormatProtocol(version) + (_useHttp3Fallback ? L.T("（本任务已回退）") : "");
     }
 
     private static string FormatProtocol(Version version) => version.Major >= 2

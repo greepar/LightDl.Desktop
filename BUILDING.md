@@ -223,7 +223,9 @@ remembered choice. A settings installation requires saving pending settings befo
 
 By default, an explicit install copies the original file into `%LOCALAPPDATA%\LightDl\LightDl.Desktop.exe` on Windows,
 or `${XDG_DATA_HOME:-~/.local/share}/lightdl/LightDl.AppImage` on Linux. It preserves the downloaded original.
-Windows creates a current-user Start menu shortcut using the EXE's embedded icon. Linux installs an icon
+Windows offers separate Start menu and Desktop shortcut checkboxes, both selected by default, using the EXE's embedded icon.
+Shortcuts use the native Unicode ShellLink API, with no PowerShell or Windows Script Host dependency. The Desktop
+path comes from the Windows user profile, including redirected/OneDrive desktops. Linux installs an icon
 under `icons/hicolor/512x512/apps/lightdl.png` and `applications/io.lightdl.LightDl.desktop` in the user data
 root, with the correct app ID/window class. The selected directory must be writable by the current user; no elevation is requested.
 Menu entries and icons always remain in the user profile, even when choosing a custom program directory.
@@ -232,3 +234,24 @@ An existing different installation is not overwritten; use its updater or move i
 After successful installation the current process exits and the installed copy starts after the single-instance
 lock has been released. Existing enabled autostart and registered Native Messaging paths are repaired by
 the installed copy; installation does not enable either feature if it was not already configured.
+
+## Languages and bundled browser extensions
+
+Settings → Application → Language offers system default, Simplified Chinese and English. Save the
+selection to apply it immediately without restarting. Unsaved language edits follow the same discard/save behavior as
+other settings. By default, the application uses the system UI language at startup: Chinese (`zh-*`)
+uses Simplified Chinese; other languages use English. SukiUI controls use the same language. UI strings and formatted status
+messages use `LightDl.UI/Localization/L.cs` and the embedded `English.resx` catalog. Keep format
+arguments identical between translations. The extension popup and metadata also follow the browser's
+UI language, using WebExtension `_locales` resources.
+
+Browser integration provides Chrome, Edge and Firefox buttons. Each saves the embedded extension into
+a new `LightDl-<browser>-<id>` subfolder of the system Downloads directory, including both a ZIP and
+an unpacked `extension` folder, then shows installation instructions. The app embeds the repository's
+extension source files during each build; no network access or PowerShell installation is required to
+export them. Repeated exports preserve earlier folders already loaded by a browser.
+
+Chrome and Edge use developer mode and Load unpacked. The bundled Firefox source is unsigned: use
+`about:debugging#/runtime/this-firefox` → Load Temporary Add-on → `manifest.json`; Firefox requires
+reloading it after a restart. Permanent Firefox installation requires a Mozilla-signed XPI. After loading
+an extension, register/repair the Native Messaging host in LightDl and enable browser download capture.

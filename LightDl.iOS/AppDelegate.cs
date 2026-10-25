@@ -26,7 +26,7 @@ public partial class AppDelegate : AvaloniaAppDelegate<App>
             Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
         App.MobileThemeFactory = static () => new SemiTheme
         {
-            Locale = CultureInfo.GetCultureInfo("zh-CN")
+            Locale = CultureInfo.GetCultureInfo(LightDl.UI.Localization.L.CultureName)
         };
         return base.CustomizeAppBuilder(builder)
             .WithInterFont();

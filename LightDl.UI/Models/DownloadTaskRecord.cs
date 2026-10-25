@@ -22,7 +22,7 @@ public sealed class DownloadTaskRecord
 
     public double ProgressPercentage { get; set; }
 
-    public string SizeText { get; set; } = "未知大小";
+    public string SizeText { get; set; } = L.T("未知大小");
 
     public string? ProtocolText { get; set; }
 

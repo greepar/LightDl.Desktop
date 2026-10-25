@@ -1,17 +1,18 @@
 <UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="using:LightDl.UI.Localization"
+                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:LightDl.UI.ViewModels"
              x:Class="LightDl.UI.Views.UpdatePromptView"
              x:DataType="vm:AppUpdateViewModel">
   <Grid RowDefinitions="Auto,*,Auto" RowSpacing="16" MaxWidth="510">
-    <TextBlock Text="有新版本可用，是否下载更新？下载完成后可选择重启安装。" TextWrapping="Wrap" />
+    <TextBlock Text="{loc:Text Key='有新版本可用，是否下载更新？下载完成后可选择重启安装。'}" TextWrapping="Wrap" />
     <ScrollViewer Grid.Row="1" MaxHeight="300">
       <TextBlock Text="{Binding ReleaseNotes}" TextWrapping="Wrap" />
     </ScrollViewer>
     <WrapPanel Grid.Row="2" HorizontalAlignment="Right">
-      <Button Content="查看完整 Release" Command="{Binding OpenReleasePageCommand}" Margin="0,0,8,8" />
-      <Button Content="稍后" Command="{Binding DismissUpdatePromptCommand}" Margin="0,0,8,8" />
-      <Button Content="下载更新" Command="{Binding DownloadUpdateCommand}" Background="#2874E8" Foreground="White" Margin="0,0,0,8" />
+      <Button Content="{loc:Text Key='查看完整 Release'}" Command="{Binding OpenReleasePageCommand}" Margin="0,0,8,8" />
+      <Button Content="{loc:Text Key='稍后'}" Command="{Binding DismissUpdatePromptCommand}" Margin="0,0,8,8" />
+      <Button Content="{loc:Text Key='下载更新'}" Command="{Binding DownloadUpdateCommand}" Background="#2874E8" Foreground="White" Margin="0,0,0,8" />
     </WrapPanel>
   </Grid>
 </UserControl>

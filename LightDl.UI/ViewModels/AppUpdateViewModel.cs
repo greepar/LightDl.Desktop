@@ -15,6 +15,12 @@ public partial class AppUpdateViewModel : ViewModelBase
     public event Action? UpdateDiscovered;
     public SukiUI.Dialogs.ISukiDialogManager PromptDialogManager { get; } = new SukiUI.Dialogs.SukiDialogManager();
     public string AvailableVersion => _release?.Version ?? "";
+    public override void RefreshLanguage()
+    {
+        Status = L.Relocalize(Status);
+        ReleaseNotes = L.Relocalize(ReleaseNotes);
+        base.RefreshLanguage();
+    }
     [ObservableProperty] private bool _isUpdatePromptOpen;
 
     public AppUpdateViewModel(DesktopUpdateService? service, SettingsViewModel settings, Func<Func<Task>, Task>? installAndExit = null)
@@ -22,7 +28,7 @@ public partial class AppUpdateViewModel : ViewModelBase
         _service = service;
         _settings = settings;
         _installAndExit = installAndExit ?? (start => App.Current is App app
-            ? app.InstallUpdateAndExitAsync(start) : Task.FromException(new InvalidOperationException("无法退出当前应用。")));
+            ? app.InstallUpdateAndExitAsync(start) : Task.FromException(new InvalidOperationException(L.T("无法退出当前应用。"))));
         AutomaticChecksEnabled = settings.CheckForUpdatesAutomatically;
         settings.PropertyChanged += (_, e) =>
         {
@@ -31,7 +37,7 @@ public partial class AppUpdateViewModel : ViewModelBase
         };
         if (service is not null)
         {
-            Status = $"当前版本 {service.CurrentVersion}";
+            Status = L.F($"当前版本 {service.CurrentVersion}");
             try
             {
                 if (File.Exists(DesktopUpdateService.StatusFile))
@@ -45,6 +51,7 @@ public partial class AppUpdateViewModel : ViewModelBase
     public bool IsSupported => _service is not null;
     public bool AutomaticChecksEnabled { get; set; }
     public string CurrentVersion => _service?.CurrentVersion ?? "";
+    public string CurrentVersionText => L.F($"当前版本 {CurrentVersion}");
     [ObservableProperty] private string _status = "";
     [ObservableProperty] private string _releaseNotes = "";
     [ObservableProperty] private double _progress;
@@ -70,16 +77,16 @@ public partial class AppUpdateViewModel : ViewModelBase
     {
         if (_service is null) return;
         IsBusy = true;
-        Status = "正在检查更新…";
+        Status = L.T("正在检查更新…");
         try
         {
             _release = await _service.CheckAsync(ct);
             HasUpdate = _release is not null;
             ReleaseNotes = _release is null ? "" : ReleaseNotesFormatter.Format(_release.Notes);
             OnPropertyChanged(nameof(AvailableVersion));
-            Status = _release is null ? $"当前已是最新版本（{CurrentVersion}）" : $"发现新版本 {_release.Version}，可以下载更新。";
+            Status = _release is null ? L.F($"当前已是最新版本（{CurrentVersion}）") : L.F($"发现新版本 {_release.Version}，可以下载更新。");
         }
-        catch (Exception ex) { Status = "检查更新失败：" + ex.Message; }
+        catch (Exception ex) { Status = L.T("检查更新失败：") + ex.Message; }
         finally { IsBusy = false; }
         if (_release is not null) UpdateDiscovered?.Invoke();
     }
@@ -103,7 +110,7 @@ public partial class AppUpdateViewModel : ViewModelBase
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(
                 $"{UpdateFeed.Repository}/releases/tag/v{_release.Version}") { UseShellExecute = true });
         }
-        catch (Exception ex) { Status = "无法打开 Release 页面：" + ex.Message; }
+        catch (Exception ex) { Status = L.T("无法打开 Release 页面：") + ex.Message; }
     }
 
     [RelayCommand(CanExecute = nameof(CanDownload), IncludeCancelCommand = true)]
@@ -113,16 +120,16 @@ public partial class AppUpdateViewModel : ViewModelBase
         IsUpdatePromptOpen = false;
         IsBusy = true;
         Progress = 0;
-        Status = "正在下载并验证更新…";
+        Status = L.T("正在下载并验证更新…");
         try
         {
             _prepared?.Dispose();
             _prepared = await _service.PrepareAsync(_release, new Progress<double>(value => Progress = value), ct);
             IsReadyToInstall = true;
-            Status = $"{_release.Version} 已准备就绪。重启安装将暂停下载并保存任务；有未保存设置时请先保存。";
+            Status = L.F($"{_release.Version} 已准备就绪。重启安装将暂停下载并保存任务；有未保存设置时请先保存。");
         }
-        catch (OperationCanceledException) { Status = "更新下载已取消，原程序未修改。"; }
-        catch (Exception ex) { Status = "更新准备失败：" + ex.Message; }
+        catch (OperationCanceledException) { Status = L.T("更新下载已取消，原程序未修改。"); }
+        catch (Exception ex) { Status = L.T("更新准备失败：") + ex.Message; }
         finally { IsBusy = false; }
     }
 
@@ -133,12 +140,12 @@ public partial class AppUpdateViewModel : ViewModelBase
         IsBusy = true;
         try
         {
-            Status = "正在保存下载任务，随后重启安装…";
+            Status = L.T("正在保存下载任务，随后重启安装…");
             await _installAndExit(_prepared.StartInstallerAsync);
         }
         catch (Exception ex)
         {
-            Status = "安装尚未开始：" + ex.Message;
+            Status = L.T("安装尚未开始：") + ex.Message;
             IsBusy = false;
         }
     }

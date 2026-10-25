@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using Avalonia;
 using Avalonia.Styling;
@@ -46,8 +46,8 @@ public partial class MainViewModel : ViewModelBase
         };
         Updates = new AppUpdateViewModel(updateService ?? Services.Updates.UpdatePlatform.Service, Settings);
         BrowserHostStatus = _browserHostRegistration.IsRegistered()
-            ? "Native Messaging 宿主已注册"
-            : "Native Messaging 宿主尚未注册";
+            ? L.T("Native Messaging 宿主已注册")
+            : L.T("Native Messaging 宿主尚未注册");
         foreach (var record in _taskStore.Load().OrderByDescending(item => item.CreatedAt))
             AttachDownload(new DownloadItemViewModel(record, Settings.ToModel()));
         ActivationBroker.Register(HandleActivation);
@@ -60,6 +60,12 @@ public partial class MainViewModel : ViewModelBase
     public ISukiDialogManager DialogManager { get; } = new SukiDialogManager();
 
     public SettingsViewModel Settings { get; }
+    public override void RefreshLanguage()
+    {
+        StatusMessage = L.Relocalize(StatusMessage);
+        BrowserHostStatus = L.Relocalize(BrowserHostStatus);
+        base.RefreshLanguage();
+    }
     public Func<Task<bool?>>? ConfirmLeaveSettingsAsync { get; set; }
     public bool ShowSettingsSave => IsSettingsPage && Settings.HasUnsavedChanges;
     public bool CanInstallToSystem => DesktopInstallationService.Current is not null;
@@ -79,7 +85,7 @@ public partial class MainViewModel : ViewModelBase
         try { await _settingsService.SaveAsync(saved); }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            StatusMessage = "记住关闭选择失败：" + ex.Message;
+            StatusMessage = L.T("记住关闭选择失败：") + ex.Message;
             return false;
         }
         Settings.MarkCloseBehaviorSaved(behavior);
@@ -101,7 +107,7 @@ public partial class MainViewModel : ViewModelBase
     public bool IsMobileLayout => !IsDesktopLayout;
 
     public string LightDlVersion { get; } =
-        typeof(global::LightDl.LightDownloader).Assembly.GetName().Version?.ToString(3) ?? "未知";
+        typeof(global::LightDl.LightDownloader).Assembly.GetName().Version?.ToString(3) ?? L.T("未知");
 
     public bool HasDownloads => Downloads.Count > 0;
 
@@ -119,7 +125,7 @@ public partial class MainViewModel : ViewModelBase
     private string _newUrl = string.Empty;
 
     [ObservableProperty]
-    private string _statusMessage = "准备就绪";
+    private string _statusMessage = L.T("准备就绪");
 
     partial void OnStatusMessageChanged(string value)
     {
@@ -127,7 +133,7 @@ public partial class MainViewModel : ViewModelBase
         _statusResetCancellation?.Dispose();
         _statusResetCancellation = null;
 
-        if (value == "准备就绪")
+        if (value == L.T("准备就绪"))
             return;
 
         var cancellation = new CancellationTokenSource();
@@ -140,7 +146,7 @@ public partial class MainViewModel : ViewModelBase
         try
         {
             await Task.Delay(TimeSpan.FromSeconds(4), cancellation.Token);
-            await Dispatcher.UIThread.InvokeAsync(() => StatusMessage = "准备就绪");
+            await Dispatcher.UIThread.InvokeAsync(() => StatusMessage = L.T("准备就绪"));
         }
         catch (OperationCanceledException)
         {
@@ -202,19 +208,19 @@ public partial class MainViewModel : ViewModelBase
 
     public string PageTitle => SelectedSection switch
     {
-        "downloading" => "正在下载",
-        "completed" => "已完成",
-        "failed" => "下载失败",
-        "settings" => "设置",
-        "browser" => "浏览器集成",
-        _ => "全部任务"
+        "downloading" => L.T("正在下载"),
+        "completed" => L.T("已完成"),
+        "failed" => L.T("下载失败"),
+        "settings" => L.T("设置"),
+        "browser" => L.T("浏览器集成"),
+        _ => L.T("全部任务")
     };
 
     public string PageSubtitle => SelectedSection switch
     {
-        "settings" => "调整下载、网络和应用行为",
-        "browser" => "管理浏览器自动接管和 Native Messaging 宿主",
-        _ => "管理桌面和移动设备上的下载队列"
+        "settings" => L.T("调整下载、网络和应用行为"),
+        "browser" => L.T("管理浏览器自动接管和 Native Messaging 宿主"),
+        _ => L.T("管理桌面和移动设备上的下载队列")
     };
 
     [RelayCommand]
@@ -268,13 +274,13 @@ public partial class MainViewModel : ViewModelBase
     {
         if (string.IsNullOrWhiteSpace(Settings.DefaultDownloadDirectory))
         {
-            StatusMessage = "请选择默认下载目录";
+            StatusMessage = L.T("请选择默认下载目录");
             return;
         }
 
         if (Settings.MinChunkCount > Settings.MaxChunkCount)
         {
-            StatusMessage = "最小连接数不能大于最大连接数";
+            StatusMessage = L.T("最小连接数不能大于最大连接数");
             return;
         }
 
@@ -282,7 +288,7 @@ public partial class MainViewModel : ViewModelBase
             (!Uri.TryCreate(Settings.ProxyUrl, UriKind.Absolute, out var proxyUri) ||
              proxyUri.Scheme is not "http" and not "https" and not "socks5"))
         {
-            StatusMessage = "请输入有效的 HTTP、HTTPS 或 SOCKS5 代理地址";
+            StatusMessage = L.T("请输入有效的 HTTP、HTTPS 或 SOCKS5 代理地址");
             return;
         }
 
@@ -294,7 +300,7 @@ public partial class MainViewModel : ViewModelBase
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
             {
-                StatusMessage = $"开机自启设置失败：{ex.Message}";
+                StatusMessage = L.F($"开机自启设置失败：{ex.Message}");
                 return;
             }
         }
@@ -308,13 +314,14 @@ public partial class MainViewModel : ViewModelBase
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            StatusMessage = $"设置保存失败：{ex.Message}";
+            StatusMessage = L.F($"设置保存失败：{ex.Message}");
             return;
         }
         Settings.MarkSaved(submittedSettings);
+        L.ChangeLanguage(submittedSettings.LanguageMode);
         Updates.AutomaticChecksEnabled = submittedSettings.CheckForUpdatesAutomatically;
         ApplyTheme(submittedSettings.ThemeMode);
-        StatusMessage = "设置已保存，新配置将在后续下载中生效";
+        StatusMessage = L.T("设置已保存，新配置将在后续下载中生效");
         ScheduleDownloads();
     }
 
@@ -324,13 +331,13 @@ public partial class MainViewModel : ViewModelBase
         try
         {
             await _browserHostRegistration.RegisterAsync();
-            BrowserHostStatus = "Native Messaging 宿主已注册，请重新启动浏览器";
-            StatusMessage = "浏览器宿主注册完成";
+            BrowserHostStatus = L.T("Native Messaging 宿主已注册，请重新启动浏览器");
+            StatusMessage = L.T("浏览器宿主注册完成");
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             BrowserHostStatus = ex.Message;
-            StatusMessage = "浏览器宿主注册失败";
+            StatusMessage = L.T("浏览器宿主注册失败");
         }
     }
 
@@ -340,13 +347,13 @@ public partial class MainViewModel : ViewModelBase
         try
         {
             _browserHostRegistration.Unregister();
-            BrowserHostStatus = "Native Messaging 宿主尚未注册";
-            StatusMessage = "已移除浏览器宿主注册";
+            BrowserHostStatus = L.T("Native Messaging 宿主尚未注册");
+            StatusMessage = L.T("已移除浏览器宿主注册");
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             BrowserHostStatus = ex.Message;
-            StatusMessage = "移除浏览器宿主失败";
+            StatusMessage = L.T("移除浏览器宿主失败");
         }
     }
 
@@ -379,7 +386,7 @@ public partial class MainViewModel : ViewModelBase
         PendingBrowserCapture = new BrowserCaptureViewModel(request, Settings.DefaultDownloadDirectory);
         _browserCaptureCompletion = new TaskCompletionSource<BrowserCaptureResponse>(
             TaskCreationOptions.RunContinuationsAsynchronously);
-        StatusMessage = $"收到来自 {PendingBrowserCapture.BrowserName} 的下载请求";
+        StatusMessage = L.F($"收到来自 {PendingBrowserCapture.BrowserName} 的下载请求");
         return _browserCaptureCompletion.Task;
     }
 
@@ -402,7 +409,7 @@ public partial class MainViewModel : ViewModelBase
 
         if (string.IsNullOrWhiteSpace(capture.DownloadDirectory))
         {
-            StatusMessage = "请选择下载目录";
+            StatusMessage = L.T("请选择下载目录");
             return false;
         }
 
@@ -438,7 +445,7 @@ public partial class MainViewModel : ViewModelBase
         var completion = _browserCaptureCompletion;
         PendingBrowserCapture = null;
         _browserCaptureCompletion = null;
-        StatusMessage = "已让浏览器继续原下载";
+        StatusMessage = L.T("已让浏览器继续原下载");
         completion?.TrySetResult(BrowserCaptureResponse.Reject("The user declined the download"));
     }
 
@@ -453,7 +460,7 @@ public partial class MainViewModel : ViewModelBase
         var completion = _browserCaptureCompletion;
         PendingBrowserCapture = null;
         _browserCaptureCompletion = null;
-        StatusMessage = "已取消本次浏览器下载";
+        StatusMessage = L.T("已取消本次浏览器下载");
         completion?.TrySetResult(new BrowserCaptureResponse
         {
             Accepted = true,
@@ -494,21 +501,21 @@ public partial class MainViewModel : ViewModelBase
         if (!Uri.TryCreate(sourceUrl, UriKind.Absolute, out var uri) ||
             (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
         {
-            StatusMessage = "请输入有效的 HTTP 或 HTTPS 下载地址";
+            StatusMessage = L.T("请输入有效的 HTTP 或 HTTPS 下载地址");
             return null;
         }
 
         destinationDirectory ??= Settings.DefaultDownloadDirectory;
         if (string.IsNullOrWhiteSpace(destinationDirectory))
         {
-            StatusMessage = "请选择下载目录";
+            StatusMessage = L.T("请选择下载目录");
             return null;
         }
 
         if (DownloadPlatform.EnsureDownloadDirectoryAccessAsync is { } ensureAccess &&
             !await ensureAccess())
         {
-            StatusMessage = "请授予下载目录访问权限，然后再次开始下载";
+            StatusMessage = L.T("请授予下载目录访问权限，然后再次开始下载");
             return null;
         }
 
@@ -521,7 +528,7 @@ public partial class MainViewModel : ViewModelBase
         AttachDownload(item, insertAtStart: true);
 
         NewUrl = string.Empty;
-        StatusMessage = $"已添加 {item.FileName}";
+        StatusMessage = L.F($"已添加 {item.FileName}");
         RaiseSummaryChanged();
         RaiseDownloadListChanged();
         await PersistDownloadsAsync();
@@ -540,8 +547,8 @@ public partial class MainViewModel : ViewModelBase
         item.PropertyChanged -= OnDownloadPropertyChanged;
         Downloads.Remove(item);
         StatusMessage = Downloads.Count == 0
-            ? "准备就绪"
-            : $"已删除 {item.FileName}";
+            ? L.T("准备就绪")
+            : L.F($"已删除 {item.FileName}");
         RaiseSummaryChanged();
         RaiseDownloadListChanged();
         PersistDownloads();

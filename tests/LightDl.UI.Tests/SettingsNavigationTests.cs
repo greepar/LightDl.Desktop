@@ -43,7 +43,7 @@ public sealed class SettingsNavigationTests : IDisposable
         await vm.SelectSectionCommand.ExecuteAsync("browser");
         Assert.Equal("settings", vm.SelectedSection);
         Assert.True(vm.Settings.HasUnsavedChanges);
-        Assert.Contains("下载目录", vm.StatusMessage);
+        Assert.Equal(L.T("请选择默认下载目录"), vm.StatusMessage);
     }
 
     public void Dispose()

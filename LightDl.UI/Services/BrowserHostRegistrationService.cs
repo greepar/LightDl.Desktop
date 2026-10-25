@@ -23,7 +23,7 @@ public sealed class BrowserHostRegistrationService
     public async Task RegisterAsync()
     {
         var hostPath = FindHostExecutable()
-                       ?? throw new FileNotFoundException("找不到 LightDl.Desktop 可执行文件，请先发布应用。");
+                       ?? throw new FileNotFoundException(L.T("找不到 LightDl.Desktop 可执行文件，请先发布应用。"));
         EnsureHostIsExecutable(hostPath);
         var dataDirectory = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),

@@ -1,0 +1,24 @@
+<suki:SukiWindow xmlns="https://github.com/avaloniaui"
+                xmlns:loc="using:LightDl.UI.Localization"
+                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                xmlns:suki="using:SukiUI.Controls"
+                xmlns:views="using:LightDl.UI.Views"
+                x:Class="LightDl.UI.Views.BrowserExtensionWindow"
+                x:DataType="views:BrowserExtensionWindow"
+                Title="{loc:Text Key='安装浏览器扩展'}" Width="620" SizeToContent="Height"
+                CanResize="False" CanMinimize="False" CanMaximize="False"
+                ShowInTaskbar="False" WindowStartupLocation="CenterOwner">
+  <StackPanel Margin="24" Spacing="16">
+    <TextBlock Text="{Binding Heading}" FontSize="22" FontWeight="SemiBold" />
+    <TextBlock Text="{loc:Text Key='扩展已保存到下载目录，无需联网下载。'}" TextWrapping="Wrap" />
+    <TextBox Text="{Binding ExportDirectory}" IsReadOnly="True" TextWrapping="Wrap" />
+    <TextBlock Text="{Binding Instructions}" TextWrapping="Wrap" />
+    <WrapPanel Orientation="Horizontal">
+      <Button Content="{loc:Text Key='打开文件夹'}" Click="OpenFolder" Margin="0,0,8,8" />
+      <Button Content="{loc:Text Key='复制扩展页面地址'}" Click="CopyAddress" Margin="0,0,8,8" />
+      <Button Content="{loc:Text Key='官方安装说明'}" Click="OpenDocumentation" Margin="0,0,8,8" />
+    </WrapPanel>
+    <TextBlock Name="ActionStatus" TextWrapping="Wrap" IsVisible="False" />
+    <Button Content="{loc:Text Key='完成'}" Click="Done" HorizontalAlignment="Right" />
+  </StackPanel>
+</suki:SukiWindow>

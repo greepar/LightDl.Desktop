@@ -32,7 +32,7 @@ public static class MacUpdateBundle
     {
         if (!OperatingSystem.IsMacOS()) throw new PlatformNotSupportedException();
         if (!Directory.Exists(candidate) || (File.GetAttributes(candidate) & FileAttributes.ReparsePoint) != 0)
-            throw new InvalidDataException("更新包中没有有效的 LightDl.app。");
+            throw new InvalidDataException(L.T("更新包中没有有效的 LightDl.app。"));
         await ExecuteAsync("/usr/bin/codesign", ct, "--verify", "--deep", "--strict", candidate);
         async Task<string> Plist(string app, string key) =>
             (await ExecuteAsync("/usr/libexec/PlistBuddy", ct, "-c", "Print :" + key, Path.Combine(app, "Contents/Info.plist"))).Output.Trim();
@@ -40,7 +40,7 @@ public static class MacUpdateBundle
             await Plist(candidate, "CFBundleIdentifier") != "io.lightdl.LightDl" ||
             await Plist(candidate, "CFBundleShortVersionString") != version ||
             await Plist(candidate, "CFBundleExecutable") != "LightDl.Desktop")
-            throw new InvalidDataException("新版应用的标识、版本或可执行文件不匹配。");
+            throw new InvalidDataException(L.T("新版应用的标识、版本或可执行文件不匹配。"));
         await ExecuteAsync("/usr/bin/lipo", ct, Path.Combine(candidate, "Contents/MacOS/LightDl.Desktop"),
             "-verify_arch", RuntimeInformation.ProcessArchitecture == Architecture.Arm64 ? "arm64" : "x86_64");
         var oldSignature = (await ExecuteAsync("/usr/bin/codesign", ct, "-dv", "--verbose=4", current)).Error;
@@ -50,17 +50,17 @@ public static class MacUpdateBundle
         if (!string.IsNullOrEmpty(oldTeam) && oldTeam != "not set")
         {
             if (newTeam != oldTeam || signature.Contains("Signature=adhoc", StringComparison.Ordinal))
-                throw new InvalidDataException("更新应用的签名团队发生变化。");
+                throw new InvalidDataException(L.T("更新应用的签名团队发生变化。"));
         }
         else if (!oldSignature.Contains("Signature=adhoc", StringComparison.Ordinal) || !signature.Contains("CDHash=", StringComparison.Ordinal))
-            throw new InvalidDataException("无法验证应用签名。");
+            throw new InvalidDataException(L.T("无法验证应用签名。"));
     }
 
     private static async Task<(string Output, string Error)> ExecuteAsync(string tool, CancellationToken ct, params string[] arguments)
     {
         var info = new ProcessStartInfo(tool) { UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true };
         foreach (var argument in arguments) info.ArgumentList.Add(argument);
-        using var process = Process.Start(info) ?? throw new IOException("无法运行 " + tool);
+        using var process = Process.Start(info) ?? throw new IOException(L.T("无法运行 ") + tool);
         var output = process.StandardOutput.ReadToEndAsync();
         var error = process.StandardError.ReadToEndAsync();
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
@@ -72,7 +72,7 @@ public static class MacUpdateBundle
             throw;
         }
         var result = (Output: await output, Error: await error);
-        if (process.ExitCode != 0) throw new IOException($"{Path.GetFileName(tool)} 失败：{result.Error.Trim()}");
+        if (process.ExitCode != 0) throw new IOException(L.F($"{Path.GetFileName(tool)} 失败：{result.Error.Trim()}"));
         return result;
     }
 }
