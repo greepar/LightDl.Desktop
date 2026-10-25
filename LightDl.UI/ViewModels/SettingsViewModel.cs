@@ -40,6 +40,7 @@ public partial class SettingsViewModel : ViewModelBase
         UserAgent = settings.UserAgent;
         IgnoreSslErrors = settings.IgnoreSslErrors;
         CloseToTray = settings.CloseToTray;
+        WindowCloseBehavior = settings.WindowCloseBehavior;
         StartWithSystem = settings.StartWithSystem;
         ShowCompletionNotification = settings.ShowCompletionNotification;
         ThemeMode = settings.ThemeMode;
@@ -52,6 +53,18 @@ public partial class SettingsViewModel : ViewModelBase
         var saved = JsonSerializer.Deserialize(_savedSnapshot, AppSettingsJsonContext.Default.AppSettings)
             ?? throw new InvalidOperationException("无法恢复已保存的设置。");
         ApplyModel(saved);
+        UpdateUnsavedChanges();
+    }
+
+    public AppSettings GetSavedModel() => JsonSerializer.Deserialize(_savedSnapshot, AppSettingsJsonContext.Default.AppSettings)
+        ?? throw new InvalidOperationException("无法读取已保存设置。");
+
+    public void MarkCloseBehaviorSaved(int behavior)
+    {
+        var saved = GetSavedModel();
+        saved.WindowCloseBehavior = behavior;
+        _savedSnapshot = SerializeSnapshot(saved);
+        WindowCloseBehavior = behavior;
         UpdateUnsavedChanges();
     }
 
@@ -92,6 +105,7 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty] private string _userAgent = string.Empty;
     [ObservableProperty] private bool _ignoreSslErrors;
     [ObservableProperty] private bool _closeToTray;
+    [ObservableProperty] private int _windowCloseBehavior;
     [ObservableProperty] private bool _startWithSystem;
     [ObservableProperty] private bool _showCompletionNotification;
     [ObservableProperty] private int _themeMode;
@@ -131,6 +145,7 @@ public partial class SettingsViewModel : ViewModelBase
         UserAgent = UserAgent,
         IgnoreSslErrors = IgnoreSslErrors,
         CloseToTray = CloseToTray,
+        WindowCloseBehavior = WindowCloseBehavior,
         StartWithSystem = StartWithSystem,
         ShowCompletionNotification = ShowCompletionNotification,
         ThemeMode = ThemeMode,

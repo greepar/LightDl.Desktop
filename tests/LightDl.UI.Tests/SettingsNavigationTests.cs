@@ -50,4 +50,28 @@ public sealed class SettingsNavigationTests : IDisposable
     {
         if (Directory.Exists(_directory)) Directory.Delete(_directory, true);
     }
+
+    [Theory]
+    [InlineData(WindowCloseAction.Exit, 1)]
+    [InlineData(WindowCloseAction.RunInBackground, 2)]
+    public async Task RememberCloseChoicePersistsOnlyThatChoice(WindowCloseAction action, int expected)
+    {
+        var service = new AppSettingsService(Path.Combine(_directory, "settings.json"));
+        await service.SaveAsync(new AppSettings());
+        var vm = new MainViewModel(service, new DownloadTaskStore(Path.Combine(_directory, "tasks.json")),
+            new BrowserHostRegistrationService());
+        var original = vm.Settings.MaxRetry;
+        vm.Settings.MaxRetry++;
+        Assert.True(await vm.RememberWindowCloseActionAsync(action));
+        Assert.Equal(expected, service.Load().WindowCloseBehavior);
+        Assert.Equal(original, service.Load().MaxRetry);
+        Assert.Equal(original + 1, vm.Settings.MaxRetry);
+        Assert.True(vm.Settings.HasUnsavedChanges);
+        vm.Settings.DiscardChanges();
+        Assert.Equal(expected, vm.Settings.WindowCloseBehavior);
+        Assert.False(vm.Settings.HasUnsavedChanges);
+        vm.Settings.WindowCloseBehavior = 0;
+        await vm.SaveSettingsCommand.ExecuteAsync(null);
+        Assert.Equal(0, service.Load().WindowCloseBehavior);
+    }
 }

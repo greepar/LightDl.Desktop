@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.ComponentModel;
 using LightDl.UI.Models;
 
 namespace LightDl.UI.ViewModels;
@@ -12,6 +13,8 @@ public partial class CloseConfirmationViewModel(bool hasActiveDownloads, bool ha
         : "请选择退出应用或最小化到后台。";
 
     public bool HasUnsavedSettings => hasUnsavedSettings;
+
+    [ObservableProperty] private bool _rememberChoice;
 
     [RelayCommand]
     private void Exit() => DecisionMade?.Invoke(WindowCloseAction.Exit);

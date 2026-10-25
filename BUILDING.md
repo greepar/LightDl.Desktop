@@ -147,7 +147,7 @@ with an invalid frame (no GUI/download), and checks the delivered hashes.
 
 CI packages Linux x64/ARM64 publishes into `lightdl-desktop-linux-<arch>.AppImage` using appimagetool `1.9.1`.
 The AppDir contains the executable, launcher entry and icon. No loose PNG or Linux ZIP is distributed.
-Run `bash eng/linux/package-appimage.sh publish/linux-x64 linux-x64 artifacts /path/to/appimagetool-x86_64.AppImage`
+Run `pwsh -File eng/package-desktop.ps1 -PublishDirectory publish/linux-x64 -RuntimeIdentifier linux-x64 -OutputDirectory artifacts -AppImageTool /path/to/appimagetool-x86_64.AppImage`
 to package locally; `desktop-file-validate` must be installed. Verify with
 `python3 eng/linux/verify-appimage.py artifacts/lightdl-desktop-linux-x64.AppImage --rid linux-x64`.
 The verification exercises the actual AppImage's native messaging entry point without a GUI or FUSE.
@@ -193,3 +193,15 @@ actual NativeAOT helper's process handoff and rollback on Linux using disposable
 
 Local Linux validation does not prove Windows/macOS permission and Gatekeeper behavior; validate updates
 on installed applications on those systems before distributing an updater-enabled release.
+
+## PowerShell packaging entry points
+
+Release workflow commands run with PowerShell 7.4+ on every runner. Use
+`pwsh -File eng/package-desktop.ps1 -PublishDirectory publish/<rid> -RuntimeIdentifier <rid> -OutputDirectory artifacts`
+for Windows ZIP, Linux AppImage, or macOS DMG packaging on the corresponding OS.
+Linux downloads appimagetool `1.9.1` unless `-AppImageTool` points to an existing copy.
+macOS accepts `-Python /path/to/venv/bin/python` for its existing signing/DMG tools and `-Version X.Y.Z`.
+`eng/package-extensions.ps1` builds and verifies both browser extension ZIPs on any supported host.
+No Bash build scripts or Bash workflow steps are required. The generated AppImage still contains a
+minimal POSIX `AppRun` launcher so end users do not need PowerShell installed. Platform-specific
+native tools (Linux appimagetool, macOS codesign/hdiutil) remain required on their build OS.

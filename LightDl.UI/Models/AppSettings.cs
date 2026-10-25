@@ -42,6 +42,9 @@ public sealed class AppSettings
 
     public bool CloseToTray { get; set; } = true;
 
+    // 0 = ask, 1 = exit, 2 = run in background.
+    public int WindowCloseBehavior { get; set; }
+
     public bool StartWithSystem { get; set; }
 
     public bool ShowCompletionNotification { get; set; } = true;

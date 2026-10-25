@@ -63,6 +63,22 @@ public partial class MainViewModel : ViewModelBase
     public Func<Task<bool?>>? ConfirmLeaveSettingsAsync { get; set; }
     public bool ShowSettingsSave => IsSettingsPage && Settings.HasUnsavedChanges;
 
+    public async Task<bool> RememberWindowCloseActionAsync(WindowCloseAction action)
+    {
+        var behavior = action == WindowCloseAction.Exit ? 1 : 2;
+        // Persist only the remembered choice; other pending edits stay unsaved.
+        var saved = Settings.GetSavedModel();
+        saved.WindowCloseBehavior = behavior;
+        try { await _settingsService.SaveAsync(saved); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            StatusMessage = "记住关闭选择失败：" + ex.Message;
+            return false;
+        }
+        Settings.MarkCloseBehaviorSaved(behavior);
+        return true;
+    }
+
     public AppUpdateViewModel Updates { get; }
 
     public IEnumerable<DownloadItemViewModel> VisibleDownloads => SelectedSection switch

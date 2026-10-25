@@ -323,6 +323,12 @@
                   <ComboBoxItem Content="深色" />
                 </ComboBox>
                 <CheckBox Content="开机自动启动（静默到托盘）" IsChecked="{Binding Settings.StartWithSystem}" />
+                <TextBlock Text="关闭主窗口时" Classes="muted" />
+                <ComboBox SelectedIndex="{Binding Settings.WindowCloseBehavior}">
+                  <ComboBoxItem Content="每次询问" />
+                  <ComboBoxItem Content="退出应用" />
+                  <ComboBoxItem Content="最小化到后台" />
+                </ComboBox>
                 <CheckBox Content="下载完成后显示系统通知" IsChecked="{Binding Settings.ShowCompletionNotification}" />
                 <CheckBox Content="启用浏览器自动接管" IsChecked="{Binding Settings.EnableBrowserIntegration}" />
               </StackPanel>

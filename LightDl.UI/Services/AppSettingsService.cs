@@ -82,6 +82,7 @@ public sealed class AppSettingsService
         settings.Http3Mode = settings.Http3Mode is >= 0 and <= 2 ? settings.Http3Mode : 0;
         settings.ProxyMode = Math.Clamp(settings.ProxyMode, 0, 2);
         settings.ThemeMode = Math.Clamp(settings.ThemeMode, 0, 2);
+        settings.WindowCloseBehavior = Math.Clamp(settings.WindowCloseBehavior, 0, 2);
         settings.ProxyUrl = settings.ProxyUrl.Trim();
         settings.UserAgent = settings.UserAgent.Trim();
         return settings;

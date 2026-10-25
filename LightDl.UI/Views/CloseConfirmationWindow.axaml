@@ -11,6 +11,7 @@
     <TextBlock Text="{Binding Message}" TextWrapping="Wrap" />
     <TextBlock Text="有未保存的设置，退出后这些修改将丢失。"
                IsVisible="{Binding HasUnsavedSettings}" TextWrapping="Wrap" Opacity="0.65" />
+    <CheckBox Content="记住我的选择" IsChecked="{Binding RememberChoice, Mode=TwoWay}" />
     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
       <Button Content="退出应用" Command="{Binding ExitCommand}" Padding="18,10" />
       <Button Content="最小化到后台" Command="{Binding RunInBackgroundCommand}"

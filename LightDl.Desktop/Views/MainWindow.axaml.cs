@@ -45,11 +45,26 @@ public partial class MainWindow : SukiWindow, ITrayManagedWindow
             return;
         }
         var viewModel = DataContext as MainViewModel;
-        _closeConfirmation = new CloseConfirmationWindow(new CloseConfirmationViewModel(
-            viewModel?.ActiveCount > 0, viewModel?.Settings.HasUnsavedChanges == true));
-        WindowCloseAction? action;
-        try { action = await _closeConfirmation.ShowDialog<WindowCloseAction?>(this); }
-        finally { _closeConfirmation = null; }
+        WindowCloseAction? action = viewModel?.Settings.GetSavedModel().WindowCloseBehavior switch
+        {
+            1 when !viewModel.Settings.HasUnsavedChanges => WindowCloseAction.Exit,
+            2 => WindowCloseAction.RunInBackground,
+            _ => null
+        };
+        if (action is null)
+        {
+            var confirmation = new CloseConfirmationViewModel(
+                viewModel?.ActiveCount > 0, viewModel?.Settings.HasUnsavedChanges == true);
+            _closeConfirmation = new CloseConfirmationWindow(confirmation);
+            try
+            {
+                action = await _closeConfirmation.ShowDialog<WindowCloseAction?>(this);
+                if (action is { } selected && confirmation.RememberChoice && viewModel is not null &&
+                    !await viewModel.RememberWindowCloseActionAsync(selected))
+                    return;
+            }
+            finally { _closeConfirmation = null; }
+        }
         if (ExitRequested) return;
         if (action == WindowCloseAction.RunInBackground)
         {

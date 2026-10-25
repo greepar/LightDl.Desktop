@@ -9,6 +9,10 @@ on:
       - "v*"
   workflow_dispatch:
 
+defaults:
+  run:
+    shell: pwsh
+
 permissions:
   contents: write
 
@@ -61,25 +65,15 @@ jobs:
       - name: Install Linux native dependencies
         if: runner.os == 'Linux'
         run: |
+          $PSNativeCommandUseErrorActionPreference = $true
           sudo apt-get update
-          sudo apt-get install -y \
-            clang \
-            desktop-file-utils \
-            fontconfig \
-            libfontconfig1-dev \
-            libfreetype6-dev \
-            libgl1-mesa-dev \
-            libice-dev \
-            libsm-dev \
-            libx11-dev \
-            libxext-dev \
-            libxfixes-dev \
-            libxi-dev \
-            libxrandr-dev \
-            libxrender-dev \
-            libxtst-dev \
-            libwayland-dev \
-            zlib1g-dev
+          $packages = @(
+            'clang', 'desktop-file-utils', 'fontconfig', 'libfontconfig1-dev',
+            'libfreetype6-dev', 'libgl1-mesa-dev', 'libice-dev', 'libsm-dev',
+            'libx11-dev', 'libxext-dev', 'libxfixes-dev', 'libxi-dev',
+            'libxrandr-dev', 'libxrender-dev', 'libxtst-dev', 'libwayland-dev', 'zlib1g-dev'
+          )
+          sudo apt-get install -y @packages
 
       - name: Restore
         shell: pwsh
@@ -130,10 +124,11 @@ jobs:
 
       - name: Install macOS packaging tools
         if: runner.os == 'macOS'
-        shell: bash
         run: |
-          python3 -m venv "$RUNNER_TEMP/lightdl-macos-tools"
-          "$RUNNER_TEMP/lightdl-macos-tools/bin/python" -m pip install -r eng/macos/requirements.txt
+          $PSNativeCommandUseErrorActionPreference = $true
+          $tools = Join-Path $env:RUNNER_TEMP 'lightdl-macos-tools'
+          python3 -m venv $tools
+          & (Join-Path $tools 'bin/python') -m pip install -r eng/macos/requirements.txt
 
       - name: Configure optional Developer ID signing and notarization
         if: runner.os == 'macOS'
@@ -146,34 +141,16 @@ jobs:
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
         run: python3 eng/macos/configure-signing.py
 
-      - name: Package signed macOS app and DMG
-        if: runner.os == 'macOS'
-        shell: bash
+      - name: Package desktop application
         run: |
-          package_dir="$RUNNER_TEMP/lightdl-packages/${{ matrix.rid }}"
-          "$RUNNER_TEMP/lightdl-macos-tools/bin/python" eng/macos/package.py "publish/${{ matrix.rid }}" --rid "${{ matrix.rid }}" --output "$package_dir" --version "${{ env.LIGHTDL_BUILD_VERSION }}"
-          "$RUNNER_TEMP/lightdl-macos-tools/bin/python" eng/macos/verify.py "$package_dir" --rid "${{ matrix.rid }}"
-          cp "$package_dir"/lightdl-desktop-${{ matrix.rid }}.dmg .
-
-      - name: Create Windows archive
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: Compress-Archive -Path "publish/${{ matrix.rid }}/*" -DestinationPath "lightdl-desktop-${{ matrix.rid }}.zip"
-
-      - name: Create Linux AppImage
-        if: runner.os == 'Linux'
-        shell: bash
-        run: |
-          arch="$(uname -m)"
-          tool="$RUNNER_TEMP/appimagetool.AppImage"
-          curl --fail --location --retry 3 "https://github.com/AppImage/appimagetool/releases/download/1.9.1/appimagetool-$arch.AppImage" -o "$tool"
-          chmod +x "$tool"
-          bash eng/linux/package-appimage.sh "publish/${{ matrix.rid }}" "${{ matrix.rid }}" . "$tool"
-
-      - name: Verify Linux AppImage
-        if: runner.os == 'Linux'
-        shell: bash
-        run: python3 eng/linux/verify-appimage.py "lightdl-desktop-${{ matrix.rid }}.AppImage" --rid "${{ matrix.rid }}"
+          $arguments = @{
+            PublishDirectory = "publish/${{ matrix.rid }}"
+            RuntimeIdentifier = "${{ matrix.rid }}"
+            OutputDirectory = '.'
+            Version = $env:LIGHTDL_BUILD_VERSION
+          }
+          if ($IsMacOS) { $arguments.Python = Join-Path $env:RUNNER_TEMP 'lightdl-macos-tools/bin/python' }
+          ./eng/package-desktop.ps1 @arguments
 
       - name: Upload desktop artifact
         uses: actions/upload-artifact@v4
@@ -222,6 +199,7 @@ jobs:
 
       - name: Validate JavaScript and manifests
         run: |
+          $PSNativeCommandUseErrorActionPreference = $true
           node --check browser-extensions/automatic/chromium/background.js
           node --check browser-extensions/automatic/firefox/background.js
           node -e "JSON.parse(require('fs').readFileSync('browser-extensions/automatic/chromium/manifest.json', 'utf8'))"
@@ -230,18 +208,8 @@ jobs:
       - name: Lint Firefox extension
         run: npx --yes web-ext@latest lint --source-dir browser-extensions/automatic/firefox
 
-      - name: Build extension archives
-        run: |
-          mkdir -p artifacts
-          cd browser-extensions/automatic/chromium
-          zip -r ../../../artifacts/lightdl-automatic-chromium.zip . -x '*.DS_Store'
-          cd ../firefox
-          zip -r ../../../artifacts/lightdl-automatic-firefox.zip . -x '*.DS_Store'
-
-      - name: Verify archive roots
-        run: |
-          unzip -p artifacts/lightdl-automatic-chromium.zip manifest.json >/dev/null
-          unzip -p artifacts/lightdl-automatic-firefox.zip manifest.json >/dev/null
+      - name: Build and verify extension archives
+        run: ./eng/package-extensions.ps1 -OutputDirectory artifacts
 
       - name: Upload browser extension artifacts
         uses: actions/upload-artifact@v4
@@ -274,8 +242,8 @@ jobs:
           RELEASE_TAG: ${{ github.ref_name }}
         run: >
           python3 eng/release-notes.py
-          --repository "$RELEASE_REPOSITORY"
-          --tag "$RELEASE_TAG"
+          --repository "$env:RELEASE_REPOSITORY"
+          --tag "$env:RELEASE_TAG"
           --artifacts artifacts
           --output release-notes.md
 
