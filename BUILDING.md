@@ -158,3 +158,38 @@ Desktop integration tools can install its bundled launcher/icon; the file manage
 
 Tagged releases publish Windows ZIPs, Linux AppImages, macOS DMGs and browser extension ZIPs.
 `eng/release-notes.py` verifies the expected asset set and generates a download table above the automatic changelog.
+
+## Desktop self-update
+
+The implementation follows the verified-download, same-volume staging and rollback approach used in
+[greepar/YesPlayMusic](https://github.com/greepar/YesPlayMusic). It uses the GitHub Releases API's asset
+size/digest and requires an exact stable tag and architecture-specific asset URL. No separate checksum
+asset or updater metadata file is needed. Releases missing a package or SHA256 digest are not installed.
+
+Windows extracts only the root `LightDl.Desktop.exe` from its ZIP. Linux accepts a type-2 AppImage for
+the current process architecture and persists the outer AppImage path. macOS mounts the verified DMG
+read-only, checks the bundle ID/version/architecture, verifies its signature and preserves an existing
+Developer ID team. It copies the complete bundle with `ditto`, including signed resources. It does not
+remove quarantine, re-sign the application or change system permissions.
+
+The candidate and previous version live in a private `.lightdl-update-<id>` directory beside the target.
+A copy of the running NativeAOT executable handles `--apply-update` before Avalonia or the single-instance
+manager starts. The helper waits for the old process to exit, rechecks the staged executable (and macOS
+bundle signature), renames the old/new files, then waits for a matching version's startup acknowledgement.
+If startup fails or times out, it restores and launches the previous version. A failed rollback leaves the
+backup and transaction directory intact. Successfully completed transactions are removed on a later launch.
+Installation details are recorded in the application's `updates/last-install.txt` data file.
+
+An automatic check only reports an available update. Download and restart require user actions. Settings
+can disable automatic checks; manual checks remain available. Pending downloads are paused and task state
+is saved before starting the helper. The original executable path remains stable for autostart and browser
+Native Messaging registration. The first updater-enabled release must be installed manually; old releases
+without this code cannot self-update.
+
+CI derives the executable and macOS bundle versions from a `vX.Y.Z` tag, so the startup acknowledgement
+matches the feed version. It runs settings/updater tests on Windows, Linux and macOS, and exercises the
+actual NativeAOT helper's process handoff and rollback on Linux using disposable executable fixtures:
+`python3 eng/linux/verify-update.py publish/linux-x64/LightDl.Desktop`.
+
+Local Linux validation does not prove Windows/macOS permission and Gatekeeper behavior; validate updates
+on installed applications on those systems before distributing an updater-enabled release.

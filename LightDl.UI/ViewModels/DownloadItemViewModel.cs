@@ -27,6 +27,9 @@ public partial class DownloadItemViewModel : ViewModelBase
     private bool _uiUpdatesEnabled = true;
     private bool _useHttp3Fallback;
     private object? _activeAttempt;
+    private readonly bool _usesIsolatedStorage;
+    private string? _workingFilePath;
+    private string WorkingDirectory => Path.Combine(_destinationDirectory, ".lightdl-tasks", Id.ToString("N"));
 
     public DownloadItemViewModel(
         string sourceUrl,
@@ -36,6 +39,7 @@ public partial class DownloadItemViewModel : ViewModelBase
         IReadOnlyDictionary<string, string>? headers = null)
     {
         Id = Guid.NewGuid();
+        _usesIsolatedStorage = true;
         SourceUrl = sourceUrl;
         _destinationDirectory = destinationDirectory;
         _settings = settings;
@@ -48,8 +52,12 @@ public partial class DownloadItemViewModel : ViewModelBase
     public DownloadItemViewModel(DownloadTaskRecord record, AppSettings settings)
     {
         Id = record.Id == Guid.Empty ? Guid.NewGuid() : record.Id;
+        _usesIsolatedStorage = record.UsesIsolatedStorage;
         SourceUrl = record.SourceUrl;
         _destinationDirectory = record.DestinationDirectory;
+        _workingFilePath = record.WorkingFilePath is { } working &&
+            Path.GetDirectoryName(Path.GetFullPath(working)) == Path.GetFullPath(WorkingDirectory)
+            ? working : null;
         _settings = settings;
         _createdAt = record.CreatedAt == default ? DateTimeOffset.UtcNow : record.CreatedAt;
         _requestedFileName = record.RequestedFileName;
@@ -97,7 +105,19 @@ public partial class DownloadItemViewModel : ViewModelBase
     [ObservableProperty]
     private int _activeWorkers;
 
-    public string WorkerText => $"{ActiveWorkers} 线程";
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(WorkerText))]
+    [NotifyPropertyChangedFor(nameof(ProtocolSummaryText))]
+    private int _concurrencyLimit;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(WorkerText))]
+    [NotifyPropertyChangedFor(nameof(ProtocolSummaryText))]
+    private bool? _supportsRange;
+
+    public string WorkerText => SupportsRange == false
+        ? $"{ActiveWorkers} 活动线程（服务器未支持分段）"
+        : ConcurrencyLimit > 0 ? $"{ActiveWorkers}/{ConcurrencyLimit} 线程（活动/上限）" : $"{ActiveWorkers} 线程";
 
     public string ProtocolSummaryText => IsActive ? $"{ProtocolText} · {WorkerText}" : ProtocolText;
 
@@ -159,16 +179,21 @@ public partial class DownloadItemViewModel : ViewModelBase
         var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         _downloadCompletion = completion;
         ResetDisplayedSpeed();
+        SupportsRange = null;
+        ConcurrencyLimit = 0;
         State = DownloadState.Downloading;
         StatusText = "正在下载";
         SetConnectingProtocol();
         var cancellationToken = _cancellation.Token;
-        string? retryDestination = _settings.EnableResume && FilePath is { } previousPath &&
+        var resumePath = _usesIsolatedStorage ? _workingFilePath : FilePath;
+        string? retryDestination = _settings.EnableResume && resumePath is { } previousPath &&
             File.Exists(previousPath + ".lightdl") ? previousPath : null;
 
         try
         {
             Directory.CreateDirectory(_destinationDirectory);
+            var transferDirectory = _usesIsolatedStorage ? WorkingDirectory : _destinationDirectory;
+            Directory.CreateDirectory(transferDirectory);
             while (true)
             {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -184,6 +209,8 @@ public partial class DownloadItemViewModel : ViewModelBase
                 });
                 var config = DownloadConfigFactory.Create(_settings, selection =>
                     ((IProgress<LightDownloadProtocolSelection>)selectionProgress).Report(selection));
+                if (_usesIsolatedStorage)
+                    config.FileConflictPolicy = LightDownloadFileConflictPolicy.Overwrite;
                 if (_useHttp3Fallback)
                 {
                     config.EnableHttp3 = false;
@@ -209,18 +236,20 @@ public partial class DownloadItemViewModel : ViewModelBase
                 {
                     if (!IsCurrentAttempt()) return;
                     FileName = info.FileName;
-                    FilePath = info.FilePath;
+                    FilePath = info.FilePath is { } reportedPath ? DisplayDestination(reportedPath) : FilePath;
                     SizeText = FormatBytes(info.Size);
+                    SupportsRange = info.SupportsRange;
                     UpdateProtocol(downloader.SelectedHttpVersion);
                 });
                 var request = (retryDestination is { } destination
                         ? LightDownloadRequest.ToFile(SourceUrl, destination, _headers)
                         : _requestedFileName is { Length: > 0 }
-                            ? LightDownloadRequest.ToFile(SourceUrl, Path.Combine(_destinationDirectory, _requestedFileName), _headers)
-                            : LightDownloadRequest.ToDirectory(SourceUrl, _destinationDirectory, _headers))
+                            ? LightDownloadRequest.ToFile(SourceUrl, Path.Combine(transferDirectory, _requestedFileName), _headers)
+                            : LightDownloadRequest.ToDirectory(SourceUrl, transferDirectory, _headers))
                     .OnFileInfo(info =>
                     {
                         resolvedDestination = info.FilePath;
+                        if (_usesIsolatedStorage) _workingFilePath = info.FilePath;
                         ((IProgress<LightDownloadFileInfo>)fileInfo).Report(info);
                     });
                 var progress = new Progress<LightDownloadProgress>(value =>
@@ -235,12 +264,13 @@ public partial class DownloadItemViewModel : ViewModelBase
                         cancellationToken: attemptCancellation.Token);
                     _activeAttempt = null;
                     UpdateProtocol(downloader.SelectedHttpVersion);
-                    FileName = result.FileName;
-                    FilePath = result.FilePath;
+                    var saved = _usesIsolatedStorage ? CommitIsolatedDownload(result.FilePath) : (result.FilePath, result.Skipped);
+                    FilePath = saved.Item1;
+                    FileName = Path.GetFileName(FilePath);
                     ProgressPercentage = 100;
                     SpeedText = "--";
                     RemainingText = "已完成";
-                    StatusText = result.Skipped ? "已存在" : "已完成";
+                    StatusText = saved.Item2 ? "已存在" : "已完成";
                     State = DownloadState.Completed;
                     break;
                 }
@@ -250,7 +280,7 @@ public partial class DownloadItemViewModel : ViewModelBase
                     _activeAttempt = null;
                     var failure = connectionFailure ?? error;
                     Console.Error.WriteLine(failure);
-                    FilePath = resolvedDestination ?? FilePath;
+                    FilePath = resolvedDestination is { } resolved ? DisplayDestination(resolved) : FilePath;
                     ProtocolText = "HTTP/3（连接失败）";
                     StatusText = "H3 连接失败，等待选择是否回退";
                     SpeedText = "--";
@@ -419,7 +449,10 @@ public partial class DownloadItemViewModel : ViewModelBase
     partial void OnStateChanged(DownloadState value)
     {
         if (value != DownloadState.Downloading)
+        {
             ActiveWorkers = 0;
+            ConcurrencyLimit = 0;
+        }
         OnPropertyChanged(nameof(IsActive));
         OnPropertyChanged(nameof(ProtocolSummaryText));
         OnPropertyChanged(nameof(CanResume));
@@ -443,8 +476,48 @@ public partial class DownloadItemViewModel : ViewModelBase
         OnPropertyChanged(nameof(DetailsSavePath));
     }
 
+    private string DisplayDestination(string transferPath) => _usesIsolatedStorage
+        ? Path.Combine(_destinationDirectory, Path.GetFileName(transferPath)) : transferPath;
+
+    private (string Path, bool Skipped) CommitIsolatedDownload(string source)
+    {
+        var destination = DisplayDestination(source);
+        var policy = (LightDownloadFileConflictPolicy)_settings.FileConflictPolicy;
+        var skipped = false;
+        if (policy == LightDownloadFileConflictPolicy.Overwrite)
+            File.Move(source, destination, overwrite: true);
+        else if (policy == LightDownloadFileConflictPolicy.Skip && File.Exists(destination))
+        {
+            File.Delete(source);
+            skipped = true;
+        }
+        else if (policy == LightDownloadFileConflictPolicy.Rename)
+        {
+            var original = destination;
+            for (var index = 0; ; index++)
+            {
+                destination = index == 0 ? original : Path.Combine(_destinationDirectory,
+                    $"{Path.GetFileNameWithoutExtension(original)} ({index}){Path.GetExtension(original)}");
+                try { File.Move(source, destination); break; }
+                catch (IOException) when (File.Exists(destination)) { }
+            }
+        }
+        else File.Move(source, destination);
+        _workingFilePath = null;
+        try { Directory.Delete(WorkingDirectory); }
+        catch (IOException) { } // Keep unexpected leftovers rather than deleting another file.
+        return (destination, skipped);
+    }
+
     private IEnumerable<string> GetDownloadFilePaths()
     {
+        if (_usesIsolatedStorage)
+        {
+            if (IsCompleted && FilePath is { } completed) yield return completed;
+            if (Directory.Exists(WorkingDirectory))
+                foreach (var file in Directory.EnumerateFiles(WorkingDirectory)) yield return file;
+            yield break;
+        }
         var destinationPath = FilePath ?? ResolveDestinationPath();
         yield return destinationPath;
         yield return destinationPath + ".lightdl";
@@ -501,6 +574,7 @@ public partial class DownloadItemViewModel : ViewModelBase
     private void UpdateProgressCore(LightDownloadProgress progress)
     {
         ActiveWorkers = Math.Max(0, progress.ActiveWorkers);
+        ConcurrencyLimit = Math.Max(0, progress.ConcurrencyLimit);
         var displaySpeed = UpdateDisplayedSpeed(progress.Speed);
         ProgressPercentage = Math.Clamp(progress.ProgressPercentage, 0, 100);
         SizeText = $"{FormatBytes(progress.DownloadedBytes)} / {FormatBytes(progress.TotalBytes)}";
@@ -616,6 +690,8 @@ public partial class DownloadItemViewModel : ViewModelBase
             StringComparer.OrdinalIgnoreCase),
         FileName = FileName,
         FilePath = FilePath,
+        UsesIsolatedStorage = _usesIsolatedStorage,
+        WorkingFilePath = _workingFilePath,
         State = State,
         ProgressPercentage = ProgressPercentage,
         SizeText = SizeText,

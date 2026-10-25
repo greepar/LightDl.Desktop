@@ -18,6 +18,12 @@ Linux builds are distributed as a single AppImage with the application icon incl
 
 macOS builds include a DMG containing a signed `LightDl.app` and an Applications shortcut. Choose `osx-arm64` for Apple Silicon or `osx-x64` for Intel (macOS 14+). Open the DMG and drag LightDl into Applications. CI uses ad-hoc signing by default; Developer ID signing and Apple notarization are enabled when the signing secrets documented in [BUILDING.md](BUILDING.md) are configured.
 
+## Automatic updates
+
+Desktop releases check GitHub for stable updates at startup and every six hours. In Settings → Software Update, download the update, then choose Restart and Install. Update packages are verified against GitHub's size and SHA256 digest before installation. Active downloads are paused and saved before restarting; unsaved settings must be saved first.
+
+Windows replaces the single EXE, Linux replaces the running AppImage, and macOS installs the complete signed `.app` from the DMG. Installation uses the existing path and requires write access to the application and its parent directory. On macOS, install in Applications or `~/Applications` first; updating from a mounted DMG or App Translocation is not supported. If replacement or startup fails, the updater restores the previous version. Development builds can check for updates but cannot install them.
+
 ## Build
 
 ```bash

@@ -15,6 +15,8 @@ public sealed class DownloadTaskRecord
     public string FileName { get; set; } = string.Empty;
 
     public string? FilePath { get; set; }
+    public bool UsesIsolatedStorage { get; set; }
+    public string? WorkingFilePath { get; set; }
 
     public DownloadState State { get; set; }
 

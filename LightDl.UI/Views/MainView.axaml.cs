@@ -97,6 +97,7 @@ public partial class MainView : UserControl
         {
             _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
             _viewModel.ConfirmHttp3FallbackAsync = null;
+            _viewModel.ConfirmLeaveSettingsAsync = null;
         }
 
         _viewModel = DataContext as MainViewModel;
@@ -104,6 +105,7 @@ public partial class MainView : UserControl
             return;
 
         _viewModel.ConfirmHttp3FallbackAsync = ConfirmHttp3FallbackAsync;
+        _viewModel.ConfirmLeaveSettingsAsync = ConfirmLeaveSettingsAsync;
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
         if (_viewModel.PendingBrowserCapture is not null)
             _ = ShowPendingBrowserDialogAsync();
@@ -116,6 +118,13 @@ public partial class MainView : UserControl
         {
             _ = ShowPendingBrowserDialogAsync();
         }
+    }
+
+    private Task<bool?> ConfirmLeaveSettingsAsync()
+    {
+        if (TopLevel.GetTopLevel(this) is not Window owner)
+            return Task.FromResult<bool?>(null);
+        return new UnsavedSettingsWindow().ShowDialog<bool?>(owner);
     }
 
     private async void OpenNewDownloadDialog(object? sender, RoutedEventArgs e)

@@ -49,4 +49,6 @@ public sealed class AppSettings
     public int ThemeMode { get; set; }
 
     public bool EnableBrowserIntegration { get; set; } = true;
+
+    public bool CheckForUpdatesAutomatically { get; set; } = true;
 }

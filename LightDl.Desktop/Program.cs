@@ -5,6 +5,7 @@ using LightDl.UI;
 using LightDl.UI.Services;
 using SukiUI;
 using SukiUI.Enums;
+using LightDl.UI.Services.Updates;
 
 namespace LightDl.Desktop;
 
@@ -16,11 +17,27 @@ internal static class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        if (args is ["--apply-update", var planFile])
+        {
+            Environment.ExitCode = UpdateInstaller.RunAsync(planFile).GetAwaiter().GetResult();
+            return;
+        }
+
         if (NativeMessagingHost.IsInvocation(args))
         {
             NativeMessagingHost.RunAsync().GetAwaiter().GetResult();
             return;
         }
+
+        var readyFile = args.FirstOrDefault(arg => arg.StartsWith("--update-ready=", StringComparison.Ordinal))?[15..];
+        args = args.Where(arg => !arg.StartsWith("--update-ready=", StringComparison.Ordinal)).ToArray();
+        var updates = new DesktopUpdateService(typeof(Program).Assembly.GetName().Version?.ToString(3) ?? "1.0.3");
+        UpdatePlatform.Service = updates;
+        UpdatePlatform.StartupCompleted = () =>
+        {
+            updates.CleanupCompletedUpdates();
+            updates.NotifyReady(readyFile);
+        };
 
         App.StartMinimizedToTray = args.Any(argument =>
             string.Equals(argument, "--silent", StringComparison.OrdinalIgnoreCase));

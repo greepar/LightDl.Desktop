@@ -31,13 +31,20 @@ public partial class MainViewModel : ViewModelBase
     public MainViewModel(
         AppSettingsService settingsService,
         DownloadTaskStore taskStore,
-        BrowserHostRegistrationService browserHostRegistration)
+        BrowserHostRegistrationService browserHostRegistration,
+        Services.Updates.DesktopUpdateService? updateService = null)
     {
         _settingsService = settingsService;
         _taskStore = taskStore;
         _browserHostRegistration = browserHostRegistration;
         IsDesktopLayout = !OperatingSystem.IsAndroid() && !OperatingSystem.IsIOS();
         Settings = new SettingsViewModel(_settingsService.Load());
+        Settings.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(SettingsViewModel.HasUnsavedChanges))
+                OnPropertyChanged(nameof(ShowSettingsSave));
+        };
+        Updates = new AppUpdateViewModel(updateService ?? Services.Updates.UpdatePlatform.Service, Settings);
         BrowserHostStatus = _browserHostRegistration.IsRegistered()
             ? "Native Messaging 宿主已注册"
             : "Native Messaging 宿主尚未注册";
@@ -53,6 +60,10 @@ public partial class MainViewModel : ViewModelBase
     public ISukiDialogManager DialogManager { get; } = new SukiDialogManager();
 
     public SettingsViewModel Settings { get; }
+    public Func<Task<bool?>>? ConfirmLeaveSettingsAsync { get; set; }
+    public bool ShowSettingsSave => IsSettingsPage && Settings.HasUnsavedChanges;
+
+    public AppUpdateViewModel Updates { get; }
 
     public IEnumerable<DownloadItemViewModel> VisibleDownloads => SelectedSection switch
     {
@@ -136,6 +147,7 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsDownloadsPage))]
     [NotifyPropertyChangedFor(nameof(IsSettingsPage))]
+    [NotifyPropertyChangedFor(nameof(ShowSettingsSave))]
     [NotifyPropertyChangedFor(nameof(IsBrowserIntegrationPage))]
     [NotifyPropertyChangedFor(nameof(PageTitle))]
     [NotifyPropertyChangedFor(nameof(PageSubtitle))]
@@ -202,7 +214,7 @@ public partial class MainViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void SelectSection(string? section)
+    private async Task SelectSectionAsync(string? section)
     {
         if (string.IsNullOrWhiteSpace(section))
             return;
@@ -213,6 +225,17 @@ public partial class MainViewModel : ViewModelBase
             return;
         }
 
+        if (IsSettingsPage && Settings.HasUnsavedChanges)
+        {
+            var save = ConfirmLeaveSettingsAsync is { } confirm ? await confirm() : null;
+            if (save is null) return;
+            if (save.Value)
+            {
+                await SaveSettingsCommand.ExecuteAsync(null);
+                if (Settings.HasUnsavedChanges) return;
+            }
+            else Settings.DiscardChanges();
+        }
         SelectedSection = section;
         RaiseDownloadListChanged();
     }
@@ -266,6 +289,7 @@ public partial class MainViewModel : ViewModelBase
             return;
         }
         Settings.MarkSaved(submittedSettings);
+        Updates.AutomaticChecksEnabled = submittedSettings.CheckForUpdatesAutomatically;
         ApplyTheme(submittedSettings.ThemeMode);
         StatusMessage = "设置已保存，新配置将在后续下载中生效";
         ScheduleDownloads();
@@ -581,6 +605,8 @@ public partial class MainViewModel : ViewModelBase
         await Task.WhenAll(Downloads.Select(item => item.PauseAndWaitAsync()));
         await PersistDownloadsAsync();
     }
+
+    public void CancelExitPreparation() => _isExiting = false;
 
     private void ScheduleDownloads()
     {

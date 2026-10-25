@@ -9,6 +9,7 @@ using LightDl.UI.Models;
 using LightDl.UI.Services;
 using LightDl.UI.ViewModels;
 using LightDl.UI.Views;
+using LightDl.UI.Services.Updates;
 
 namespace LightDl.UI;
 
@@ -35,6 +36,7 @@ public partial class App : Application
     private BrowserIntegrationService? _browserIntegrationService;
     private IClassicDesktopStyleApplicationLifetime? _desktopLifetime;
     private bool _exitInProgress;
+    private DispatcherTimer? _updateCheckTimer;
 
     public override void Initialize()
     {
@@ -100,6 +102,24 @@ public partial class App : Application
         }
 
         base.OnFrameworkInitializationCompleted();
+        if (_mainViewModel is not null && UpdatePlatform.Service is not null)
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                UpdatePlatform.StartupCompleted?.Invoke();
+                CheckForUpdatesAutomatically();
+            }, DispatcherPriority.Background);
+            _updateCheckTimer = new DispatcherTimer { Interval = TimeSpan.FromHours(6) };
+            _updateCheckTimer.Tick += (_, _) => CheckForUpdatesAutomatically();
+            _updateCheckTimer.Start();
+        }
+    }
+
+    private void CheckForUpdatesAutomatically()
+    {
+        if (_mainViewModel?.Updates is { AutomaticChecksEnabled: true } updates &&
+            updates.CheckForUpdatesCommand.CanExecute(null))
+            _ = updates.CheckForUpdatesCommand.ExecuteAsync(null);
     }
 
     private void ShowAboutWindow()
@@ -195,6 +215,34 @@ public partial class App : Application
             Console.Error.WriteLine(ex);
         }
 
+        ShutdownDesktop(desktop);
+    }
+
+    public async Task InstallUpdateAndExitAsync(Func<Task> startInstaller)
+    {
+        if (_exitInProgress || _desktopLifetime is not { } desktop)
+            throw new InvalidOperationException("应用正在退出，请稍后重试。");
+        if (_mainViewModel?.Settings.HasUnsavedChanges == true)
+            throw new InvalidOperationException("请先保存设置，再重启安装。");
+        _exitInProgress = true;
+        try
+        {
+            if (_mainViewModel is not null) await _mainViewModel.PrepareForExitAsync();
+            await startInstaller();
+        }
+        catch
+        {
+            _mainViewModel?.CancelExitPreparation();
+            _exitInProgress = false;
+            throw;
+        }
+        ShutdownDesktop(desktop);
+    }
+
+    private void ShutdownDesktop(IClassicDesktopStyleApplicationLifetime desktop)
+    {
+        _updateCheckTimer?.Stop();
+        _mainViewModel?.Updates.Cleanup();
         if (_mainWindow is ITrayManagedWindow trayManagedWindow)
             trayManagedWindow.ExitRequested = true;
 

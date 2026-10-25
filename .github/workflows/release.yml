@@ -82,7 +82,18 @@ jobs:
             zlib1g-dev
 
       - name: Restore
-        run: dotnet restore ${{ env.PROJECT_PATH }} -r ${{ matrix.rid }}
+        shell: pwsh
+        run: ./eng/restore.ps1 -Project ${{ env.PROJECT_PATH }} -RuntimeIdentifier ${{ matrix.rid }}
+
+      - name: Set application version
+        shell: pwsh
+        run: |
+          $version = ([xml](Get-Content $env:PROJECT_PATH)).Project.PropertyGroup.Version | Where-Object { $_ } | Select-Object -First 1
+          if ($env:GITHUB_REF_TYPE -eq 'tag') {
+            if ($env:GITHUB_REF_NAME -notmatch '^v(\d+\.\d+\.\d+)$') { throw "Expected a stable vX.Y.Z tag" }
+            $version = $Matches[1]
+          }
+          "LIGHTDL_BUILD_VERSION=$version" >> $env:GITHUB_ENV
 
       - name: Publish NativeAOT
         run: >
@@ -94,6 +105,11 @@ jobs:
           -o publish/${{ matrix.rid }}
           -p:PublishSingleFile=true
           -p:StripSymbols=true
+          -p:Version=${{ env.LIGHTDL_BUILD_VERSION }}
+
+      - name: Verify native update helper
+        if: runner.os == 'Linux'
+        run: python3 eng/linux/verify-update.py "publish/${{ matrix.rid }}/LightDl.Desktop"
 
       - name: Remove debug symbols
         shell: pwsh
@@ -135,7 +151,7 @@ jobs:
         shell: bash
         run: |
           package_dir="$RUNNER_TEMP/lightdl-packages/${{ matrix.rid }}"
-          "$RUNNER_TEMP/lightdl-macos-tools/bin/python" eng/macos/package.py "publish/${{ matrix.rid }}" --rid "${{ matrix.rid }}" --output "$package_dir"
+          "$RUNNER_TEMP/lightdl-macos-tools/bin/python" eng/macos/package.py "publish/${{ matrix.rid }}" --rid "${{ matrix.rid }}" --output "$package_dir" --version "${{ env.LIGHTDL_BUILD_VERSION }}"
           "$RUNNER_TEMP/lightdl-macos-tools/bin/python" eng/macos/verify.py "$package_dir" --rid "${{ matrix.rid }}"
           cp "$package_dir"/lightdl-desktop-${{ matrix.rid }}.dmg .
 
@@ -171,18 +187,25 @@ jobs:
         run: python3 eng/macos/configure-signing.py --cleanup
 
   settings-tests:
-    name: HTTP/3 settings tests
-    runs-on: ubuntu-latest
+    name: Settings and updater tests (${{ matrix.runner }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-latest, windows-latest, macos-15]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
-      - run: dotnet test tests/LightDl.UI.Tests/LightDl.UI.Tests.csproj -c Release --logger "trx;LogFileName=settings.trx"
+      - name: Restore test dependencies
+        shell: pwsh
+        run: ./eng/restore.ps1 -Project tests/LightDl.UI.Tests/LightDl.UI.Tests.csproj
+      - run: dotnet test tests/LightDl.UI.Tests/LightDl.UI.Tests.csproj -c Release --no-restore --logger "trx;LogFileName=settings.trx"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: http3-settings-test-results
+          name: settings-update-test-results-${{ matrix.runner }}
           path: tests/LightDl.UI.Tests/TestResults/*.trx
 
   browser-extensions:

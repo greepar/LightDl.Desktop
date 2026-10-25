@@ -20,10 +20,17 @@ using Xunit;
 namespace LightDl.UI.Tests;
 
 [CollectionDefinition("Download transport", DisableParallelization = true)]
-public sealed class DownloadTransportCollection;
+public sealed class DownloadTransportCollection : ICollectionFixture<HeadlessAppFixture>;
+
+public sealed class HeadlessAppFixture : IDisposable
+{
+    // SukiUI caches geometry resources: keep their owning dispatcher for the whole collection.
+    public HeadlessUnitTestSession Session { get; } = HeadlessUnitTestSession.StartNew(typeof(Http3FallbackTests.TestAppBuilder));
+    public void Dispose() => Session.Dispose();
+}
 
 [Collection("Download transport")]
-public sealed class Http3FallbackTests
+public sealed class Http3FallbackTests(HeadlessAppFixture fixture)
 {
     public sealed class TestAppBuilder
     {
@@ -271,23 +278,29 @@ public sealed class Http3FallbackTests
             {
                 window.UpdateLayout();
                 var floating = view.FindControl<Border>("FloatingSettingsSave")!;
-                Assert.False(floating.IsVisible);
+                Assert.False(floating.IsHitTestVisible);
+                Assert.DoesNotContain("pending", floating.Classes);
                 vm.Settings.MaxRetry++;
                 window.UpdateLayout();
-                Assert.True(floating.IsVisible);
+                Assert.True(floating.IsHitTestVisible);
+                Assert.Contains("pending", floating.Classes);
                 var position = floating.TranslatePoint(default, window);
                 foreach (var scroll in view.GetVisualDescendants().OfType<ScrollViewer>())
                     scroll.Offset = new Vector(0, 10000);
                 window.UpdateLayout();
                 Assert.Equal(position, floating.TranslatePoint(default, window));
                 vm.SelectedSection = "all";
-                Assert.True(floating.IsVisible);
+                Assert.False(floating.IsVisible);
+                Assert.False(floating.IsHitTestVisible);
+                vm.SelectedSection = "settings";
                 vm.Settings.DefaultDownloadDirectory = string.Empty;
                 await vm.SaveSettingsCommand.ExecuteAsync(null);
-                Assert.True(floating.IsVisible);
+                Assert.True(floating.IsHitTestVisible);
+                Assert.Contains("pending", floating.Classes);
                 vm.Settings.DefaultDownloadDirectory = directory;
                 await vm.SaveSettingsCommand.ExecuteAsync(null);
-                Assert.False(floating.IsVisible);
+                Assert.False(floating.IsHitTestVisible);
+                Assert.DoesNotContain("pending", floating.Classes);
                 Assert.Equal(vm.Settings.MaxRetry, settingsService.Load().MaxRetry);
             }
             finally { window.Close(); }
@@ -442,10 +455,9 @@ public sealed class Http3FallbackTests
         Assert.False(Http3FailurePolicy.CanOfferFallback(new LightDownloadException("checksum mismatch")));
     }
 
-    private static async Task RunAsync(Func<string, Origin, Task> test)
+    private async Task RunAsync(Func<string, Origin, Task> test)
     {
-        using var session = HeadlessUnitTestSession.StartNew(typeof(TestAppBuilder));
-        await session.Dispatch(async () =>
+        await fixture.Session.Dispatch(async () =>
         {
             var directory = Path.Combine(Path.GetTempPath(), "lightdl-fallback-" + Guid.NewGuid());
             Directory.CreateDirectory(directory);
@@ -459,6 +471,40 @@ public sealed class Http3FallbackTests
                 Directory.Delete(directory, true);
             }
         }, CancellationToken.None);
+    }
+
+    [Fact]
+    public async Task SameUrlTasksHaveIndependentPartialFilesAndCompletedNames()
+    {
+        await RunAsync(async (directory, origin) =>
+        {
+            origin.BlockBody = true;
+            var settings = new AppSettings { Http3Mode = 2, ChunkCount = 1, EnableDynamicConcurrency = false };
+            var first = new DownloadItemViewModel("https://download.test/file.bin", directory, settings);
+            var firstRun = first.StartAsync();
+            await origin.BodyStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await first.PauseAndWaitAsync();
+            await firstRun;
+            var firstRecord = first.ToRecord();
+            var partial = firstRecord.WorkingFilePath!;
+            Assert.True(File.Exists(partial + ".lightdl"));
+            var before = await File.ReadAllBytesAsync(partial + ".lightdl");
+
+            origin.BlockBody = false;
+            var second = new DownloadItemViewModel(first.SourceUrl, directory, settings);
+            await second.StartAsync();
+            Assert.Equal(DownloadState.Completed, second.State);
+            Assert.Equal(0, first.ProgressPercentage);
+            Assert.Equal(before, await File.ReadAllBytesAsync(partial + ".lightdl"));
+
+            var restored = new DownloadItemViewModel(firstRecord, settings);
+            Assert.Equal(firstRecord.WorkingFilePath, restored.ToRecord().WorkingFilePath);
+            await restored.StartAsync();
+            Assert.Equal(DownloadState.Completed, restored.State);
+            Assert.NotEqual(second.FilePath, restored.FilePath);
+            Assert.Equal(origin.Payload, await File.ReadAllBytesAsync(second.FilePath!));
+            Assert.Equal(origin.Payload, await File.ReadAllBytesAsync(restored.FilePath!));
+        });
     }
 
     public sealed class Origin : HttpMessageHandler

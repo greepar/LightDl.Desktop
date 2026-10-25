@@ -1,0 +1,15 @@
+<suki:SukiWindow xmlns="https://github.com/avaloniaui"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:suki="using:SukiUI.Controls"
+                 x:Class="LightDl.UI.Views.UnsavedSettingsWindow"
+                 Title="未保存的设置" Width="460" SizeToContent="Height"
+                 CanResize="False" CanMinimize="False" CanMaximize="False"
+                 ShowInTaskbar="False" WindowStartupLocation="CenterOwner">
+  <StackPanel Margin="24,16,24,24" Spacing="20">
+    <TextBlock Text="设置尚未保存，要保存修改后离开吗？" TextWrapping="Wrap" />
+    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12">
+      <Button Content="放弃修改" Click="Discard" Padding="18,10" />
+      <Button Content="保存后离开" Click="Save" Background="#2874E8" Foreground="White" Padding="18,10" />
+    </StackPanel>
+  </StackPanel>
+</suki:SukiWindow>

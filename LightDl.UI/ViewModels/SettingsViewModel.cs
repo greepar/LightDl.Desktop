@@ -11,6 +11,17 @@ public partial class SettingsViewModel : ViewModelBase
 
     public SettingsViewModel(AppSettings settings)
     {
+        ApplyModel(settings);
+        _savedSnapshot = SerializeSnapshot(ToModel());
+        PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName != nameof(HasUnsavedChanges))
+                UpdateUnsavedChanges();
+        };
+    }
+
+    private void ApplyModel(AppSettings settings)
+    {
         DefaultDownloadDirectory = settings.DefaultDownloadDirectory;
         MaxConcurrentDownloads = settings.MaxConcurrentDownloads;
         ChunkCount = settings.ChunkCount;
@@ -33,12 +44,15 @@ public partial class SettingsViewModel : ViewModelBase
         ShowCompletionNotification = settings.ShowCompletionNotification;
         ThemeMode = settings.ThemeMode;
         EnableBrowserIntegration = settings.EnableBrowserIntegration;
-        _savedSnapshot = SerializeSnapshot(ToModel());
-        PropertyChanged += (_, e) =>
-        {
-            if (e.PropertyName != nameof(HasUnsavedChanges))
-                UpdateUnsavedChanges();
-        };
+        CheckForUpdatesAutomatically = settings.CheckForUpdatesAutomatically;
+    }
+
+    public void DiscardChanges()
+    {
+        var saved = JsonSerializer.Deserialize(_savedSnapshot, AppSettingsJsonContext.Default.AppSettings)
+            ?? throw new InvalidOperationException("无法恢复已保存的设置。");
+        ApplyModel(saved);
+        UpdateUnsavedChanges();
     }
 
     [ObservableProperty] private bool _hasUnsavedChanges;
@@ -55,7 +69,7 @@ public partial class SettingsViewModel : ViewModelBase
     private static string SerializeSnapshot(AppSettings settings) =>
         JsonSerializer.Serialize(settings, AppSettingsJsonContext.Default.AppSettings);
 
-    [ObservableProperty] private string _defaultDownloadDirectory;
+    [ObservableProperty] private string _defaultDownloadDirectory = string.Empty;
     [ObservableProperty] private int _maxConcurrentDownloads;
     [ObservableProperty] private int _chunkCount;
     [ObservableProperty] private bool _enableDynamicConcurrency;
@@ -74,14 +88,15 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowHttp3ProxyNote))]
     private int _proxyMode;
-    [ObservableProperty] private string _proxyUrl;
-    [ObservableProperty] private string _userAgent;
+    [ObservableProperty] private string _proxyUrl = string.Empty;
+    [ObservableProperty] private string _userAgent = string.Empty;
     [ObservableProperty] private bool _ignoreSslErrors;
     [ObservableProperty] private bool _closeToTray;
     [ObservableProperty] private bool _startWithSystem;
     [ObservableProperty] private bool _showCompletionNotification;
     [ObservableProperty] private int _themeMode;
     [ObservableProperty] private bool _enableBrowserIntegration;
+    [ObservableProperty] private bool _checkForUpdatesAutomatically;
 
     public string Http3ModeDescription => Http3Mode switch
     {
@@ -119,6 +134,7 @@ public partial class SettingsViewModel : ViewModelBase
         StartWithSystem = StartWithSystem,
         ShowCompletionNotification = ShowCompletionNotification,
         ThemeMode = ThemeMode,
-        EnableBrowserIntegration = EnableBrowserIntegration
+        EnableBrowserIntegration = EnableBrowserIntegration,
+        CheckForUpdatesAutomatically = CheckForUpdatesAutomatically
     };
 }

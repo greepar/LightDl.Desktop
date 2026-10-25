@@ -13,6 +13,17 @@
   </Design.DataContext>
 
   <UserControl.Styles>
+    <Style Selector="Border.floating-settings-save">
+      <Setter Property="Opacity" Value="0" />
+      <Setter Property="Transitions">
+        <Transitions>
+          <DoubleTransition Property="Opacity" Duration="0:0:0.1" Easing="CubicEaseOut" />
+        </Transitions>
+      </Setter>
+    </Style>
+    <Style Selector="Border.floating-settings-save.pending">
+      <Setter Property="Opacity" Value="1" />
+    </Style>
     <Style Selector="Border.card">
       <Setter Property="Background" Value="#18FFFFFF" />
       <Setter Property="BorderBrush" Value="#24FFFFFF" />
@@ -83,6 +94,7 @@
           <StackPanel Grid.Row="3" Spacing="2">
             <Button Content="浏览器集成" Classes="nav" Classes.selected="{Binding IsBrowserSelected}" Command="{Binding SelectSectionCommand}" CommandParameter="browser" />
             <Button Content="设置" Classes="nav" Classes.selected="{Binding IsSettingsSelected}" Command="{Binding SelectSectionCommand}" CommandParameter="settings" />
+            <Button Content="发现新版本 · 查看" IsVisible="{Binding Updates.HasUpdate}" Command="{Binding SelectSectionCommand}" CommandParameter="settings" />
           </StackPanel>
         </Grid>
       </Border>
@@ -257,8 +269,10 @@
                       <ComboBoxItem Content="自动重命名" />
                     </ComboBox>
                   </StackPanel>
-                  <StackPanel Grid.Column="1" Spacing="8" VerticalAlignment="Bottom">
-                    <CheckBox Content="启用断点续传" IsChecked="{Binding Settings.EnableResume}" />
+                  <StackPanel Grid.Column="1" Spacing="15">
+                    <TextBlock Text="已有文件处理" Classes="muted" Opacity="0" />
+                    <CheckBox VerticalAlignment="Center" Margin="10 0 0 0"
+                      Content="启用断点续传" IsChecked="{Binding Settings.EnableResume}" />
                   </StackPanel>
                 </Grid>
               </StackPanel>
@@ -311,6 +325,41 @@
                 <CheckBox Content="开机自动启动（静默到托盘）" IsChecked="{Binding Settings.StartWithSystem}" />
                 <CheckBox Content="下载完成后显示系统通知" IsChecked="{Binding Settings.ShowCompletionNotification}" />
                 <CheckBox Content="启用浏览器自动接管" IsChecked="{Binding Settings.EnableBrowserIntegration}" />
+              </StackPanel>
+            </Border>
+            <Border Classes="card" Padding="18" IsVisible="{Binding Updates.IsSupported}">
+              <StackPanel Spacing="12">
+                <TextBlock Text="软件更新" FontSize="18" FontWeight="SemiBold" />
+                <Border Height="1" Background="#24808080" Margin="0,0,0,8" />
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="20">
+                  <StackPanel Spacing="6">
+                    <TextBlock Text="自动检查更新" FontWeight="SemiBold" />
+                    <TextBlock Text="启动后及每 6 小时检查，发现新版时提示。关闭后仍可手动检查。"
+                               Classes="muted" TextWrapping="Wrap" />
+                  </StackPanel>
+                  <ToggleSwitch Grid.Column="1" Name="AutomaticUpdateCheckToggle"
+                                IsChecked="{Binding Settings.CheckForUpdatesAutomatically, Mode=TwoWay}"
+                                VerticalAlignment="Center"
+                                ToolTip.Tip="自动检查更新"
+                                AutomationProperties.Name="自动检查更新" />
+                </Grid>
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="20" Margin="0,8,0,0">
+                  <StackPanel Spacing="6">
+                    <TextBlock Text="{Binding Updates.CurrentVersion, StringFormat='当前版本 v{0}'}" FontWeight="SemiBold" />
+                    <TextBlock Text="发现新版后，可选择是否下载并安装。" Classes="muted" TextWrapping="Wrap" />
+                  </StackPanel>
+                  <Button Grid.Column="1" Content="检查更新" Command="{Binding Updates.CheckForUpdatesCommand}" VerticalAlignment="Center" />
+                </Grid>
+                <TextBlock Text="{Binding Updates.Status}" TextWrapping="Wrap" />
+                <ProgressBar Minimum="0" Maximum="100" Value="{Binding Updates.Progress}" IsVisible="{Binding Updates.IsBusy}" />
+                <WrapPanel Orientation="Horizontal">
+                  <Button Content="下载更新" Command="{Binding Updates.DownloadUpdateCommand}" IsVisible="{Binding Updates.HasUpdate}" Margin="0,0,8,8" />
+                  <Button Content="取消下载" Command="{Binding Updates.DownloadUpdateCancelCommand}" IsVisible="{Binding Updates.IsBusy}" Margin="0,0,8,8" />
+                  <Button Content="重启安装" Command="{Binding Updates.InstallUpdateCommand}" IsVisible="{Binding Updates.IsReadyToInstall}" Margin="0,0,8,8" />
+                </WrapPanel>
+                <Expander Header="版本说明" IsVisible="{Binding Updates.HasUpdate}">
+                  <TextBlock Text="{Binding Updates.ReleaseNotes}" TextWrapping="Wrap" />
+                </Expander>
               </StackPanel>
             </Border>
           </StackPanel>
@@ -500,10 +549,14 @@
         </Panel>
       </Grid>
     </Border>
-    <Border Name="FloatingSettingsSave" IsVisible="{Binding Settings.HasUnsavedChanges}"
+    <Border Name="FloatingSettingsSave" Classes="floating-settings-save" IsVisible="{Binding IsSettingsPage}"
+            Classes.pending="{Binding ShowSettingsSave}"
+            IsHitTestVisible="{Binding ShowSettingsSave}"
+            IsEnabled="{Binding ShowSettingsSave}"
             HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,44,50"
             ZIndex="10" CornerRadius="12" BoxShadow="0 4 18 0 #38000000">
       <Button Content="保存设置" Command="{Binding SaveSettingsCommand}"
+              Opacity="1"
               Background="#2874E8" Foreground="White" BorderThickness="0"
               CornerRadius="12" Padding="26,13" FontWeight="SemiBold" />
     </Border>
