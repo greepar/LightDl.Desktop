@@ -80,6 +80,9 @@ jobs:
             libwayland-dev \
             zlib1g-dev
 
+      - name: Prepare pinned LightDl preview
+        run: python eng/prepare-lightdl.py
+
       - name: Restore
         run: dotnet restore ${{ env.PROJECT_PATH }} -r ${{ matrix.rid }}
 
@@ -169,6 +172,7 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
+      - run: python eng/prepare-lightdl.py
       - run: dotnet test tests/LightDl.UI.Tests/LightDl.UI.Tests.csproj -c Release --logger "trx;LogFileName=settings.trx"
       - uses: actions/upload-artifact@v4
         if: always()

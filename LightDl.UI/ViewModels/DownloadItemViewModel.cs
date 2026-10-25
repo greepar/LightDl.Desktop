@@ -95,6 +95,21 @@ public partial class DownloadItemViewModel : ViewModelBase
     private string _protocolText = "等待连接";
 
     [ObservableProperty]
+    private int _activeWorkers;
+
+    public string WorkerText => $"{ActiveWorkers} 线程";
+
+    public string ProtocolSummaryText => IsActive ? $"{ProtocolText} · {WorkerText}" : ProtocolText;
+
+    partial void OnProtocolTextChanged(string value) => OnPropertyChanged(nameof(ProtocolSummaryText));
+
+    partial void OnActiveWorkersChanged(int value)
+    {
+        OnPropertyChanged(nameof(WorkerText));
+        OnPropertyChanged(nameof(ProtocolSummaryText));
+    }
+
+    [ObservableProperty]
     private string _sizeText = "未知大小";
 
     [ObservableProperty]
@@ -403,7 +418,10 @@ public partial class DownloadItemViewModel : ViewModelBase
 
     partial void OnStateChanged(DownloadState value)
     {
+        if (value != DownloadState.Downloading)
+            ActiveWorkers = 0;
         OnPropertyChanged(nameof(IsActive));
+        OnPropertyChanged(nameof(ProtocolSummaryText));
         OnPropertyChanged(nameof(CanResume));
         OnPropertyChanged(nameof(IsCompleted));
         OnPropertyChanged(nameof(CanOpenFile));
@@ -482,6 +500,7 @@ public partial class DownloadItemViewModel : ViewModelBase
 
     private void UpdateProgressCore(LightDownloadProgress progress)
     {
+        ActiveWorkers = Math.Max(0, progress.ActiveWorkers);
         var displaySpeed = UpdateDisplayedSpeed(progress.Speed);
         ProgressPercentage = Math.Clamp(progress.ProgressPercentage, 0, 100);
         SizeText = $"{FormatBytes(progress.DownloadedBytes)} / {FormatBytes(progress.TotalBytes)}";

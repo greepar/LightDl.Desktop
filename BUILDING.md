@@ -16,9 +16,17 @@ dotnet workload install android ios
 
 ## Download engine
 
-LightDl `0.4.6` is restored directly from NuGet.org through the central package reference.
-It includes H2/H3 speed comparison, concurrent H3 ranges, and static MsQuic assets.
-No local preview feed, engine source checkout, or bootstrap packaging step is required.
+The current main branch uses the unpublished LightDl `0.4.7-preview.9815027` worker-progress update.
+Before restoring or building, run:
+
+```sh
+python3 eng/prepare-lightdl.py
+```
+
+This fetches the pinned engine commit `9815027684176ee6e38cc63ede1c08ed24ac80aa` and packs its net10.0 target into `artifacts/local-nuget`.
+It requires Git, Python and the .NET 10 SDK; CI runs the same step automatically.
+The preview includes real active-worker counts, H2/H3 speed comparison and static MsQuic assets.
+It has not been published to NuGet.org; the latest official package remains `0.4.6`.
 
 ## Desktop NativeAOT
 

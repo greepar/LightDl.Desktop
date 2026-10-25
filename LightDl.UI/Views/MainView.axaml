@@ -170,10 +170,9 @@
                                      Value="{Binding ProgressPercentage}" Height="7" Margin="0,12,0,8" />
                         <Grid Grid.Row="2" Grid.ColumnSpan="2" ColumnDefinitions="*,Auto,Auto,Auto,Auto">
                           <TextBlock Text="{Binding StatusText}" TextWrapping="Wrap" />
-                          <TextBlock Grid.Column="1" Text="{Binding ProtocolText}" Classes="muted" Margin="14,0,0,0" />
-                          <TextBlock Grid.Column="2" Text="{Binding SizeText}" Classes="muted" Margin="14,0" />
-                          <TextBlock Grid.Column="3" Text="{Binding SpeedText}" Classes="muted" Margin="14,0" />
-                          <TextBlock Grid.Column="4" Text="{Binding RemainingText}" Classes="muted" Margin="14,0,0,0" />
+                          <TextBlock Grid.Column="1" Grid.ColumnSpan="4" Classes="muted" Margin="14,0,0,0">
+                            <Run Text="{Binding ProtocolSummaryText}" /><Run Text="    " /><Run Text="{Binding SizeText}" /><Run Text="    " /><Run Text="{Binding SpeedText}" /><Run Text="    " /><Run Text="{Binding RemainingText}" />
+                          </TextBlock>
                         </Grid>
                         <Border Grid.Row="3" Grid.ColumnSpan="2"
                                 Background="#0C2874E8"
@@ -478,10 +477,9 @@
                                    Margin="0,13,0,10" />
 
                       <Grid Grid.Row="2" ColumnDefinitions="Auto,*,Auto,Auto">
-                        <TextBlock Text="{Binding ProtocolText}" Classes="mobile-muted" FontSize="11" Margin="0,0,10,0" />
-                        <TextBlock Grid.Column="1" Text="{Binding SizeText}" Classes="mobile-muted" FontSize="11" />
-                        <TextBlock Grid.Column="2" Text="{Binding SpeedText}" Foreground="#67D7A5" FontSize="11" Margin="10,0" />
-                        <TextBlock Grid.Column="3" Text="{Binding RemainingText}" Classes="mobile-muted" FontSize="11" />
+                        <TextBlock Grid.ColumnSpan="4" Classes="mobile-muted" FontSize="11">
+                          <Run Text="{Binding ProtocolSummaryText}" /><Run Text="   " /><Run Text="{Binding SizeText}" /><Run Text="   " /><Run Text="{Binding SpeedText}" Foreground="#67D7A5" /><Run Text="   " /><Run Text="{Binding RemainingText}" />
+                        </TextBlock>
                       </Grid>
 
                       <StackPanel Grid.Row="3"
